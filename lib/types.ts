@@ -1,4 +1,10 @@
 import type { EducationalSetting } from "@/src/lib/schools";
+import type { PedagogicalModelId } from "@/src/lib/intelligence/frameworks/pedagogical-models";
+import type {
+  CollaborationScope,
+  ResourceVisibility,
+} from "@/src/lib/intelligence/collaboration/scopes";
+import type { ResourceFileType } from "@/src/lib/intelligence/resources/warehouse-types";
 import type { YearGroupId } from "./year-groups";
 
 export type PathwayId =
@@ -74,6 +80,10 @@ export interface LessonPlan {
   assessmentNotes: string;
   reflectionNotes: string;
   selectedLearningOutcomeIds: string[];
+  /** Pedagogical models tagged on this lesson (SE, TGfU, etc.). */
+  pedagogicalModels?: PedagogicalModelId[];
+  /** Collaboration scope — prepared for future multi-user sync. */
+  scope?: CollaborationScope;
   createdAt: string;
   updatedAt: string;
 }
@@ -111,6 +121,8 @@ export interface SchemeOfWork {
   /** Planned number of lessons for the term unit. */
   plannedLessonCount: number;
   lessons: SOWLesson[];
+  pedagogicalModels?: PedagogicalModelId[];
+  scope?: CollaborationScope;
   createdAt: string;
   updatedAt: string;
   /** @deprecated Migrated to lessons */
@@ -131,6 +143,17 @@ export interface ResourceItem {
   fileName: string;
   fileSize: number;
   createdAt: string;
+  /** Phase 4 resource warehouse extensions (all optional). */
+  fileType?: ResourceFileType;
+  yearGroup?: string;
+  topicId?: string;
+  skillId?: string;
+  learningOutcomeIds?: string[];
+  pedagogicalModels?: PedagogicalModelId[];
+  keywords?: string[];
+  visibility?: ResourceVisibility;
+  scope?: CollaborationScope;
+  storageUri?: string;
 }
 
 export interface AppData {

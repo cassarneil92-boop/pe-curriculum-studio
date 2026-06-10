@@ -1,5 +1,5 @@
 {
-  "importedAt": "2026-06-10T00:59:24.636Z",
+  "importedAt": "2026-06-10T23:30:30.557Z",
   "sourceDirectory": "C:\\Users\\User\\Desktop\\pe-curriculum-studio\\data\\curriculum-pdfs",
   "outputDirectory": "C:\\Users\\User\\Desktop\\pe-curriculum-studio\\src\\lib\\curriculum\\data",
   "sourceFiles": [
@@ -62,12 +62,12 @@
         "PE_syllabus_Learning_Outcomes_latest.pdf",
         "Sport_Values.pdf"
       ],
-      "learningOutcomeCount": 393
+      "learningOutcomeCount": 530
     }
   ],
   "recordCounts": {
-    "learningOutcomes": 569,
-    "topics": 23,
+    "learningOutcomes": 706,
+    "topics": 31,
     "skills": 28,
     "values": 27
   },

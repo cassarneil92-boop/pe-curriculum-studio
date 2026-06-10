@@ -1,4 +1,6 @@
+import { resolveGameTopicsForCode } from "./games-pedagogy";
 import type { ImportedLearningOutcomeRecord } from "./types";
+import { refineTopicForOutcome } from "./topic-resolution";
 import {
   GENERIC_TOPIC_IDS,
   SKILL_PATTERNS,
@@ -77,17 +79,12 @@ function inferTopicFromPathway(
 }
 
 function inferTopicFromCode(code: string): CanonicalTopic | null {
-  if (/^IG\d/i.test(code)) return "Invasion Games";
-  if (/^NG\d/i.test(code)) return "Net Games";
-  if (/^GY\d/i.test(code)) return "Gymnastics";
-  if (/^A\d/i.test(code)) return "Athletics";
-  if (/^F\d/i.test(code)) return "Fitness";
-  if (/^S\d/i.test(code)) return "Swimming / Aquatics";
-  if (/^D\d/i.test(code)) return "Educational Dance";
-  if (/^OR\d/i.test(code)) return "Outdoor Recreation";
-  if (/^SV\./i.test(code)) return "Sport Values";
-  if (/^SEC\.LO/i.test(code)) return null;
-  return null;
+  const refined = refineTopicForOutcome(code, "", {
+    topic: "General",
+    topicId: "general",
+  });
+  if (refined.topicId === "general") return null;
+  return refined.topic as CanonicalTopic;
 }
 
 function resolveCanonicalTopic(
@@ -145,7 +142,34 @@ function resolveCanonicalTopic(
   if (/^SV\.Y\d+\.TEAMWO/i.test(outcome.code)) topic = "Teamwork";
   if (/^SV\./i.test(outcome.code) && topic === "General") topic = "Sport Values";
 
-  return { topic, topicId: normaliseTopicId(topic) };
+  const refined = refineTopicForOutcome(outcome.code, outcome.description, {
+    topic,
+    topicId: normaliseTopicId(topic),
+  });
+
+  return { topic: refined.topic, topicId: refined.topicId };
+}
+
+function resolveSecondaryTopics(
+  outcome: ImportedLearningOutcomeRecord,
+  primaryTopicId: string
+): string[] {
+  const gameSports = resolveGameTopicsForCode(outcome.code);
+  const topics = uniqueSorted([
+    ...(outcome.topics ?? []),
+    outcome.topic,
+    ...gameSports,
+  ]);
+
+  const topicIds = uniqueSorted(
+    topics.map((label) => normaliseTopicId(label)).filter(Boolean)
+  );
+
+  if (!topicIds.includes(primaryTopicId)) {
+    topicIds.unshift(primaryTopicId);
+  }
+
+  return topicIds;
 }
 
 function inferSkillsForOutcome(
@@ -185,10 +209,13 @@ export function enrichOutcomeTags(
   const { topic, topicId } = resolveCanonicalTopic(outcome, text);
   const skills = uniqueSorted(inferSkillsForOutcome(outcome, text, topic));
 
+  const topics = resolveSecondaryTopics(outcome, topicId);
+
   return {
     ...outcome,
     topic,
     topicId,
+    topics,
     skills,
     skillIds: skills.map((skill) => normaliseSkillId(skill)),
     strand: outcome.strand || topic,

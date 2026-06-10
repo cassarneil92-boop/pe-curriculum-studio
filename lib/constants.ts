@@ -124,6 +124,8 @@ export const NAV_ITEMS = [
   { href: "/lesson-builder", label: "Lesson Builder", icon: "builder" },
   { href: "/schemes", label: "Schemes of Work", icon: "schemes" },
   { href: "/curriculum", label: "Curriculum Hub", icon: "curriculum" },
+  { href: "/curriculum-analytics", label: "Curriculum Analytics", icon: "analytics" },
+  { href: "/curriculum-assistant", label: "Curriculum Assistant", icon: "assistant" },
   { href: "/curriculum-tester", label: "Curriculum Tester", icon: "tester" },
   { href: "/curriculum-coverage", label: "Curriculum Coverage", icon: "coverage" },
   {

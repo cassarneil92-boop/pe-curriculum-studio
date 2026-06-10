@@ -43,6 +43,8 @@ import {
   pickYearGroupForPathwaysFilter,
 } from "@/lib/teacher-context";
 import { getYearGroupLabel } from "@/lib/year-groups";
+import { AlignmentScoreCard } from "@/components/intelligence/AlignmentScoreCard";
+import { buildSchemeAdvisoryAlignment } from "@/src/lib/intelligence/advisory/scheme-alignment";
 import type { PathwayId, SchemeOfWork, SOWLesson, YearGroup } from "@/lib/types";
 
 type BuilderView = "build" | "preview";
@@ -130,6 +132,11 @@ export default function SchemesPage() {
   }, [draft?.topicId, draft?.skillId, draft?.yearGroup, draftPathways, context]);
 
   const alignmentReady = Boolean(draft?.topicId && draft?.skillId && draftPathways.length > 0);
+
+  const advisoryAlignment = useMemo(() => {
+    if (!draft || !alignmentReady) return null;
+    return buildSchemeAdvisoryAlignment(draft, context);
+  }, [draft, alignmentReady, context]);
 
   const schemesByTerm = useMemo(() => {
     const map = new Map<string, SchemeOfWork[]>();
@@ -495,6 +502,8 @@ export default function SchemesPage() {
               onUpdate={updateDraft}
               onLessonCountChange={handleLessonCountChange}
             />
+
+            {advisoryAlignment && <AlignmentScoreCard report={advisoryAlignment} />}
 
             <SOWPlanningBoard
               topicName={getTopicName(draft.topicId)}

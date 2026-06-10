@@ -35,27 +35,46 @@
     ]
   },
   {
+    "id": "archery",
+    "name": "Archery",
+    "skillIds": [
+      "shooting",
+      "safety"
+    ],
+    "sourceFiles": [
+      "PE_syllabus_Learning_Outcomes_latest.pdf"
+    ]
+  },
+  {
     "id": "athletics",
     "name": "Athletics",
     "skillIds": [
       "running",
+      "sprinting",
       "jumping",
       "throwing",
-      "movement",
-      "sprinting",
       "endurance",
       "speed",
       "landing",
-      "balance",
-      "receiving",
       "shooting",
-      "agility",
+      "movement",
+      "balance",
       "analysis",
-      "communication",
-      "cooperation",
-      "coordination",
-      "safety",
-      "strength",
+      "officiating"
+    ],
+    "sourceFiles": [
+      "PE_syllabus_Learning_Outcomes_latest.pdf",
+      "SEC32PhysicalEducation2026.pdf"
+    ]
+  },
+  {
+    "id": "badminton",
+    "name": "Badminton",
+    "skillIds": [
+      "movement",
+      "passing",
+      "attacking",
+      "analysis",
       "officiating"
     ],
     "sourceFiles": [
@@ -78,18 +97,18 @@
     "id": "educational-dance",
     "name": "Educational Dance",
     "skillIds": [
+      "flexibility",
       "jumping",
       "movement",
       "running",
       "balance",
       "safety",
       "speed",
+      "travelling",
       "strength",
-      "flexibility",
       "communication",
       "analysis",
-      "shooting",
-      "attacking"
+      "shooting"
     ],
     "sourceFiles": [
       "PE_syllabus_Learning_Outcomes_latest.pdf"
@@ -100,25 +119,20 @@
     "name": "Fitness",
     "skillIds": [
       "sprinting",
-      "catching",
-      "balance",
-      "travelling",
-      "movement",
-      "endurance",
-      "strength",
-      "rolling",
-      "speed",
-      "throwing",
-      "jumping",
-      "landing",
-      "passing",
-      "running",
-      "dribbling",
-      "shooting",
       "agility",
+      "balance",
       "coordination",
+      "landing",
+      "movement",
       "safety",
-      "analysis"
+      "endurance",
+      "analysis",
+      "running",
+      "strength",
+      "cooperation",
+      "officiating",
+      "receiving",
+      "shooting"
     ],
     "sourceFiles": [
       "ACCREDITED ALP SPORTS LOs.docx",
@@ -135,24 +149,52 @@
       "shooting",
       "jumping",
       "officiating",
-      "analysis",
-      "receiving"
+      "analysis"
     ],
     "sourceFiles": [
       "ACCREDITED ALP SPORTS LOs.docx",
       "ALP Supplementary LOs for PE_Lifeskills_Healthy Lifestyle.docx",
-      "PE_syllabus_Learning_Outcomes_latest.pdf",
       "SEC32PhysicalEducation2026.pdf"
+    ]
+  },
+  {
+    "id": "fundamentals",
+    "name": "Fundamentals",
+    "skillIds": [
+      "catching",
+      "coordination",
+      "movement",
+      "balance",
+      "travelling",
+      "jumping",
+      "rolling",
+      "speed",
+      "throwing",
+      "agility",
+      "running",
+      "landing",
+      "passing",
+      "sprinting",
+      "dribbling",
+      "receiving",
+      "shooting",
+      "cooperation"
+    ],
+    "sourceFiles": [
+      "PE_syllabus_Learning_Outcomes_latest.pdf"
     ]
   },
   {
     "id": "games",
     "name": "Games",
     "skillIds": [
+      "passing",
       "dribbling",
       "shooting",
-      "passing",
-      "receiving"
+      "analysis",
+      "receiving",
+      "cooperation",
+      "movement"
     ],
     "sourceFiles": [
       "PE_syllabus_Learning_Outcomes_latest.pdf"
@@ -162,21 +204,17 @@
     "id": "gymnastics",
     "name": "Gymnastics",
     "skillIds": [
-      "catching",
-      "speed",
-      "sprinting",
+      "travelling",
+      "jumping",
+      "rolling",
       "balance",
       "movement",
-      "rolling",
-      "jumping",
+      "kicking",
       "landing",
-      "strength",
-      "analysis",
-      "officiating"
+      "strength"
     ],
     "sourceFiles": [
-      "PE_syllabus_Learning_Outcomes_latest.pdf",
-      "SEC32PhysicalEducation2026.pdf"
+      "PE_syllabus_Learning_Outcomes_latest.pdf"
     ]
   },
   {
@@ -191,7 +229,6 @@
     ],
     "sourceFiles": [
       "ACCREDITED ALP SPORTS LOs.docx",
-      "PE_syllabus_Learning_Outcomes_latest.pdf",
       "SEC32PhysicalEducation2026.pdf"
     ]
   },
@@ -213,7 +250,10 @@
   {
     "id": "hockey",
     "name": "Hockey",
-    "skillIds": [],
+    "skillIds": [
+      "cooperation",
+      "passing"
+    ],
     "sourceFiles": [
       "ACCREDITED ALP SPORTS LOs.docx"
     ]
@@ -231,7 +271,12 @@
       "shooting",
       "movement",
       "strength",
-      "analysis"
+      "analysis",
+      "balance",
+      "jumping",
+      "receiving",
+      "running",
+      "throwing"
     ],
     "sourceFiles": [
       "PE_syllabus_Learning_Outcomes_latest.pdf"
@@ -241,11 +286,10 @@
     "id": "invasion-games",
     "name": "Invasion Games",
     "skillIds": [
-      "movement",
       "passing",
-      "cooperation",
       "running",
       "receiving",
+      "cooperation",
       "attacking",
       "shooting",
       "defending",
@@ -282,15 +326,40 @@
     ]
   },
   {
+    "id": "mini-tennis",
+    "name": "Mini Tennis / Beach Racquet",
+    "skillIds": [
+      "endurance"
+    ],
+    "sourceFiles": [
+      "PE_syllabus_Learning_Outcomes_latest.pdf"
+    ]
+  },
+  {
     "id": "net-games",
     "name": "Net Games",
     "skillIds": [
       "movement",
       "passing",
-      "attacking",
       "endurance",
+      "attacking",
       "defending",
-      "shooting"
+      "shooting",
+      "analysis",
+      "cooperation",
+      "safety"
+    ],
+    "sourceFiles": [
+      "PE_syllabus_Learning_Outcomes_latest.pdf"
+    ]
+  },
+  {
+    "id": "orienteering",
+    "name": "Orienteering",
+    "skillIds": [
+      "movement",
+      "safety",
+      "travelling"
     ],
     "sourceFiles": [
       "PE_syllabus_Learning_Outcomes_latest.pdf"
@@ -300,15 +369,8 @@
     "id": "outdoor-recreation",
     "name": "Outdoor Recreation",
     "skillIds": [
-      "cooperation",
-      "safety",
-      "travelling",
-      "endurance",
       "throwing",
-      "catching",
-      "passing",
-      "running",
-      "shooting",
+      "safety",
       "analysis"
     ],
     "sourceFiles": [
@@ -342,8 +404,32 @@
     "name": "Swimming / Aquatics",
     "skillIds": [
       "movement",
+      "officiating",
+      "safety",
       "kicking",
-      "jumping"
+      "jumping",
+      "agility",
+      "analysis",
+      "balance",
+      "communication",
+      "cooperation",
+      "coordination",
+      "endurance",
+      "landing",
+      "running",
+      "shooting",
+      "speed",
+      "strength"
+    ],
+    "sourceFiles": [
+      "PE_syllabus_Learning_Outcomes_latest.pdf"
+    ]
+  },
+  {
+    "id": "team-building",
+    "name": "Team Building",
+    "skillIds": [
+      "cooperation"
     ],
     "sourceFiles": [
       "PE_syllabus_Learning_Outcomes_latest.pdf"
@@ -354,14 +440,35 @@
     "name": "Teamwork",
     "skillIds": [
       "communication",
-      "cooperation",
-      "analysis",
-      "safety"
+      "cooperation"
     ],
     "sourceFiles": [
       "ACCREDITED ALP SPORTS LOs.docx",
-      "PE_syllabus_Learning_Outcomes_latest.pdf",
       "Sport_Values.pdf"
+    ]
+  },
+  {
+    "id": "trekking",
+    "name": "Trekking",
+    "skillIds": [
+      "endurance",
+      "movement"
+    ],
+    "sourceFiles": [
+      "PE_syllabus_Learning_Outcomes_latest.pdf"
+    ]
+  },
+  {
+    "id": "ultimate-frisbee",
+    "name": "Ultimate Frisbee",
+    "skillIds": [
+      "throwing",
+      "catching",
+      "passing",
+      "running"
+    ],
+    "sourceFiles": [
+      "PE_syllabus_Learning_Outcomes_latest.pdf"
     ]
   },
   {

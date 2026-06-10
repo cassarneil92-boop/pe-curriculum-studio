@@ -10,6 +10,8 @@
     "import-curriculum": "tsx scripts/import-curriculum.ts",
     "audit-curriculum": "tsx scripts/audit-curriculum.ts",
     "audit-metadata": "tsx scripts/audit-metadata.ts",
+    "audit-implementation": "tsx scripts/audit-curriculum-implementation.ts",
+    "audit-completeness": "tsx scripts/audit-curriculum-completeness.ts",
     "test:alignment": "tsx --test src/lib/curriculum/alignment/alignment-engine.test.ts",
     "sample:alignment": "tsx src/lib/curriculum/alignment/sample-usage.ts"
   },
