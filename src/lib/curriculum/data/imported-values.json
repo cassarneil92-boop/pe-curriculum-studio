@@ -1,0 +1,298 @@
+[
+  {
+    "id": "val-healthy-lifestyle-empathy-alp-pe-l1-2-1k09",
+    "code": "VAL.ALP.PE.L1.2.1K09.empathy",
+    "description": "Empathy in ALP learning context.",
+    "theme": "respect",
+    "topic": "Healthy Lifestyle",
+    "topicId": "healthy-lifestyle",
+    "skills": [],
+    "skillIds": []
+  },
+  {
+    "id": "val-healthy-lifestyle-empathy-alp-pe-l1-2-1k10",
+    "code": "VAL.ALP.PE.L1.2.1K10.empathy",
+    "description": "Empathy in ALP learning context.",
+    "theme": "respect",
+    "topic": "Healthy Lifestyle",
+    "topicId": "healthy-lifestyle",
+    "skills": [
+      "Communication"
+    ],
+    "skillIds": [
+      "communication"
+    ]
+  },
+  {
+    "id": "val-healthy-lifestyle-empathy-alp-pe-l1-2-2s02",
+    "code": "VAL.ALP.PE.L1.2.2S02.empathy",
+    "description": "Empathy in ALP learning context.",
+    "theme": "respect",
+    "topic": "Healthy Lifestyle",
+    "topicId": "healthy-lifestyle",
+    "skills": [
+      "Communication"
+    ],
+    "skillIds": [
+      "communication"
+    ]
+  },
+  {
+    "id": "val-healthy-lifestyle-empathy-alp-pe-l1-2-3c06",
+    "code": "VAL.ALP.PE.L1.2.3C06.empathy",
+    "description": "Empathy in ALP learning context.",
+    "theme": "respect",
+    "topic": "Healthy Lifestyle",
+    "topicId": "healthy-lifestyle",
+    "skills": [],
+    "skillIds": []
+  },
+  {
+    "id": "val-sport-fair-play-alp-sv-l1-2-2s04",
+    "code": "VAL.ALP.SV.L1.2.2S04.fair-play",
+    "description": "Fair play in Sport context.",
+    "theme": "fair-play",
+    "topic": "Sport",
+    "topicId": "sport",
+    "skills": [],
+    "skillIds": []
+  },
+  {
+    "id": "val-sport-respect-alp-sv-l1-2-2s04",
+    "code": "VAL.ALP.SV.L1.2.2S04.respect",
+    "description": "Respect in Sport context.",
+    "theme": "respect",
+    "topic": "Sport",
+    "topicId": "sport",
+    "skills": [],
+    "skillIds": []
+  },
+  {
+    "id": "val-sport-respect-alp-sv-l1-2-3c04",
+    "code": "VAL.ALP.SV.L1.2.3C04.respect",
+    "description": "Respect in Sport context.",
+    "theme": "respect",
+    "topic": "Sport",
+    "topicId": "sport",
+    "skills": [],
+    "skillIds": []
+  },
+  {
+    "id": "val-sport-responsibility-alp-sv-l1-2-3c04",
+    "code": "VAL.ALP.SV.L1.2.3C04.responsibility",
+    "description": "Responsibility in Sport context.",
+    "theme": "responsibility",
+    "topic": "Sport",
+    "topicId": "sport",
+    "skills": [],
+    "skillIds": []
+  },
+  {
+    "id": "val-sport-respect-alp-sv-l2-2-3c02",
+    "code": "VAL.ALP.SV.L2.2.3C02.respect",
+    "description": "Respect in Sport context.",
+    "theme": "respect",
+    "topic": "Sport",
+    "topicId": "sport",
+    "skills": [],
+    "skillIds": []
+  },
+  {
+    "id": "val-sport-values-leadership-sv-y10-leader-14",
+    "code": "VAL.SV.Y10.LEADER.14.LEA",
+    "description": "Lead a person or a group to achieve a desired outcome.",
+    "theme": "leadership",
+    "topic": "Sport Values",
+    "topicId": "sport-values",
+    "skills": [],
+    "skillIds": []
+  },
+  {
+    "id": "val-sport-values-teamwork-sv-y10-teamwo-15",
+    "code": "VAL.SV.Y10.TEAMWO.15.TEA",
+    "description": "Work harmoniously in a team to achieve team goals in practice and during play.",
+    "theme": "teamwork",
+    "topic": "Sport Values",
+    "topicId": "sport-values",
+    "skills": [
+      "Cooperation"
+    ],
+    "skillIds": [
+      "cooperation"
+    ]
+  },
+  {
+    "id": "val-sport-values-excellence-sv-y11-excell-16",
+    "code": "VAL.SV.Y11.EXCELL.16.EXC",
+    "description": "Develop excellence in my practice and competitions.",
+    "theme": "excellence",
+    "topic": "Sport Values",
+    "topicId": "sport-values",
+    "skills": [],
+    "skillIds": []
+  },
+  {
+    "id": "val-sport-values-match-fixing-sv-y11-matchf-17",
+    "code": "VAL.SV.Y11.MATCHF.17.MAT",
+    "description": "Say no to match fixing",
+    "theme": "match-fixing",
+    "topic": "Sport Values",
+    "topicId": "sport-values",
+    "skills": [],
+    "skillIds": []
+  },
+  {
+    "id": "val-sport-values-perseverance-sv-y11-persev-18",
+    "code": "VAL.SV.Y11.PERSEV.18.PER",
+    "description": "Persevere under difficult circumstances to achieve the desired goal.",
+    "theme": "perseverance",
+    "topic": "Sport Values",
+    "topicId": "sport-values",
+    "skills": [
+      "Shooting"
+    ],
+    "skillIds": [
+      "shooting"
+    ]
+  },
+  {
+    "id": "val-sport-values-discipline-sv-y7-discip-1",
+    "code": "VAL.SV.Y7.DISCIP.1.DIS",
+    "description": "Show discipline in practice situations and in games or competitions.",
+    "theme": "discipline",
+    "topic": "Sport Values",
+    "topicId": "sport-values",
+    "skills": [],
+    "skillIds": []
+  },
+  {
+    "id": "val-sport-values-fair-play-sv-y7-fairpl-2",
+    "code": "VAL.SV.Y7.FAIRPL.2.FAI",
+    "description": "Participate and compete fairly in sports.",
+    "theme": "fair-play",
+    "topic": "Sport Values",
+    "topicId": "sport-values",
+    "skills": [],
+    "skillIds": []
+  },
+  {
+    "id": "val-sport-values-inclusion-sv-y7-inclus-3",
+    "code": "VAL.SV.Y7.INCLUS.3.INC",
+    "description": "Ensures inclusion in practice and games or competition.",
+    "theme": "inclusion",
+    "topic": "Sport Values",
+    "topicId": "sport-values",
+    "skills": [],
+    "skillIds": []
+  },
+  {
+    "id": "val-sport-values-respect-sv-y7-respec-4",
+    "code": "VAL.SV.Y7.RESPEC.4.RES",
+    "description": "Shows respect to others during practice and games.",
+    "theme": "respect",
+    "topic": "Sport Values",
+    "topicId": "sport-values",
+    "skills": [],
+    "skillIds": []
+  },
+  {
+    "id": "val-sport-values-responsibility-sv-y7-respon-5",
+    "code": "VAL.SV.Y7.RESPON.5.RES",
+    "description": "Show responsible behaviour during practice and play situations.",
+    "theme": "responsibility",
+    "topic": "Sport Values",
+    "topicId": "sport-values",
+    "skills": [],
+    "skillIds": []
+  },
+  {
+    "id": "val-sport-values-communication-sv-y8-commun-7",
+    "code": "VAL.SV.Y8.COMMUN.7.COM",
+    "description": "Communicate with the teammates in my group/team to achieve a common",
+    "theme": "communication",
+    "topic": "Sport Values",
+    "topicId": "sport-values",
+    "skills": [
+      "Communication",
+      "Cooperation"
+    ],
+    "skillIds": [
+      "communication",
+      "cooperation"
+    ]
+  },
+  {
+    "id": "val-sport-values-discipline-sv-y8-discip-6",
+    "code": "VAL.SV.Y8.DISCIP.6.DIS",
+    "description": "Show discipline in practice situations and in games or competitions.",
+    "theme": "discipline",
+    "topic": "Sport Values",
+    "topicId": "sport-values",
+    "skills": [],
+    "skillIds": []
+  },
+  {
+    "id": "val-sport-values-inclusion-sv-y8-inclus-8",
+    "code": "VAL.SV.Y8.INCLUS.8.INC",
+    "description": "Ensures inclusion in practice and games or competition.",
+    "theme": "inclusion",
+    "topic": "Sport Values",
+    "topicId": "sport-values",
+    "skills": [],
+    "skillIds": []
+  },
+  {
+    "id": "val-sport-values-responsibility-sv-y8-respon-9",
+    "code": "VAL.SV.Y8.RESPON.9.RES",
+    "description": "Show responsible behaviour during practice and play situations.",
+    "theme": "responsibility",
+    "topic": "Sport Values",
+    "topicId": "sport-values",
+    "skills": [],
+    "skillIds": []
+  },
+  {
+    "id": "val-sport-values-teamwork-sv-y8-teamwo-10",
+    "code": "VAL.SV.Y8.TEAMWO.10.TEA",
+    "description": "Work harmoniously in a team to achieve team goals in practice and during play.",
+    "theme": "teamwork",
+    "topic": "Sport Values",
+    "topicId": "sport-values",
+    "skills": [
+      "Cooperation"
+    ],
+    "skillIds": [
+      "cooperation"
+    ]
+  },
+  {
+    "id": "val-sport-values-commitment-sv-y9-commit-11",
+    "code": "VAL.SV.Y9.COMMIT.11.COM",
+    "description": "Show commitment to the task that is being performed.",
+    "theme": "commitment",
+    "topic": "Sport Values",
+    "topicId": "sport-values",
+    "skills": [],
+    "skillIds": []
+  },
+  {
+    "id": "val-sport-values-fair-play-sv-y9-fairpl-12",
+    "code": "VAL.SV.Y9.FAIRPL.12.FAI",
+    "description": "Participate and compete fairly in sports.",
+    "theme": "fair-play",
+    "topic": "Sport Values",
+    "topicId": "sport-values",
+    "skills": [],
+    "skillIds": []
+  },
+  {
+    "id": "val-sport-values-respect-sv-y9-respec-13",
+    "code": "VAL.SV.Y9.RESPEC.13.RES",
+    "description": "Shows respect to others during practice and games.",
+    "theme": "respect",
+    "topic": "Sport Values",
+    "topicId": "sport-values",
+    "skills": [],
+    "skillIds": []
+  }
+]

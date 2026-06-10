@@ -1,0 +1,79 @@
+{
+  "sources": [
+    {
+      "file": "Kinder_1_and_2_Level_3_LOP_Sept_2018.pdf",
+      "pathwayId": "early-years-pe",
+      "pathwayLabel": "Early Years PE",
+      "defaultYearGroups": ["Year 1", "Year 2"]
+    },
+    {
+      "file": "Kinder_1_and_2_Level_3_LOP_Sept_2018 (1).pdf",
+      "pathwayId": "early-years-pe",
+      "pathwayLabel": "Early Years PE",
+      "defaultYearGroups": ["Year 1", "Year 2"]
+    },
+    {
+      "file": "PE_syllabus_Learning_Outcomes_latest.pdf",
+      "pathwayId": "secondary-pe",
+      "pathwayLabel": "Secondary PE"
+    },
+    {
+      "file": "SEC32PhysicalEducation2026.pdf",
+      "pathwayId": "pe-option-sec",
+      "pathwayLabel": "PE Option SEC",
+      "defaultYearGroups": ["Year 10", "Year 11"]
+    },
+    {
+      "file": "SEC32PhysicalEducation2027.pdf",
+      "pathwayId": "pe-option-sec",
+      "pathwayLabel": "PE Option SEC",
+      "defaultYearGroups": ["Year 10", "Year 11"]
+    },
+    {
+      "file": "SEC32PhysicalEducation2028.pdf",
+      "pathwayId": "pe-option-sec",
+      "pathwayLabel": "PE Option SEC",
+      "defaultYearGroups": ["Year 10", "Year 11"]
+    },
+    {
+      "file": "Sport_Values.pdf",
+      "pathwayId": "secondary-pe",
+      "pathwayLabel": "Secondary PE"
+    },
+    {
+      "file": "2 - Fitness Year11 SOW.pdf",
+      "pathwayId": "fitness-curriculum",
+      "pathwayLabel": "Fitness Curriculum",
+      "defaultYearGroups": ["Year 11"]
+    },
+    {
+      "file": "5 - COPE Fitness 2026 Stephen Grima.pdf",
+      "pathwayId": "fitness-curriculum",
+      "pathwayLabel": "Fitness Curriculum"
+    },
+    {
+      "file": "1 - FW_ Update_ New Fitness Learning Outcomes Framework (Years 7–11) & Equipment Guidelines for Scholastic Year 2026–2027 - Darryl Poulton - Outlook.pdf",
+      "pathwayId": "fitness-curriculum",
+      "pathwayLabel": "Fitness Curriculum",
+      "defaultYearGroups": ["Year 7", "Year 8", "Year 9", "Year 10", "Year 11"]
+    },
+    {
+      "file": "ACCREDITED ALP SPORTS LOs.docx",
+      "pathwayId": "alp-sports-vocational",
+      "pathwayLabel": "ALP Sports Vocational",
+      "format": "docx"
+    },
+    {
+      "file": "ALP supplementary LOS - L2.docx",
+      "pathwayId": "alp-sports-vocational",
+      "pathwayLabel": "ALP Sports Vocational",
+      "format": "docx"
+    },
+    {
+      "file": "ALP Supplementary LOs for PE_Lifeskills_Healthy Lifestyle.docx",
+      "pathwayId": "alp-pe",
+      "pathwayLabel": "ALP Physical Education",
+      "format": "docx"
+    }
+  ]
+}

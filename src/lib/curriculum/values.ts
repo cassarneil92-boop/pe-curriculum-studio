@@ -1,0 +1,60 @@
+import type { ValueBasedPrinciple } from "./types";
+
+export const VALUES: ValueBasedPrinciple[] = [
+  {
+    id: "val-hb-fair-play",
+    code: "VAL.HB.FP1",
+    description: "Apply handball rules fairly and resolve disputes respectfully.",
+    theme: "fair-play",
+    topicIds: ["handball"],
+    skillIds: ["passing", "receiving"],
+  },
+  {
+    id: "val-hb-teamwork",
+    code: "VAL.HB.TW1",
+    description: "Communicate with teammates during handball passing phases.",
+    theme: "teamwork",
+    topicIds: ["handball"],
+    skillIds: ["passing", "receiving"],
+  },
+  {
+    id: "val-fb-respect",
+    code: "VAL.FB.R1",
+    description: "Show respect for opponents and officials during football.",
+    theme: "respect",
+    topicIds: ["football"],
+    skillIds: ["kicking", "finishing"],
+  },
+  {
+    id: "val-fb-fair-play",
+    code: "VAL.FB.FP1",
+    description: "Accept decisions and play fairly in football matches.",
+    theme: "fair-play",
+    topicIds: ["football"],
+    skillIds: ["kicking", "passing"],
+  },
+  {
+    id: "val-bb-inclusion",
+    code: "VAL.BB.IN1",
+    description: "Include all players in basketball passing activities.",
+    theme: "inclusion",
+    topicIds: ["basketball"],
+    skillIds: ["passing", "receiving"],
+  },
+  {
+    id: "val-ath-responsibility",
+    code: "VAL.AT.R1",
+    description: "Take responsibility for personal effort in athletics.",
+    theme: "responsibility",
+    topicIds: ["athletics"],
+    skillIds: ["running"],
+  },
+  {
+    id: "val-fit-responsibility",
+    code: "VAL.FT.R1",
+    description: "Take responsibility for personal fitness choices.",
+    theme: "responsibility",
+    topicIds: ["fitness"],
+    skillIds: ["endurance", "strength"],
+  },
+];

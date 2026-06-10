@@ -1,0 +1,652 @@
+[
+  {
+    "id": "agility",
+    "name": "Agility",
+    "topicIds": [
+      "athletics",
+      "fitness"
+    ],
+    "sourceFiles": [
+      "PE_syllabus_Learning_Outcomes_latest.pdf"
+    ]
+  },
+  {
+    "id": "analysis",
+    "name": "Analysis",
+    "topicIds": [
+      "alp-sports-vocational",
+      "holistic-development",
+      "educational-dance",
+      "athletics",
+      "fitness",
+      "football",
+      "teamwork",
+      "outdoor-recreation",
+      "handball",
+      "gymnastics"
+    ],
+    "sourceFiles": [
+      "ACCREDITED ALP SPORTS LOs.docx",
+      "PE_syllabus_Learning_Outcomes_latest.pdf",
+      "SEC32PhysicalEducation2026.pdf"
+    ]
+  },
+  {
+    "id": "attacking",
+    "name": "Attacking",
+    "topicIds": [
+      "holistic-development",
+      "martial-arts",
+      "educational-dance",
+      "invasion-games",
+      "net-games",
+      "volleyball"
+    ],
+    "sourceFiles": [
+      "PE_syllabus_Learning_Outcomes_latest.pdf"
+    ]
+  },
+  {
+    "id": "balance",
+    "name": "Balance",
+    "topicIds": [
+      "alp-physical-education",
+      "fitness",
+      "educational-dance",
+      "gymnastics",
+      "athletics",
+      "invasion-games"
+    ],
+    "sourceFiles": [
+      "Kinder_1_and_2_Level_3_LOP_Sept_2018 (1).pdf",
+      "PE_syllabus_Learning_Outcomes_latest.pdf"
+    ]
+  },
+  {
+    "id": "catching",
+    "name": "Catching",
+    "topicIds": [
+      "alp-physical-education",
+      "fitness",
+      "gymnastics",
+      "outdoor-recreation"
+    ],
+    "sourceFiles": [
+      "Kinder_1_and_2_Level_3_LOP_Sept_2018 (1).pdf",
+      "PE_syllabus_Learning_Outcomes_latest.pdf"
+    ]
+  },
+  {
+    "id": "communication",
+    "name": "Communication",
+    "topicIds": [
+      "teamwork",
+      "sport-values",
+      "alp-sports-vocational",
+      "healthy-lifestyle",
+      "alp-physical-education",
+      "holistic-development",
+      "educational-dance",
+      "athletics",
+      "leadership"
+    ],
+    "sourceFiles": [
+      "ACCREDITED ALP SPORTS LOs.docx",
+      "ALP supplementary LOS - L2.docx",
+      "ALP Supplementary LOs for PE_Lifeskills_Healthy Lifestyle.docx",
+      "Kinder_1_and_2_Level_3_LOP_Sept_2018 (1).pdf",
+      "PE_syllabus_Learning_Outcomes_latest.pdf",
+      "Sport_Values.pdf"
+    ]
+  },
+  {
+    "id": "cooperation",
+    "name": "Cooperation",
+    "topicIds": [
+      "football",
+      "teamwork",
+      "sport-values",
+      "alp-sports-vocational",
+      "healthy-lifestyle",
+      "invasion-games",
+      "holistic-development",
+      "outdoor-recreation",
+      "athletics",
+      "volleyball",
+      "leadership"
+    ],
+    "sourceFiles": [
+      "ACCREDITED ALP SPORTS LOs.docx",
+      "ALP Supplementary LOs for PE_Lifeskills_Healthy Lifestyle.docx",
+      "PE_syllabus_Learning_Outcomes_latest.pdf",
+      "Sport_Values.pdf"
+    ]
+  },
+  {
+    "id": "coordination",
+    "name": "Coordination",
+    "topicIds": [
+      "alp-physical-education",
+      "athletics",
+      "fitness"
+    ],
+    "sourceFiles": [
+      "Kinder_1_and_2_Level_3_LOP_Sept_2018 (1).pdf",
+      "PE_syllabus_Learning_Outcomes_latest.pdf"
+    ]
+  },
+  {
+    "id": "defending",
+    "name": "Defending",
+    "topicIds": [
+      "holistic-development",
+      "martial-arts",
+      "invasion-games",
+      "net-games"
+    ],
+    "sourceFiles": [
+      "PE_syllabus_Learning_Outcomes_latest.pdf"
+    ]
+  },
+  {
+    "id": "dribbling",
+    "name": "Dribbling",
+    "topicIds": [
+      "basketball",
+      "games",
+      "fitness"
+    ],
+    "sourceFiles": [
+      "ACCREDITED ALP SPORTS LOs.docx",
+      "PE_syllabus_Learning_Outcomes_latest.pdf"
+    ]
+  },
+  {
+    "id": "endurance",
+    "name": "Endurance",
+    "topicIds": [
+      "fitness",
+      "athletics",
+      "net-games",
+      "outdoor-recreation"
+    ],
+    "sourceFiles": [
+      "PE_syllabus_Learning_Outcomes_latest.pdf"
+    ]
+  },
+  {
+    "id": "flexibility",
+    "name": "Flexibility",
+    "topicIds": [
+      "alp-sports-vocational",
+      "healthy-lifestyle",
+      "educational-dance"
+    ],
+    "sourceFiles": [
+      "ACCREDITED ALP SPORTS LOs.docx",
+      "ALP Supplementary LOs for PE_Lifeskills_Healthy Lifestyle.docx",
+      "PE_syllabus_Learning_Outcomes_latest.pdf"
+    ]
+  },
+  {
+    "id": "jumping",
+    "name": "Jumping",
+    "topicIds": [
+      "football",
+      "athletics",
+      "educational-dance",
+      "fitness",
+      "gymnastics",
+      "swimming-aquatics"
+    ],
+    "sourceFiles": [
+      "ACCREDITED ALP SPORTS LOs.docx",
+      "PE_syllabus_Learning_Outcomes_latest.pdf"
+    ]
+  },
+  {
+    "id": "kicking",
+    "name": "Kicking",
+    "topicIds": [
+      "alp-physical-education",
+      "martial-arts",
+      "swimming-aquatics"
+    ],
+    "sourceFiles": [
+      "Kinder_1_and_2_Level_3_LOP_Sept_2018 (1).pdf",
+      "PE_syllabus_Learning_Outcomes_latest.pdf"
+    ]
+  },
+  {
+    "id": "landing",
+    "name": "Landing",
+    "topicIds": [
+      "fitness",
+      "athletics",
+      "gymnastics"
+    ],
+    "sourceFiles": [
+      "PE_syllabus_Learning_Outcomes_latest.pdf"
+    ]
+  },
+  {
+    "id": "movement",
+    "name": "Movement",
+    "topicIds": [
+      "volleyball",
+      "alp-physical-education",
+      "swimming-aquatics",
+      "fitness",
+      "educational-dance",
+      "gymnastics",
+      "athletics",
+      "invasion-games",
+      "holistic-development",
+      "martial-arts",
+      "net-games"
+    ],
+    "sourceFiles": [
+      "ACCREDITED ALP SPORTS LOs.docx",
+      "Kinder_1_and_2_Level_3_LOP_Sept_2018 (1).pdf",
+      "PE_syllabus_Learning_Outcomes_latest.pdf"
+    ]
+  },
+  {
+    "id": "officiating",
+    "name": "Officiating",
+    "topicIds": [
+      "alp-sports-vocational",
+      "football",
+      "holistic-development",
+      "athletics",
+      "handball",
+      "gymnastics"
+    ],
+    "sourceFiles": [
+      "ACCREDITED ALP SPORTS LOs.docx",
+      "ALP Supplementary LOs for PE_Lifeskills_Healthy Lifestyle.docx",
+      "PE_syllabus_Learning_Outcomes_latest.pdf",
+      "SEC32PhysicalEducation2026.pdf"
+    ]
+  },
+  {
+    "id": "passing",
+    "name": "Passing",
+    "topicIds": [
+      "football",
+      "basketball",
+      "alp-sports-vocational",
+      "volleyball",
+      "handball",
+      "games",
+      "fitness",
+      "invasion-games",
+      "net-games",
+      "outdoor-recreation"
+    ],
+    "sourceFiles": [
+      "ACCREDITED ALP SPORTS LOs.docx",
+      "PE_syllabus_Learning_Outcomes_latest.pdf"
+    ]
+  },
+  {
+    "id": "receiving",
+    "name": "Receiving",
+    "topicIds": [
+      "games",
+      "athletics",
+      "football",
+      "invasion-games",
+      "volleyball",
+      "handball",
+      "basketball"
+    ],
+    "sourceFiles": [
+      "PE_syllabus_Learning_Outcomes_latest.pdf"
+    ]
+  },
+  {
+    "id": "rolling",
+    "name": "Rolling",
+    "topicIds": [
+      "fitness",
+      "gymnastics"
+    ],
+    "sourceFiles": [
+      "PE_syllabus_Learning_Outcomes_latest.pdf"
+    ]
+  },
+  {
+    "id": "running",
+    "name": "Running",
+    "topicIds": [
+      "athletics",
+      "educational-dance",
+      "fitness",
+      "invasion-games",
+      "outdoor-recreation"
+    ],
+    "sourceFiles": [
+      "PE_syllabus_Learning_Outcomes_latest.pdf"
+    ]
+  },
+  {
+    "id": "safety",
+    "name": "Safety",
+    "topicIds": [
+      "alp-sports-vocational",
+      "healthy-lifestyle",
+      "educational-dance",
+      "holistic-development",
+      "athletics",
+      "fitness",
+      "teamwork",
+      "outdoor-recreation"
+    ],
+    "sourceFiles": [
+      "ALP supplementary LOS - L2.docx",
+      "ALP Supplementary LOs for PE_Lifeskills_Healthy Lifestyle.docx",
+      "PE_syllabus_Learning_Outcomes_latest.pdf",
+      "SEC32PhysicalEducation2026.pdf"
+    ]
+  },
+  {
+    "id": "shooting",
+    "name": "Shooting",
+    "topicIds": [
+      "football",
+      "alp-sports-vocational",
+      "games",
+      "fitness",
+      "holistic-development",
+      "athletics",
+      "educational-dance",
+      "invasion-games",
+      "net-games",
+      "volleyball",
+      "outdoor-recreation",
+      "sport-values"
+    ],
+    "sourceFiles": [
+      "ACCREDITED ALP SPORTS LOs.docx",
+      "PE_syllabus_Learning_Outcomes_latest.pdf",
+      "Sport_Values.pdf"
+    ]
+  },
+  {
+    "id": "speed",
+    "name": "Speed",
+    "topicIds": [
+      "fitness",
+      "educational-dance",
+      "gymnastics",
+      "athletics",
+      "invasion-games"
+    ],
+    "sourceFiles": [
+      "PE_syllabus_Learning_Outcomes_latest.pdf"
+    ]
+  },
+  {
+    "id": "sprinting",
+    "name": "Sprinting",
+    "topicIds": [
+      "alp-sports-vocational",
+      "fitness",
+      "gymnastics",
+      "athletics"
+    ],
+    "sourceFiles": [
+      "ACCREDITED ALP SPORTS LOs.docx",
+      "PE_syllabus_Learning_Outcomes_latest.pdf"
+    ]
+  },
+  {
+    "id": "strength",
+    "name": "Strength",
+    "topicIds": [
+      "handball",
+      "fitness",
+      "educational-dance",
+      "holistic-development",
+      "gymnastics",
+      "athletics"
+    ],
+    "sourceFiles": [
+      "ACCREDITED ALP SPORTS LOs.docx",
+      "PE_syllabus_Learning_Outcomes_latest.pdf"
+    ]
+  },
+  {
+    "id": "throwing",
+    "name": "Throwing",
+    "topicIds": [
+      "handball",
+      "alp-physical-education",
+      "fitness",
+      "athletics",
+      "martial-arts",
+      "outdoor-recreation"
+    ],
+    "sourceFiles": [
+      "ACCREDITED ALP SPORTS LOs.docx",
+      "Kinder_1_and_2_Level_3_LOP_Sept_2018 (1).pdf",
+      "PE_syllabus_Learning_Outcomes_latest.pdf"
+    ]
+  },
+  {
+    "id": "travelling",
+    "name": "Travelling",
+    "topicIds": [
+      "fitness",
+      "outdoor-recreation"
+    ],
+    "sourceFiles": [
+      "PE_syllabus_Learning_Outcomes_latest.pdf"
+    ]
+  },
+  {
+    "id": "serving",
+    "name": "Serving",
+    "topicIds": ["volleyball", "net-games"],
+    "sourceFiles": ["PE_syllabus_Learning_Outcomes_latest.pdf"]
+  },
+  {
+    "id": "setting",
+    "name": "Setting",
+    "topicIds": ["volleyball", "net-games"],
+    "sourceFiles": ["PE_syllabus_Learning_Outcomes_latest.pdf"]
+  },
+  {
+    "id": "digging",
+    "name": "Digging",
+    "topicIds": ["volleyball", "net-games"],
+    "sourceFiles": ["PE_syllabus_Learning_Outcomes_latest.pdf"]
+  },
+  {
+    "id": "blocking",
+    "name": "Blocking",
+    "topicIds": ["volleyball", "net-games"],
+    "sourceFiles": ["PE_syllabus_Learning_Outcomes_latest.pdf"]
+  },
+  {
+    "id": "spiking",
+    "name": "Spiking",
+    "topicIds": ["volleyball", "net-games"],
+    "sourceFiles": ["PE_syllabus_Learning_Outcomes_latest.pdf"]
+  },
+  {
+    "id": "positioning",
+    "name": "Positioning",
+    "topicIds": ["volleyball", "football", "basketball", "handball", "net-games"],
+    "sourceFiles": ["PE_syllabus_Learning_Outcomes_latest.pdf"]
+  },
+  {
+    "id": "pacing",
+    "name": "Pacing",
+    "topicIds": ["athletics"],
+    "sourceFiles": ["PE_syllabus_Learning_Outcomes_latest.pdf"]
+  },
+  {
+    "id": "technique",
+    "name": "Technique",
+    "topicIds": ["athletics", "gymnastics", "volleyball"],
+    "sourceFiles": ["PE_syllabus_Learning_Outcomes_latest.pdf"]
+  },
+  {
+    "id": "teamwork",
+    "name": "Teamwork",
+    "topicIds": ["sport-values", "teamwork", "volleyball"],
+    "sourceFiles": ["PE_syllabus_Learning_Outcomes_latest.pdf", "Sport_Values.pdf"]
+  },
+  {
+    "id": "leadership",
+    "name": "Leadership",
+    "topicIds": ["leadership", "sport-values", "alp-sports-vocational"],
+    "sourceFiles": ["Sport_Values.pdf", "ACCREDITED ALP SPORTS LOs.docx"]
+  },
+  {
+    "id": "responsibility",
+    "name": "Responsibility",
+    "topicIds": ["sport-values", "leadership"],
+    "sourceFiles": ["Sport_Values.pdf"]
+  },
+  {
+    "id": "fair-play",
+    "name": "Fair Play",
+    "topicIds": ["sport-values"],
+    "sourceFiles": ["Sport_Values.pdf"]
+  },
+  {
+    "id": "inclusion",
+    "name": "Inclusion",
+    "topicIds": ["sport-values"],
+    "sourceFiles": ["Sport_Values.pdf"]
+  },
+  {
+    "id": "empathy",
+    "name": "Empathy",
+    "topicIds": ["sport-values"],
+    "sourceFiles": ["Sport_Values.pdf"]
+  },
+  {
+    "id": "respect",
+    "name": "Respect",
+    "topicIds": ["sport-values"],
+    "sourceFiles": ["Sport_Values.pdf"]
+  },
+  {
+    "id": "rules",
+    "name": "Rules",
+    "topicIds": ["football", "basketball", "volleyball", "alp-sports-vocational"],
+    "sourceFiles": ["PE_syllabus_Learning_Outcomes_latest.pdf", "ACCREDITED ALP SPORTS LOs.docx"]
+  },
+  {
+    "id": "decision-making",
+    "name": "Decision Making",
+    "topicIds": ["football", "basketball", "handball", "sport-values"],
+    "sourceFiles": ["PE_syllabus_Learning_Outcomes_latest.pdf"]
+  },
+  {
+    "id": "tactics",
+    "name": "Tactics",
+    "topicIds": ["football", "basketball", "handball", "volleyball"],
+    "sourceFiles": ["PE_syllabus_Learning_Outcomes_latest.pdf"]
+  },
+  {
+    "id": "risk-management",
+    "name": "Risk Management",
+    "topicIds": ["alp-sports-vocational", "outdoor-recreation"],
+    "sourceFiles": ["ACCREDITED ALP SPORTS LOs.docx"]
+  },
+  {
+    "id": "problem-solving",
+    "name": "Problem Solving",
+    "topicIds": ["outdoor-recreation"],
+    "sourceFiles": ["PE_syllabus_Learning_Outcomes_latest.pdf"]
+  },
+  {
+    "id": "orientation",
+    "name": "Orientation",
+    "topicIds": ["outdoor-recreation"],
+    "sourceFiles": ["PE_syllabus_Learning_Outcomes_latest.pdf"]
+  },
+  {
+    "id": "coaching",
+    "name": "Coaching",
+    "topicIds": ["alp-sports-vocational"],
+    "sourceFiles": ["ACCREDITED ALP SPORTS LOs.docx"]
+  },
+  {
+    "id": "organisation",
+    "name": "Organisation",
+    "topicIds": ["alp-sports-vocational"],
+    "sourceFiles": ["ACCREDITED ALP SPORTS LOs.docx"]
+  },
+  {
+    "id": "employability",
+    "name": "Employability",
+    "topicIds": ["alp-sports-vocational"],
+    "sourceFiles": ["ACCREDITED ALP SPORTS LOs.docx"]
+  },
+  {
+    "id": "event-management",
+    "name": "Event Management",
+    "topicIds": ["alp-sports-vocational"],
+    "sourceFiles": ["ACCREDITED ALP SPORTS LOs.docx"]
+  },
+  {
+    "id": "choreography",
+    "name": "Choreography",
+    "topicIds": ["educational-dance"],
+    "sourceFiles": ["PE_syllabus_Learning_Outcomes_latest.pdf"]
+  },
+  {
+    "id": "rhythm",
+    "name": "Rhythm",
+    "topicIds": ["educational-dance"],
+    "sourceFiles": ["PE_syllabus_Learning_Outcomes_latest.pdf"]
+  },
+  {
+    "id": "expression",
+    "name": "Expression",
+    "topicIds": ["educational-dance"],
+    "sourceFiles": ["PE_syllabus_Learning_Outcomes_latest.pdf"]
+  },
+  {
+    "id": "performance",
+    "name": "Performance",
+    "topicIds": ["educational-dance", "gymnastics"],
+    "sourceFiles": ["PE_syllabus_Learning_Outcomes_latest.pdf"]
+  },
+  {
+    "id": "body-control",
+    "name": "Body Control",
+    "topicIds": ["gymnastics"],
+    "sourceFiles": ["PE_syllabus_Learning_Outcomes_latest.pdf"]
+  },
+  {
+    "id": "apparatus",
+    "name": "Apparatus",
+    "topicIds": ["gymnastics"],
+    "sourceFiles": ["PE_syllabus_Learning_Outcomes_latest.pdf"]
+  },
+  {
+    "id": "sequencing",
+    "name": "Sequencing",
+    "topicIds": ["gymnastics"],
+    "sourceFiles": ["PE_syllabus_Learning_Outcomes_latest.pdf"]
+  },
+  {
+    "id": "circuit-training",
+    "name": "Circuit Training",
+    "topicIds": ["fitness"],
+    "sourceFiles": ["PE_syllabus_Learning_Outcomes_latest.pdf"]
+  },
+  {
+    "id": "fitness-testing",
+    "name": "Fitness Testing",
+    "topicIds": ["fitness"],
+    "sourceFiles": ["PE_syllabus_Learning_Outcomes_latest.pdf"]
+  }
+]

@@ -1,0 +1,104 @@
+{
+  "importedAt": "2026-06-10T00:59:24.636Z",
+  "sourceDirectory": "C:\\Users\\User\\Desktop\\pe-curriculum-studio\\data\\curriculum-pdfs",
+  "outputDirectory": "C:\\Users\\User\\Desktop\\pe-curriculum-studio\\src\\lib\\curriculum\\data",
+  "sourceFiles": [
+    "1 - FW_ Update_ New Fitness Learning Outcomes Framework (Years 7–11) & Equipment Guidelines for Scholastic Year 2026–2027 - Darryl Poulton - Outlook.pdf",
+    "2 - Fitness Year11 SOW.pdf",
+    "5 - COPE Fitness 2026 Stephen Grima.pdf",
+    "ACCREDITED ALP SPORTS LOs.docx",
+    "ALP supplementary LOS - L2.docx",
+    "ALP Supplementary LOs for PE_Lifeskills_Healthy Lifestyle.docx",
+    "Kinder_1_and_2_Level_3_LOP_Sept_2018 (1).pdf",
+    "Kinder_1_and_2_Level_3_LOP_Sept_2018.pdf",
+    "PE_syllabus_Learning_Outcomes_latest.pdf",
+    "SEC32PhysicalEducation2026.pdf",
+    "SEC32PhysicalEducation2027.pdf",
+    "SEC32PhysicalEducation2028.pdf",
+    "Sport_Values.pdf"
+  ],
+  "ignoredFiles": [
+    "IM36PhysicalEducation2027.pdf",
+    "IM_36_1.pdf"
+  ],
+  "pathways": [
+    {
+      "id": "alp-pe",
+      "label": "ALP Physical Education",
+      "sourceFiles": [
+        "ALP Supplementary LOs for PE_Lifeskills_Healthy Lifestyle.docx"
+      ],
+      "learningOutcomeCount": 38
+    },
+    {
+      "id": "alp-sports-vocational",
+      "label": "ALP Sports Vocational",
+      "sourceFiles": [
+        "ACCREDITED ALP SPORTS LOs.docx",
+        "ALP supplementary LOS - L2.docx"
+      ],
+      "learningOutcomeCount": 59
+    },
+    {
+      "id": "early-years-pe",
+      "label": "Early Years PE",
+      "sourceFiles": [
+        "Kinder_1_and_2_Level_3_LOP_Sept_2018 (1).pdf"
+      ],
+      "learningOutcomeCount": 69
+    },
+    {
+      "id": "pe-option-sec",
+      "label": "PE Option SEC",
+      "sourceFiles": [
+        "SEC32PhysicalEducation2026.pdf"
+      ],
+      "learningOutcomeCount": 10
+    },
+    {
+      "id": "secondary-pe",
+      "label": "Secondary PE",
+      "sourceFiles": [
+        "PE_syllabus_Learning_Outcomes_latest.pdf",
+        "Sport_Values.pdf"
+      ],
+      "learningOutcomeCount": 393
+    }
+  ],
+  "recordCounts": {
+    "learningOutcomes": 569,
+    "topics": 23,
+    "skills": 28,
+    "values": 27
+  },
+  "alpDocxCounts": {
+    "alpPe": 38,
+    "alpSportsVocational": 59
+  },
+  "warnings": [
+    {
+      "sourceFile": "IM36PhysicalEducation2027.pdf",
+      "message": "Ignored — IM 36 is out of scope (coverage up to Form 5 only)."
+    },
+    {
+      "sourceFile": "IM_36_1.pdf",
+      "message": "Ignored — IM 36 is out of scope (coverage up to Form 5 only)."
+    },
+    {
+      "sourceFile": "1 - FW_ Update_ New Fitness Learning Outcomes Framework (Years 7–11) & Equipment Guidelines for Scholastic Year 2026–2027 - Darryl Poulton - Outlook.pdf",
+      "message": "PDF appears to be an email notification without embedded curriculum content. Add the linked document PDF instead."
+    },
+    {
+      "sourceFile": "1 - FW_ Update_ New Fitness Learning Outcomes Framework (Years 7–11) & Equipment Guidelines for Scholastic Year 2026–2027 - Darryl Poulton - Outlook.pdf",
+      "message": "No learning outcomes extracted. Check PDF structure or add an entry to data/curriculum-pdfs/import-sources.json."
+    },
+    {
+      "sourceFile": "2 - Fitness Year11 SOW.pdf",
+      "message": "No learning outcomes extracted. Check PDF structure or add an entry to data/curriculum-pdfs/import-sources.json."
+    },
+    {
+      "sourceFile": "5 - COPE Fitness 2026 Stephen Grima.pdf",
+      "message": "No learning outcomes extracted. Check PDF structure or add an entry to data/curriculum-pdfs/import-sources.json."
+    }
+  ]
+}

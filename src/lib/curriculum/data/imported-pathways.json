@@ -1,0 +1,44 @@
+[
+  {
+    "id": "alp-pe",
+    "label": "ALP Physical Education",
+    "sourceFiles": [
+      "ALP Supplementary LOs for PE_Lifeskills_Healthy Lifestyle.docx"
+    ],
+    "learningOutcomeCount": 38
+  },
+  {
+    "id": "alp-sports-vocational",
+    "label": "ALP Sports Vocational",
+    "sourceFiles": [
+      "ACCREDITED ALP SPORTS LOs.docx",
+      "ALP supplementary LOS - L2.docx"
+    ],
+    "learningOutcomeCount": 59
+  },
+  {
+    "id": "early-years-pe",
+    "label": "Early Years PE",
+    "sourceFiles": [
+      "Kinder_1_and_2_Level_3_LOP_Sept_2018 (1).pdf"
+    ],
+    "learningOutcomeCount": 69
+  },
+  {
+    "id": "pe-option-sec",
+    "label": "PE Option SEC",
+    "sourceFiles": [
+      "SEC32PhysicalEducation2026.pdf"
+    ],
+    "learningOutcomeCount": 10
+  },
+  {
+    "id": "secondary-pe",
+    "label": "Secondary PE",
+    "sourceFiles": [
+      "PE_syllabus_Learning_Outcomes_latest.pdf",
+      "Sport_Values.pdf"
+    ],
+    "learningOutcomeCount": 393
+  }
+]
