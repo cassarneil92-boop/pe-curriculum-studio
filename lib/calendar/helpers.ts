@@ -5,6 +5,7 @@ import { DEFAULT_DELIVERY_STATUS } from "@/lib/progress/delivery";
 
 export type CalendarDragPayload =
   | { type: "calendar-entry"; entryId: string }
+  | { type: "custom-entry"; entryId: string }
   | { type: "lesson"; lessonId: string }
   | { type: "scheme-lesson"; schemeId: string; lessonNumber: number };
 
@@ -82,7 +83,20 @@ export function createCalendarEntryFromSchemeLesson(
   };
 }
 
+export function isUnscheduledEntry(entry: CalendarEntry): boolean {
+  return !entry.startDate?.trim();
+}
+
+export function isCustomPoolEntry(entry: CalendarEntry): boolean {
+  return (
+    isUnscheduledEntry(entry) &&
+    !entry.linkedLessonId &&
+    !entry.linkedSchemeId
+  );
+}
+
 export function entryOnDate(entry: CalendarEntry, iso: string): boolean {
+  if (!entry.startDate?.trim()) return false;
   const end = entry.endDate || entry.startDate;
   return entry.startDate <= iso && end >= iso;
 }

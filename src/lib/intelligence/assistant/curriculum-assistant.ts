@@ -127,7 +127,7 @@ export function queryCurriculumAssistant(
     );
     const topGaps = report.underrepresented.slice(0, 5);
     answer = `Taught coverage: **${report.summary.overallCoveragePercent}%** (${report.summary.taughtOutcomeIds} delivered outcomes). Planned: ${report.summary.plannedOutcomeIds}. Remaining: ${report.summary.remainingOutcomeIds}.\n\nUnderrepresented topics:\n${topGaps.map((t) => `• ${t.label}: ${t.coveragePercent}%`).join("\n") || "None identified yet."}`;
-    suggestions.push("Open Coverage Tracker for full heat maps and pathway breakdown.");
+    suggestions.push("Open Teaching Progress for full heat maps and pathway breakdown.");
     return { answer, relatedOutcomeCodes, relatedTopicIds, suggestions };
   }
 

@@ -15,6 +15,10 @@ import { getContextualYearGroupLabel } from "@/lib/teacher-context";
 import { countImportedOutcomeVisibility } from "@/lib/teacher-context";
 import { getYearGroupLabel } from "@/lib/year-groups";
 import { getLessonTopicName } from "@/lib/lesson-plans/helpers";
+import { buildTermUnitBlocks, currentUnitBlock, upcomingUnitBlock } from "@/lib/calendar/pacing";
+import { startOfWeek, toIso, addDays } from "@/lib/calendar/dates";
+import { collectRemainingOutcomeIds, collectTaughtOutcomeIds } from "@/lib/progress/coverage";
+import { getPlanningOutcomes } from "@/src/lib/curriculum/planning";
 import { resolveSchoolDisplayName } from "@/src/lib/schools";
 import { IMPORTED_LEARNING_OUTCOMES } from "@/src/lib/curriculum/coverage";
 
@@ -25,10 +29,36 @@ function todayIso(): string {
 export default function DashboardPage() {
   const { data } = useApp();
   const { context } = useTeacherContext();
-  const { teacher, lessons, calendar } = data;
+  const { teacher, lessons, calendar, schemes } = data;
   const schoolName = resolveSchoolDisplayName(teacher.school, teacher.manualSchoolName);
   const today = todayIso();
   const displayName = getTeacherDisplayName(schoolName, teacher.manualSchoolName);
+
+  const weekStart = toIso(startOfWeek(new Date()));
+  const weekEnd = toIso(addDays(startOfWeek(new Date()), 6));
+
+  const termBlocks = useMemo(
+    () => buildTermUnitBlocks(schemes, calendar),
+    [schemes, calendar]
+  );
+  const currentUnit = currentUnitBlock(termBlocks, today);
+  const upcomingUnit = upcomingUnitBlock(termBlocks, today);
+
+  const weekLessons = useMemo(
+    () =>
+      calendar.filter(
+        (e) => e.startDate && e.startDate >= weekStart && e.startDate <= weekEnd
+      ),
+    [calendar, weekStart, weekEnd]
+  );
+
+  const deliveredThisWeek = weekLessons.filter((e) => e.deliveryStatus === "delivered").length;
+
+  const outcomesRemaining = useMemo(() => {
+    const taught = collectTaughtOutcomeIds(lessons, schemes, calendar);
+    const all = getPlanningOutcomes().map((o) => o.id);
+    return collectRemainingOutcomeIds(all, taught).size;
+  }, [lessons, schemes, calendar]);
 
   const todaysLessons = useMemo(() => {
     const items: {
@@ -54,12 +84,12 @@ export default function DashboardPage() {
     }
 
     for (const entry of calendar) {
-      if (entry.startDate <= today && (!entry.endDate || entry.endDate >= today)) {
+      if (entry.startDate && entry.startDate <= today && (!entry.endDate || entry.endDate >= today)) {
         items.push({
           id: entry.id,
           title: entry.title,
-          time: entry.startDate,
-          group: getYearGroupLabel(entry.yearGroup),
+          time: entry.startTime || entry.startDate,
+          group: entry.classGroup || getYearGroupLabel(entry.yearGroup),
           topic: entry.sport || entry.title,
           source: "Calendar",
         });
@@ -84,9 +114,45 @@ export default function DashboardPage() {
           Today&apos;s teaching
         </h1>
         <p className="mt-2 max-w-xl text-base text-slate-500">
-          A calm view of what matters now — your lessons, context, and next steps.
+          Plan → teach → mark delivered → see progress → adjust future lessons.
         </p>
       </header>
+
+      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <DashboardStat
+          label="Current unit"
+          value={currentUnit?.title ?? "Not scheduled"}
+          hint={
+            currentUnit
+              ? `${currentUnit.deliveredLessons}/${currentUnit.totalLessons} delivered`
+              : "Schedule a scheme in Calendar"
+          }
+        />
+        <DashboardStat
+          label="Lessons this week"
+          value={String(weekLessons.length)}
+          hint="Scheduled on your calendar"
+        />
+        <DashboardStat
+          label="Delivered this week"
+          value={String(deliveredThisWeek)}
+          hint="Marked as taught"
+        />
+        <DashboardStat
+          label="Outcomes remaining"
+          value={String(outcomesRemaining)}
+          hint="In your teaching context"
+        />
+      </section>
+
+      {upcomingUnit && !currentUnit && (
+        <Card className="border-teal-100 bg-teal-50/30">
+          <p className="text-sm text-slate-700">
+            <span className="font-semibold">Upcoming unit:</span> {upcomingUnit.title} starts{" "}
+            {upcomingUnit.startDate}
+          </p>
+        </Card>
+      )}
 
       <section>
         <div className="mb-4 flex items-center justify-between">
@@ -98,25 +164,21 @@ export default function DashboardPage() {
         {todaysLessons.length === 0 ? (
           <Card className="border-dashed bg-gradient-to-r from-white to-teal-50/30">
             <p className="text-sm text-slate-600">
-              No lessons scheduled for today. Add one in{" "}
-              <Link href="/lesson-builder" className="font-medium text-teal-700">
-                Lesson Builder
-              </Link>{" "}
-              or{" "}
+              No lessons scheduled for today.{" "}
               <Link href="/calendar" className="font-medium text-teal-700">
-                Calendar
-              </Link>
-              .
+                Open Calendar
+              </Link>{" "}
+              to plan your week.
             </p>
           </Card>
         ) : (
-          <div className="flex gap-4 overflow-x-auto pb-2">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {todaysLessons.map((lesson) => {
               const theme = getTopicTheme(lesson.topic);
               return (
                 <div
                   key={lesson.id}
-                  className={`min-w-[280px] shrink-0 rounded-2xl border p-5 shadow-sm ${theme.border} ${theme.bg}`}
+                  className={`rounded-2xl border p-5 shadow-sm ${theme.border} ${theme.bg}`}
                 >
                   <div className="flex items-start gap-3">
                     <TopicIcon name={lesson.topic} size="md" />
@@ -167,6 +229,13 @@ export default function DashboardPage() {
         <h2 className="mb-4 text-lg font-semibold text-slate-900">Quick actions</h2>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <QuickActionCard
+            href="/calendar"
+            title="Calendar"
+            description="Plan your term and track delivered lessons."
+            accent="green"
+            icon={<span>📅</span>}
+          />
+          <QuickActionCard
             href="/curriculum"
             title="Curriculum Hub"
             description="Browse topics and learning outcomes for your pathways."
@@ -188,11 +257,11 @@ export default function DashboardPage() {
             icon={<span>📋</span>}
           />
           <QuickActionCard
-            href="/calendar"
-            title="Calendar"
-            description="Map your week and teaching rhythm."
-            accent="green"
-            icon={<span>📅</span>}
+            href="/curriculum-analytics"
+            title="Teaching Progress"
+            description="Planned vs taught coverage across your context."
+            accent="amber"
+            icon={<span>📊</span>}
           />
           <QuickActionCard
             href="/resources"
@@ -210,8 +279,8 @@ export default function DashboardPage() {
             title="Curriculum at a glance"
             description="Imported outcomes visible in your current teaching context."
             action={
-              <Link href="/curriculum-coverage" className="text-sm font-medium text-teal-700">
-                Full coverage
+              <Link href="/curriculum-analytics" className="text-sm font-medium text-teal-700">
+                Teaching Progress
               </Link>
             }
           />
@@ -224,22 +293,27 @@ export default function DashboardPage() {
               <p className="text-2xl font-semibold text-slate-700">{coverage.total}</p>
               <p className="text-sm text-slate-500">total imported</p>
             </div>
-            <div className="hidden flex-1 sm:block">
-              <div className="h-2 overflow-hidden rounded-full bg-slate-100">
-                <div
-                  className="h-full rounded-full bg-teal-500 transition-all"
-                  style={{
-                    width: `${coverage.total ? (coverage.visible / coverage.total) * 100 : 0}%`,
-                  }}
-                />
-              </div>
-              <p className="mt-2 text-xs text-slate-400">
-                {context.exploreAllEnabled ? "Explore All active" : context.roleLabel}
-              </p>
-            </div>
           </div>
         </Card>
       </section>
     </div>
+  );
+}
+
+function DashboardStat({
+  label,
+  value,
+  hint,
+}: {
+  label: string;
+  value: string;
+  hint: string;
+}) {
+  return (
+    <Card>
+      <p className="text-xs font-medium uppercase tracking-wide text-slate-500">{label}</p>
+      <p className="mt-1 text-xl font-semibold text-slate-900">{value}</p>
+      <p className="mt-1 text-xs text-slate-500">{hint}</p>
+    </Card>
   );
 }

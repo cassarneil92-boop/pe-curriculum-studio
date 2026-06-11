@@ -32,7 +32,7 @@ export default function CurriculumAnalyticsPage() {
   return (
     <div>
       <PageHeader
-        title="Coverage Tracker"
+        title="Teaching Progress"
         description="See what you have planned, what you have delivered, and what is still left to teach."
       />
 
