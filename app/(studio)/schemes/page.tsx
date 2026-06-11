@@ -26,6 +26,7 @@ import { getTopicTheme } from "@/lib/design/topic-theme";
 import { syncSchemeStatus } from "@/lib/progress/delivery";
 import { buildSchemeExportHtml } from "@/lib/export";
 import { parseHubPathwaysFromQuery } from "@/lib/curriculum-hub/planning-links";
+import { BrandLogoHorizontal } from "@/components/brand/BrandLogoHorizontal";
 import { SchemeHealthCard } from "@/components/progress/SchemeHealthCard";
 import { migratePlanningTerms } from "@/lib/planning/terms";
 import {
@@ -823,6 +824,9 @@ export default function SchemesPage() {
 
   return (
     <div>
+      <div className="mb-4">
+        <BrandLogoHorizontal height={28} className="opacity-90" />
+      </div>
       <PageHeader
         eyebrow="Planning"
         title="Schemes of Work"

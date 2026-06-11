@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { BrandLogoHorizontal } from "@/components/brand/BrandLogoHorizontal";
 import { LessonDeliveryControls } from "@/components/progress/DeliveryControls";
 import { LessonLibraryStatusBadge } from "@/components/progress/LessonLibraryStatusBadge";
 import { useApp } from "@/components/providers/AppProvider";
@@ -129,7 +130,7 @@ export default function LessonsPage() {
         <EmptyState
           title="No saved lessons yet"
           description="Build a lesson in Lesson Builder and save it — it will appear here instantly."
-          icon="📘"
+          icon={<BrandLogoHorizontal height={32} className="mx-auto" />}
           action={
             <Link href="/lesson-builder">
               <Button>Open Lesson Builder</Button>

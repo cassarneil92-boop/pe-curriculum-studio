@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { BrandIcon } from "@/components/brand/BrandIcon";
 import { CalendarPlanner } from "@/components/calendar/CalendarPlanner";
 import { PageHeader } from "@/components/layout/PageHeader";
 
@@ -22,6 +23,9 @@ export default function CalendarPage() {
 
   return (
     <div>
+      <div className="mb-2 flex items-center gap-2">
+        <BrandIcon size={24} />
+      </div>
       <PageHeader
         title="Calendar"
         description="Your weekly planning workspace — schedule lessons, mark delivered, and organise term frameworks."

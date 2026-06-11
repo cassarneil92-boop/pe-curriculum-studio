@@ -1,3 +1,8 @@
+import {
+  buildExportBrandFooterHtml,
+  buildExportBrandHeaderHtml,
+  EXPORT_BRAND_STYLES,
+} from "@/lib/brand/export-header";
 import type { ExportFormat, LessonPlan, SchemeOfWork } from "./types";
 import { buildLessonPreviewHtml } from "./lesson-plans/export";
 import { getPathwayLabel } from "./constants";
@@ -11,8 +16,6 @@ import {
 } from "./scheme-builder/helpers";
 import { getYearGroupLabel } from "./year-groups";
 
-const SCHEME_FOOTER = "PE Curriculum Studio © Neil Cassar";
-
 function baseStyles(): string {
   return `
     @page { size: A4; margin: 18mm 15mm 22mm; }
@@ -23,6 +26,7 @@ function baseStyles(): string {
     ul, ol { padding-left: 1.25rem; }
     .section { margin-bottom: 1.25rem; }
     .doc-footer { margin-top: 2rem; padding-top: 0.75rem; border-top: 1px solid #cbd5e1; font-size: 0.75rem; color: #64748b; text-align: center; }
+    ${EXPORT_BRAND_STYLES}
     @media print {
       body { margin: 0; padding: 0; }
       .doc-footer { position: fixed; bottom: 8mm; left: 0; right: 0; border: none; }
@@ -78,6 +82,7 @@ export function buildSchemeExportHtml(scheme: SchemeOfWork): string {
   </style>
 </head>
 <body>
+  ${buildExportBrandHeaderHtml()}
   <h1>${title}</h1>
   <p class="meta">
     ${getSchemeSelectedPathways(scheme).map((pathwayId) => getPathwayLabel(pathwayId)).join(" + ")} · ${getYearGroupLabel(scheme.yearGroup)}
@@ -100,7 +105,7 @@ export function buildSchemeExportHtml(scheme: SchemeOfWork): string {
       <tbody>${lessonsHtml}</tbody>
     </table>
   </div>
-  <p class="doc-footer">${SCHEME_FOOTER}</p>
+  ${buildExportBrandFooterHtml()}
 </body>
 </html>`;
 }

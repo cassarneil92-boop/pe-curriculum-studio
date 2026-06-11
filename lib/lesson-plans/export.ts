@@ -1,3 +1,4 @@
+import { buildExportBrandFooterHtml, buildExportBrandHeaderHtml, EXPORT_BRAND_STYLES } from "@/lib/brand/export-header";
 import { buildLessonExportFilename } from "./helpers";
 import { buildLessonSectionsForExport } from "./preview-html";
 import { exportDocument } from "@/lib/export";
@@ -34,7 +35,8 @@ export function buildLessonPreviewHtml(lesson: LessonPlan): string {
     .body { font-size: 0.95rem; }
     ul { padding-left: 1.25rem; margin: 0.25rem 0; }
     li { margin-bottom: 0.35rem; }
-    .footer { margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid #e2e8f0; font-size: 0.8rem; color: #94a3b8; text-align: center; }
+    .footer, .doc-footer { margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid #e2e8f0; font-size: 0.8rem; color: #94a3b8; text-align: center; }
+    ${EXPORT_BRAND_STYLES}
     @media print {
       body { margin: 0; max-width: none; }
       .section { page-break-inside: avoid; }
@@ -42,6 +44,7 @@ export function buildLessonPreviewHtml(lesson: LessonPlan): string {
   </style>
 </head>
 <body>
+  ${buildExportBrandHeaderHtml()}
   <h1>${escapeHtml(sections.meta.title)}</h1>
   <p class="meta">
     ${escapeHtml(sections.meta.pathway)} · ${escapeHtml(sections.meta.yearGroup)}
@@ -58,7 +61,7 @@ export function buildLessonPreviewHtml(lesson: LessonPlan): string {
   ${sectionHtml("PE Activities", sections.activities)}
   ${sectionHtml("Safety Considerations", sections.safety)}
   ${sections.endings ? sectionHtml("Lesson Ending", sections.endings) : ""}
-  <p class="footer">PE Curriculum Studio © Neil Cassar</p>
+  ${buildExportBrandFooterHtml()}
 </body>
 </html>`;
 }

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { FieldGroup, Input, Select, Textarea } from "@/components/ui/Input";
+import { BrandIcon } from "@/components/brand/BrandIcon";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { getPathwayLabel, PATHWAYS, SPORTS } from "@/lib/constants";
 import {
@@ -250,7 +251,8 @@ export default function ResourcesPage() {
           {data.resources.length === 0 ? (
             <EmptyState
               title="No resources yet"
-              description="Upload lesson cards, drills, or assessment sheets."
+              description="Store lesson cards, worksheets, assessments and resources."
+              icon={<BrandIcon size={48} className="mx-auto" />}
             />
           ) : (
             <ul className="space-y-2">

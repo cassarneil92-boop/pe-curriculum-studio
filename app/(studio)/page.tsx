@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useMemo } from "react";
+import { BrandLogoHorizontal } from "@/components/brand/BrandLogoHorizontal";
 import { useApp } from "@/components/providers/AppProvider";
 import { QuickActionCard } from "@/components/design/QuickActionCard";
 import { TopicIcon } from "@/components/design/TopicIcon";
@@ -122,6 +123,9 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-10">
+      <div className="mb-2">
+        <BrandLogoHorizontal height={36} className="opacity-95" />
+      </div>
       <header>
         <p className="text-sm font-medium text-teal-700">
           {getTimeGreeting()}, {displayName}

@@ -1,5 +1,7 @@
 "use client";
 
+import { BrandLogoHorizontal } from "@/components/brand/BrandLogoHorizontal";
+import { BRAND_FOOTER } from "@/lib/brand/constants";
 import { Badge } from "@/components/ui/Badge";
 import {
   formatLessonDate,
@@ -119,6 +121,9 @@ export function LessonPreview({ lesson, showFooter = true }: LessonPreviewProps)
 
   return (
     <article className="lesson-print-root space-y-4">
+      <div className="lesson-print-brand mb-4 hidden print:block">
+        <BrandLogoHorizontal height={36} />
+      </div>
       <header className="rounded-2xl border border-teal-100 bg-gradient-to-br from-teal-50 to-white p-6">
         <h1 className="text-2xl font-semibold text-slate-900">{lesson.title}</h1>
         <p className="mt-2 text-sm text-slate-600">
@@ -211,7 +216,7 @@ export function LessonPreview({ lesson, showFooter = true }: LessonPreviewProps)
 
       {showFooter && (
         <footer className="border-t border-slate-200 pt-4 text-center text-xs text-slate-400">
-          PE Curriculum Studio © Neil Cassar
+          {BRAND_FOOTER}
         </footer>
       )}
     </article>

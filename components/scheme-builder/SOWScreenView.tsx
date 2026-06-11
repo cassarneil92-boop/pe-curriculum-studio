@@ -18,6 +18,8 @@ import {
 import { activityLabels, isActivitiesEmpty } from "@/lib/scheme-builder/lesson-actions";
 import { getPathwayLabel } from "@/lib/constants";
 import { getYearGroupLabel } from "@/lib/year-groups";
+import { BrandLogoHorizontal } from "@/components/brand/BrandLogoHorizontal";
+import { BRAND_FOOTER } from "@/lib/brand/constants";
 import { SchemeLessonDeliveryControls } from "@/components/progress/SchemeLessonDeliveryControls";
 import type { LessonDeliveryStatus, SchemeOfWork, SOWLesson } from "@/lib/types";
 
@@ -244,6 +246,9 @@ export function SOWScreenView({
 
   return (
     <div className="scheme-print-root space-y-6">
+      <div className="scheme-print-brand hidden print:block">
+        <BrandLogoHorizontal height={36} />
+      </div>
       <Card className="scheme-print-header">
         <h2 className="text-xl font-semibold text-teal-900">{title}</h2>
         <p className="mt-1 text-sm text-slate-600">
@@ -304,7 +309,7 @@ export function SOWScreenView({
       </div>
 
       <p className="scheme-print-footer hidden text-center text-xs text-slate-400 print:block">
-        PE Curriculum Studio © Neil Cassar
+        {BRAND_FOOTER}
       </p>
     </div>
   );

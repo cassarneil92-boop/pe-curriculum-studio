@@ -248,6 +248,19 @@ export default function SettingsPage() {
         </Card>
 
         <Card>
+          <CardHeader
+            title="About PE Curriculum Studio"
+            description="Official branding, mission, and credits."
+          />
+          <Link
+            href="/about"
+            className="inline-flex text-sm font-medium text-teal-700 hover:text-teal-800"
+          >
+            View about page →
+          </Link>
+        </Card>
+
+        <Card>
           <CardHeader title="Data storage" description="All data is stored locally in your browser." />
           <p className="text-sm text-slate-600">
             {data.lessons.length} lessons · {data.schemes.length} schemes ·{" "}

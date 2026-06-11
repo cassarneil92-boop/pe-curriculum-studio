@@ -13,6 +13,7 @@ import { FieldGroup, Input, Select, Textarea } from "@/components/ui/Input";
 import { LessonActivityEditor } from "@/components/lesson-builder/LessonActivityEditor";
 import { LessonEndingBuilder } from "@/components/lesson-builder/LessonEndingBuilder";
 import { LessonQualityChecklist } from "@/components/lesson-builder/LessonQualityChecklist";
+import { BrandLogoHorizontal } from "@/components/brand/BrandLogoHorizontal";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { StickyActionBar } from "@/components/layout/StickyActionBar";
 import { YearGroupSelect } from "@/components/shared/YearGroupSelect";
@@ -396,6 +397,9 @@ export default function LessonBuilderPage() {
       </StickyActionBar>
 
       <div className="px-6 pt-4 lg:px-10">
+        <div className="mb-4">
+          <BrandLogoHorizontal height={28} className="opacity-90" />
+        </div>
         <PageHeader
           eyebrow="Planning"
           title={editingId ? "Edit lesson" : "Lesson Builder"}

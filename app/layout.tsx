@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { AppProvider } from "@/components/providers/AppProvider";
+import { BRAND_PATHS } from "@/lib/brand/constants";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -17,6 +18,12 @@ export const metadata: Metadata = {
   title: "PE Curriculum Studio — Malta",
   description:
     "A calm planning workspace for Malta PE teachers. Lesson plans, schemes of work, and curriculum alignment up to Form 5.",
+  icons: {
+    icon: [{ url: BRAND_PATHS.icon, type: "image/png" }],
+    apple: [{ url: BRAND_PATHS.icon, type: "image/png" }],
+    shortcut: [BRAND_PATHS.icon],
+  },
+  applicationName: "PE Curriculum Studio",
 };
 
 export default function RootLayout({
