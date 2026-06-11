@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { CalendarEntryCard } from "@/components/calendar/CalendarEntryCard";
 import { CALENDAR_DRAG_MIME } from "@/lib/calendar/helpers";
 import { entryOnDate } from "@/lib/calendar/helpers";
@@ -35,6 +36,7 @@ export function CalendarMonthView({
   onNextMonth,
   onToday,
 }: CalendarMonthViewProps) {
+  const [dragOverDay, setDragOverDay] = useState<string | null>(null);
   const monthStart = startOfMonth(month);
   const gridStart = startOfWeek(monthStart);
   const totalCells = 42;
@@ -71,15 +73,27 @@ export function CalendarMonthView({
             const inMonth = date.getMonth() === month.getMonth();
             const dayEntries = entries.filter((e) => entryOnDate(e, iso));
 
+            const isDragOver = dragOverDay === iso;
+
             return (
               <div
                 key={iso}
-                className={`min-h-[100px] border-b border-r border-slate-100 p-1.5 ${
-                  inMonth ? "bg-white" : "bg-slate-50/60"
+                className={`min-h-[100px] border-b border-r border-slate-100 p-1.5 transition-colors ${
+                  isDragOver
+                    ? "bg-teal-50 ring-1 ring-inset ring-teal-300"
+                    : inMonth
+                      ? "bg-white"
+                      : "bg-slate-50/60"
                 }`}
-                onDragOver={(e) => e.preventDefault()}
+                onDragEnter={() => setDragOverDay(iso)}
+                onDragLeave={() => setDragOverDay((prev) => (prev === iso ? null : prev))}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setDragOverDay(iso);
+                }}
                 onDrop={(e) => {
                   e.preventDefault();
+                  setDragOverDay(null);
                   const raw = e.dataTransfer.getData(CALENDAR_DRAG_MIME);
                   if (raw) onDropOnDate(iso, raw);
                 }}

@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { buildTeachingWarnings } from "@/lib/progress/warnings";
 import {
   buildCurriculumAnalytics,
   type CoverageMode,
@@ -27,6 +28,11 @@ export default function CurriculumAnalyticsPage() {
   const report = useMemo(
     () => buildCurriculumAnalytics(data.lessons, data.schemes, undefined, mode, data.calendar),
     [data.lessons, data.schemes, data.calendar, mode]
+  );
+
+  const warnings = useMemo(
+    () => buildTeachingWarnings(data.lessons, data.schemes, data.calendar),
+    [data.lessons, data.schemes, data.calendar]
   );
 
   return (
@@ -52,6 +58,28 @@ export default function CurriculumAnalyticsPage() {
         </Link>
         . Official curriculum wording is never modified.
       </p>
+
+      {warnings.length > 0 && (
+        <Card className="mb-6 border-amber-200 bg-amber-50/40">
+          <CardHeader
+            title="Topics needing attention"
+            description="Automatic checks based on your planned and delivered lessons."
+          />
+          <ul className="space-y-2">
+            {warnings.map((warning) => (
+              <li
+                key={warning.id}
+                className={`flex items-start gap-2 text-sm ${
+                  warning.tone === "rose" ? "text-rose-800" : "text-amber-900"
+                }`}
+              >
+                <span aria-hidden>⚠</span>
+                <span>{warning.message}</span>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      )}
 
       <div className="mb-6 flex flex-wrap gap-2">
         {(["planned", "taught", "remaining"] as CoverageMode[]).map((value) => (

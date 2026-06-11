@@ -10,8 +10,8 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { DeliveryStatusBadge } from "@/components/progress/DeliveryStatusBadge";
 import { LessonDeliveryControls } from "@/components/progress/DeliveryControls";
+import { LessonLibraryStatusBadge } from "@/components/progress/LessonLibraryStatusBadge";
 import { useApp } from "@/components/providers/AppProvider";
 import { useDeliverySync } from "@/hooks/useDeliverySync";
 import { getTopicTheme } from "@/lib/design/topic-theme";
@@ -100,7 +100,7 @@ export default function LessonsPage() {
 
         <Card className="no-print mb-6 p-4">
           <p className="mb-2 text-sm font-semibold text-slate-800">Lesson progress</p>
-          <DeliveryStatusBadge status={selectedLesson.deliveryStatus} />
+          <LessonLibraryStatusBadge lesson={selectedLesson} />
           <LessonDeliveryControls
             lesson={selectedLesson}
             status={selectedLesson.deliveryStatus}
@@ -198,7 +198,7 @@ function LessonLibraryCard({
         </div>
 
         <div className="mt-3 flex flex-wrap gap-1.5">
-          <DeliveryStatusBadge status={lesson.deliveryStatus} />
+          <LessonLibraryStatusBadge lesson={lesson} />
           {lesson.deliveryStatus === "delivered" && lesson.deliveredDate && (
             <Badge tone="green">Delivered {lesson.deliveredDate}</Badge>
           )}

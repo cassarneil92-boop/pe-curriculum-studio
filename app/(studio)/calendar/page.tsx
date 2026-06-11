@@ -24,7 +24,7 @@ export default function CalendarPage() {
     <div>
       <PageHeader
         title="Calendar"
-        description="Plan your term, schedule lessons, and track what has been taught."
+        description="Your weekly planning workspace — schedule lessons, mark delivered, and organise term frameworks."
       />
 
       <CalendarPlanner

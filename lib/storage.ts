@@ -6,6 +6,7 @@ import {
 import { migrateCalendarEntry } from "./calendar/migrate";
 import { migrateLessons } from "./lesson-plans/migrate";
 import { migrateScheme } from "./scheme-builder/migrate";
+import { migratePlanningTerms } from "./planning/terms";
 import { migrateYearGroupList, migrateYearGroupValue } from "./year-groups";
 import {
   findCollegeIdByName,
@@ -31,6 +32,7 @@ export const DEFAULT_APP_DATA: AppData = {
   calendar: [],
   resources: [],
   academicCalendar: defaultAcademicCalendarSettings(),
+  planningTerms: migratePlanningTerms(undefined, defaultAcademicCalendarSettings()),
   setupComplete: false,
 };
 
@@ -59,6 +61,10 @@ function migrateAppData(parsed: AppData): AppData {
       })
     ),
     academicCalendar: migrateAcademicCalendarSettings(parsed.academicCalendar),
+    planningTerms: migratePlanningTerms(
+      parsed.planningTerms,
+      migrateAcademicCalendarSettings(parsed.academicCalendar)
+    ),
   };
 }
 

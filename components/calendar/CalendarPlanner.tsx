@@ -1,40 +1,40 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useApp } from "@/components/providers/AppProvider";
 import { CalendarEntryCard } from "@/components/calendar/CalendarEntryCard";
 import { CalendarEntryDetail } from "@/components/calendar/CalendarEntryDetail";
 import { CalendarMonthView } from "@/components/calendar/CalendarMonthView";
-import { CalendarTermView } from "@/components/calendar/CalendarTermView";
+import { CalendarPlanningTermsView } from "@/components/calendar/CalendarPlanningTermsView";
+import { CalendarWeekView } from "@/components/calendar/CalendarWeekView";
 import { CustomEntryModal } from "@/components/calendar/CustomEntryModal";
 import { LessonsToSchedulePanel } from "@/components/calendar/LessonsToSchedulePanel";
 import { ScheduleSchemeModal } from "@/components/calendar/ScheduleSchemeModal";
 import { Button } from "@/components/ui/Button";
 import { Card, CardHeader } from "@/components/ui/Card";
 import {
-  CALENDAR_DRAG_MIME,
   createCalendarEntryFromLesson,
   createCalendarEntryFromSchemeLesson,
   decodeCalendarDrag,
-  entryOnDate,
 } from "@/lib/calendar/helpers";
 import { useDeliverySync } from "@/hooks/useDeliverySync";
-import {
-  addDays,
-  formatShortDate,
-  startOfMonth,
-  startOfWeek,
-  toIso,
-} from "@/lib/calendar/dates";
-import type { CalendarEntry, LessonDeliveryStatus } from "@/lib/types";
+import { startOfMonth, startOfWeek } from "@/lib/calendar/dates";
+import { migratePlanningTerms } from "@/lib/planning/terms";
+import type { CalendarEntry } from "@/lib/types";
 
 interface ScheduleSchemePrefill {
   schemeId: string;
 }
 
-export type CalendarViewMode = "term" | "month" | "week" | "agenda";
+export type CalendarViewMode = "week" | "month" | "terms" | "agenda";
 
-const WEEKDAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"] as const;
+const VIEW_MODES: { id: CalendarViewMode; label: string }[] = [
+  { id: "week", label: "Week" },
+  { id: "month", label: "Month" },
+  { id: "terms", label: "Terms" },
+  { id: "agenda", label: "Agenda" },
+];
 
 interface CalendarPlannerProps {
   showCustomEntry: boolean;
@@ -55,22 +55,27 @@ export function CalendarPlanner({
   onOpenCustomEntry,
   scheduleSchemePrefill,
 }: CalendarPlannerProps) {
-  const { data, addCalendarEntry, updateCalendarEntry, deleteCalendarEntry } = useApp();
+  const router = useRouter();
+  const {
+    data,
+    addCalendarEntry,
+    updateCalendarEntry,
+    deleteCalendarEntry,
+    updateScheme,
+    updatePlanningTerm,
+    addPlanningTerm,
+    removePlanningTerm,
+  } = useApp();
   const { setCalendarDelivery } = useDeliverySync();
 
-  const [viewMode, setViewMode] = useState<CalendarViewMode>("term");
+  const [viewMode, setViewMode] = useState<CalendarViewMode>("week");
   const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date()));
   const [monthDate, setMonthDate] = useState(() => startOfMonth(new Date()));
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
-  const weekDays = useMemo(
-    () =>
-      WEEKDAYS.map((label, i) => ({
-        label,
-        date: addDays(weekStart, i),
-        iso: toIso(addDays(weekStart, i)),
-      })),
-    [weekStart]
+  const planningTerms = useMemo(
+    () => migratePlanningTerms(data.planningTerms, data.academicCalendar),
+    [data.planningTerms, data.academicCalendar]
   );
 
   const selected = data.calendar.find((e) => e.id === selectedId) ?? null;
@@ -131,12 +136,6 @@ export function CalendarPlanner({
     }
   };
 
-  const onDayDrop = (iso: string) => (e: React.DragEvent) => {
-    e.preventDefault();
-    const raw = e.dataTransfer.getData(CALENDAR_DRAG_MIME);
-    if (raw) handleDropOnDate(iso, raw);
-  };
-
   const handleScheduleScheme = (entries: Omit<CalendarEntry, "id">[]) => {
     for (const entry of entries) {
       addCalendarEntry(entry);
@@ -146,14 +145,13 @@ export function CalendarPlanner({
   return (
     <>
       <div className="mb-4 flex flex-wrap items-center gap-2">
-        {(["term", "month", "week", "agenda"] as CalendarViewMode[]).map((mode) => (
+        {VIEW_MODES.map(({ id, label }) => (
           <Button
-            key={mode}
-            variant={viewMode === mode ? "primary" : "secondary"}
-            onClick={() => setViewMode(mode)}
-            className="capitalize"
+            key={id}
+            variant={viewMode === id ? "primary" : "secondary"}
+            onClick={() => setViewMode(id)}
           >
-            {mode}
+            {label}
           </Button>
         ))}
         <div className="ml-auto flex flex-wrap gap-2">
@@ -172,16 +170,15 @@ export function CalendarPlanner({
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_300px]">
         <div className="min-w-0 space-y-4">
-          {viewMode === "term" && (
-            <CalendarTermView
-              schemes={data.schemes}
-              calendar={data.calendar}
-              academicCalendar={data.academicCalendar}
-              onSelectBlock={(schemeId) => {
-                const entry = data.calendar.find((e) => e.linkedSchemeId === schemeId);
-                if (entry) setSelectedId(entry.id);
-              }}
-              onScheduleDraft={(schemeId) => onOpenScheduleScheme({ schemeId })}
+          {viewMode === "week" && (
+            <CalendarWeekView
+              weekStart={weekStart}
+              entries={data.calendar}
+              selectedId={selectedId}
+              onSelect={setSelectedId}
+              onWeekChange={setWeekStart}
+              onDropOnDate={handleDropOnDate}
+              onDeliveryChange={(entry, status) => setCalendarDelivery(entry, status)}
             />
           )}
 
@@ -206,59 +203,18 @@ export function CalendarPlanner({
             />
           )}
 
-          {viewMode === "week" && (
-            <>
-              <div className="flex flex-wrap gap-2">
-                <Button variant="ghost" onClick={() => setWeekStart(addDays(weekStart, -7))}>
-                  ← Prev week
-                </Button>
-                <Button variant="ghost" onClick={() => setWeekStart(startOfWeek(new Date()))}>
-                  This week
-                </Button>
-                <Button variant="ghost" onClick={() => setWeekStart(addDays(weekStart, 7))}>
-                  Next week →
-                </Button>
-              </div>
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
-                {weekDays.map((day) => {
-                  const dayEntries = data.calendar.filter((e) => entryOnDate(e, day.iso));
-                  return (
-                    <div key={day.iso} className="flex min-w-0 flex-col">
-                      <div className="mb-2 rounded-xl bg-white px-3 py-2 text-center shadow-sm ring-1 ring-slate-200/60">
-                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                          {day.label}
-                        </p>
-                        <p className="text-sm font-medium text-slate-800">
-                          {formatShortDate(day.date)}
-                        </p>
-                      </div>
-                      <div
-                        className="flex min-h-[200px] flex-col gap-2 rounded-2xl border border-dashed border-slate-200/80 bg-white/60 p-2"
-                        onDragOver={(e) => e.preventDefault()}
-                        onDrop={onDayDrop(day.iso)}
-                      >
-                        {dayEntries.length === 0 ? (
-                          <p className="px-2 py-8 text-center text-xs text-slate-400">
-                            Drop a lesson here
-                          </p>
-                        ) : (
-                          dayEntries.map((entry) => (
-                            <CalendarEntryCard
-                              key={entry.id}
-                              entry={entry}
-                              active={selectedId === entry.id}
-                              onSelect={() => setSelectedId(entry.id)}
-                              showQuickActions
-                              onDeliveryChange={(status) => setCalendarDelivery(entry, status)}
-                            />
-                          ))
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </>
+          {viewMode === "terms" && (
+            <CalendarPlanningTermsView
+              terms={planningTerms}
+              schemes={data.schemes}
+              onUpdateTerm={updatePlanningTerm}
+              onAddTerm={addPlanningTerm}
+              onRemoveTerm={removePlanningTerm}
+              onMoveScheme={(schemeId, termName) =>
+                updateScheme(schemeId, { term: termName })
+              }
+              onOpenScheme={() => router.push("/schemes")}
+            />
           )}
 
           {viewMode === "agenda" && (
@@ -286,7 +242,7 @@ export function CalendarPlanner({
           <Card>
             <CardHeader
               title="Lessons to schedule"
-              description="Drag onto the calendar to plan your term"
+              description="Drag onto Week or Month to plan your teaching"
             />
             <LessonsToSchedulePanel
               lessons={data.lessons}

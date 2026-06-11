@@ -46,6 +46,14 @@ export interface AcademicCalendarSettings {
   term3: TermDateRange;
 }
 
+/** Editable planning term container (framework for schemes, not calendar scheduling). */
+export interface PlanningTerm {
+  id: string;
+  name: string;
+  start: string;
+  end: string;
+}
+
 export interface TeacherProfile {
   educationalSetting: EducationalSetting | "";
   college: string;
@@ -252,6 +260,8 @@ export interface ResourceItem {
   visibility?: ResourceVisibility;
   scope?: CollaborationScope;
   storageUri?: string;
+  /** Resource warehouse category (foundation for future filtering). */
+  category?: string;
 }
 
 export interface AppData {
@@ -261,6 +271,8 @@ export interface AppData {
   calendar: CalendarEntry[];
   resources: ResourceItem[];
   academicCalendar?: AcademicCalendarSettings;
+  /** Editable term planning containers. */
+  planningTerms?: PlanningTerm[];
   setupComplete: boolean;
 }
 

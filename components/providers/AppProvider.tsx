@@ -9,11 +9,16 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import {
+  createPlanningTerm,
+  renamePlanningTermInSchemes,
+} from "@/lib/planning/terms";
 import type {
   AcademicCalendarSettings,
   AppData,
   CalendarEntry,
   LessonPlan,
+  PlanningTerm,
   ResourceItem,
   SchemeOfWork,
   TeacherProfile,
@@ -30,6 +35,9 @@ interface AppContextValue {
   hydrated: boolean;
   updateTeacher: (teacher: TeacherProfile) => void;
   updateAcademicCalendar: (settings: AcademicCalendarSettings) => void;
+  updatePlanningTerm: (id: string, patch: Partial<PlanningTerm>) => void;
+  addPlanningTerm: () => void;
+  removePlanningTerm: (id: string) => void;
   completeSetup: () => void;
   addLesson: (lesson: Omit<LessonPlan, "id" | "createdAt" | "updatedAt">) => LessonPlan;
   updateLesson: (id: string, lesson: Partial<LessonPlan>) => void;
@@ -65,6 +73,45 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const updateAcademicCalendar = useCallback((academicCalendar: AcademicCalendarSettings) => {
     setData((prev) => ({ ...prev, academicCalendar }));
+  }, []);
+
+  const updatePlanningTerm = useCallback((id: string, patch: Partial<PlanningTerm>) => {
+    setData((prev) => {
+      const terms = prev.planningTerms ?? [];
+      const existing = terms.find((t) => t.id === id);
+      let schemes = prev.schemes;
+      if (existing && patch.name && patch.name !== existing.name) {
+        schemes = renamePlanningTermInSchemes(schemes, existing.name, patch.name);
+      }
+      return {
+        ...prev,
+        schemes,
+        planningTerms: terms.map((t) => (t.id === id ? { ...t, ...patch } : t)),
+      };
+    });
+  }, []);
+
+  const addPlanningTerm = useCallback(() => {
+    setData((prev) => ({
+      ...prev,
+      planningTerms: [...(prev.planningTerms ?? []), createPlanningTerm(prev.planningTerms ?? [])],
+    }));
+  }, []);
+
+  const removePlanningTerm = useCallback((id: string) => {
+    setData((prev) => {
+      const terms = prev.planningTerms ?? [];
+      if (terms.length <= 1) return prev;
+      const removing = terms.find((t) => t.id === id);
+      const remaining = terms.filter((t) => t.id !== id);
+      const fallback = remaining[0]?.name ?? "Term 1";
+      const schemes = removing
+        ? prev.schemes.map((s) =>
+            s.term === removing.name ? { ...s, term: fallback } : s
+          )
+        : prev.schemes;
+      return { ...prev, planningTerms: remaining, schemes };
+    });
   }, []);
 
   const completeSetup = useCallback(() => {
@@ -154,6 +201,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       hydrated,
       updateTeacher,
       updateAcademicCalendar,
+      updatePlanningTerm,
+      addPlanningTerm,
+      removePlanningTerm,
       completeSetup,
       addLesson,
       updateLesson,
@@ -172,6 +222,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       hydrated,
       updateTeacher,
       updateAcademicCalendar,
+      updatePlanningTerm,
+      addPlanningTerm,
+      removePlanningTerm,
       completeSetup,
       addLesson,
       updateLesson,

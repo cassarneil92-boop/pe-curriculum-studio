@@ -125,9 +125,39 @@ export const NAV_ITEMS = [
   { href: "/schemes", label: "Schemes of Work", icon: "schemes" },
   { href: "/curriculum", label: "Curriculum Hub", icon: "curriculum" },
   { href: "/curriculum-analytics", label: "Teaching Progress", icon: "analytics" },
-  { href: "/curriculum-assistant", label: "Planning Assistant", icon: "assistant" },
+  { href: "/curriculum-assistant", label: "Curriculum Assistant", icon: "assistant" },
   { href: "/resources", label: "Resources", icon: "resources" },
   { href: "/settings", label: "Settings", icon: "settings" },
+] as const;
+
+export const NAV_SECTIONS = [
+  {
+    title: "Planning",
+    items: [
+      { href: "/calendar", label: "Calendar", icon: "calendar" },
+      { href: "/lessons", label: "Lesson Plans", icon: "lessons" },
+      { href: "/lesson-builder", label: "Lesson Builder", icon: "builder" },
+      { href: "/schemes", label: "Schemes of Work", icon: "schemes" },
+    ],
+  },
+  {
+    title: "Curriculum",
+    items: [
+      { href: "/curriculum", label: "Curriculum Hub", icon: "curriculum" },
+      { href: "/curriculum-analytics", label: "Teaching Progress", icon: "analytics" },
+    ],
+  },
+  {
+    title: "Tools",
+    items: [
+      { href: "/resources", label: "Resources", icon: "resources" },
+      { href: "/curriculum-assistant", label: "Curriculum Assistant", icon: "assistant" },
+    ],
+  },
+  {
+    title: "Settings",
+    items: [{ href: "/settings", label: "Settings", icon: "settings" }],
+  },
 ] as const;
 
 /** Technical curriculum tools — linked from Settings, routes preserved. */

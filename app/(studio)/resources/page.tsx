@@ -9,6 +9,11 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { FieldGroup, Input, Select, Textarea } from "@/components/ui/Input";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { getPathwayLabel, PATHWAYS, SPORTS } from "@/lib/constants";
+import {
+  getResourceCategoryLabel,
+  normaliseResourceCategory,
+  RESOURCE_CATEGORIES,
+} from "@/lib/resources/categories";
 import type { PathwayId, ResourceItem } from "@/lib/types";
 
 export default function ResourcesPage() {
@@ -18,12 +23,14 @@ export default function ResourcesPage() {
   const [form, setForm] = useState({
     name: "",
     type: "Document",
+    category: "general",
     pathway: "" as PathwayId | "",
     sport: "",
     notes: "",
     fileName: "",
     fileSize: 0,
   });
+  const [categoryFilter, setCategoryFilter] = useState<string>("all");
 
   const handleFiles = (files: FileList | null) => {
     if (!files || files.length === 0) return;
@@ -52,6 +59,7 @@ export default function ResourcesPage() {
     addResource({
       name: form.name,
       type: form.type,
+      category: normaliseResourceCategory(form.category),
       pathway: form.pathway,
       sport: form.sport,
       notes: form.notes,
@@ -61,6 +69,7 @@ export default function ResourcesPage() {
     setForm({
       name: "",
       type: "Document",
+      category: "general",
       pathway: "",
       sport: "",
       notes: "",
@@ -82,6 +91,40 @@ export default function ResourcesPage() {
         title="Resources"
         description="Keep your teaching materials in one place. Files are tracked locally in your browser."
       />
+
+      <Card className="mb-6">
+        <CardHeader
+          title="Resource categories"
+          description="Foundation for organising lesson cards, assessments, rubrics, and more."
+        />
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => setCategoryFilter("all")}
+            className={`rounded-full px-3 py-1 text-xs font-medium ${
+              categoryFilter === "all"
+                ? "bg-teal-100 text-teal-800"
+                : "bg-slate-100 text-slate-600"
+            }`}
+          >
+            All
+          </button>
+          {RESOURCE_CATEGORIES.map((cat) => (
+            <button
+              key={cat.id}
+              type="button"
+              onClick={() => setCategoryFilter(cat.id)}
+              className={`rounded-full px-3 py-1 text-xs font-medium ${
+                categoryFilter === cat.id
+                  ? "bg-teal-100 text-teal-800"
+                  : "bg-slate-100 text-slate-600"
+              }`}
+            >
+              {cat.label}
+            </button>
+          ))}
+        </div>
+      </Card>
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
@@ -147,6 +190,18 @@ export default function ResourcesPage() {
                 placeholder="Resource name"
               />
             </FieldGroup>
+            <FieldGroup label="Category">
+              <Select
+                value={form.category}
+                onChange={(e) => setForm({ ...form, category: e.target.value })}
+              >
+                {RESOURCE_CATEGORIES.map((cat) => (
+                  <option key={cat.id} value={cat.id}>
+                    {cat.label}
+                  </option>
+                ))}
+              </Select>
+            </FieldGroup>
             <div className="grid gap-3 sm:grid-cols-2">
               <FieldGroup label="Pathway (optional)">
                 <Select
@@ -199,7 +254,13 @@ export default function ResourcesPage() {
             />
           ) : (
             <ul className="space-y-2">
-              {data.resources.map((r: ResourceItem) => (
+              {data.resources
+                .filter(
+                  (r) =>
+                    categoryFilter === "all" ||
+                    normaliseResourceCategory(r.category) === categoryFilter
+                )
+                .map((r: ResourceItem) => (
                 <Card key={r.id} className="flex items-start justify-between gap-3">
                   <div>
                     <p className="text-sm font-medium text-slate-800">{r.name}</p>
@@ -209,6 +270,9 @@ export default function ResourcesPage() {
                       {r.fileSize ? ` · ${formatSize(r.fileSize)}` : ""}
                     </p>
                     <div className="mt-2 flex flex-wrap gap-1">
+                      <Badge tone="purple">
+                        {getResourceCategoryLabel(r.category)}
+                      </Badge>
                       {r.pathway && (
                         <Badge tone="teal">{getPathwayLabel(r.pathway)}</Badge>
                       )}

@@ -38,8 +38,19 @@ export function CalendarEntryDetail({
                 ? ` → ${entry.endDate}`
                 : ""}
             </p>
+            {entry.classGroup && (
+              <p className="mt-1 text-sm text-slate-600">{entry.classGroup}</p>
+            )}
           </div>
         </div>
+
+        <Button
+          variant={entry.deliveryStatus === "delivered" ? "primary" : "secondary"}
+          className="w-full"
+          onClick={() => onDeliveryChange("delivered")}
+        >
+          Mark delivered
+        </Button>
 
         <DeliveryQuickActions
           status={entry.deliveryStatus}
@@ -95,9 +106,18 @@ export function CalendarEntryDetail({
           <p className="text-sm leading-relaxed text-slate-600">{entry.notes}</p>
         )}
 
-        <Button variant="danger" className="w-full text-sm" onClick={onDelete}>
-          Remove from calendar
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            variant="ghost"
+            className="flex-1 text-sm"
+            onClick={() => onDeliveryChange("moved")}
+          >
+            Move lesson
+          </Button>
+          <Button variant="danger" className="flex-1 text-sm" onClick={onDelete}>
+            Delete lesson
+          </Button>
+        </div>
       </div>
     </Card>
   );

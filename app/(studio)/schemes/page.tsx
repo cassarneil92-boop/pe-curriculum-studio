@@ -26,7 +26,12 @@ import { getTopicTheme } from "@/lib/design/topic-theme";
 import { syncSchemeStatus } from "@/lib/progress/delivery";
 import { buildSchemeExportHtml } from "@/lib/export";
 import { parseHubPathwaysFromQuery } from "@/lib/curriculum-hub/planning-links";
-import { SOW_TERMS } from "@/lib/scheme-builder/constants";
+import { SchemeHealthCard } from "@/components/progress/SchemeHealthCard";
+import { migratePlanningTerms } from "@/lib/planning/terms";
+import {
+  buildSchemeProgressSummary,
+  buildSchemesDashboardSummary,
+} from "@/lib/progress/summary";
 import {
   getPlanningOutcomeSuggestions,
   getSchemeSkillOptions,
@@ -179,17 +184,28 @@ export default function SchemesPage() {
     return analyseSchemeCoaching(preview, context);
   }, [draft, alignmentReady, context, editingId]);
 
+  const planningTerms = useMemo(
+    () => migratePlanningTerms(data.planningTerms, data.academicCalendar),
+    [data.planningTerms, data.academicCalendar]
+  );
+
   const schemesByTerm = useMemo(() => {
     const map = new Map<string, SchemeOfWork[]>();
-    for (const term of SOW_TERMS) map.set(term, []);
+    for (const term of planningTerms) map.set(term.name, []);
     for (const scheme of data.schemes) {
-      const term = SOW_TERMS.includes(scheme.term as (typeof SOW_TERMS)[number])
+      const termName = map.has(scheme.term)
         ? scheme.term
-        : "Term 1";
-      map.get(term)!.push(scheme);
+        : planningTerms[0]?.name ?? "Term 1";
+      if (!map.has(termName)) map.set(termName, []);
+      map.get(termName)!.push(scheme);
     }
     return map;
-  }, [data.schemes]);
+  }, [data.schemes, planningTerms]);
+
+  const dashboardSummary = useMemo(
+    () => buildSchemesDashboardSummary(data.schemes),
+    [data.schemes]
+  );
 
   useEffect(() => {
     if (hubPrefillApplied.current || !searchParams || searchParams.get("create") !== "1") {
@@ -822,119 +838,67 @@ export default function SchemesPage() {
           action={<Button onClick={startNewScheme}>New scheme</Button>}
         />
       ) : (
-        <div className="grid gap-6 lg:grid-cols-3">
-          {SOW_TERMS.map((term) => {
-            const schemes = schemesByTerm.get(term) ?? [];
-            return (
-              <div key={term}>
-                <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-slate-500">
-                  {term}
-                </h2>
-                <div className="space-y-3">
-                  {schemes.length === 0 ? (
-                    <div className="rounded-2xl border border-dashed border-slate-200 px-4 py-8 text-center text-sm text-slate-400">
-                      No schemes yet
-                    </div>
-                  ) : (
-                    schemes.map((scheme) => (
-                      <SchemeCard
-                        key={scheme.id}
-                        scheme={scheme}
-                        onView={() => openSchemeView(scheme)}
-                        onEdit={() => startEditScheme(scheme)}
-                        onDelete={() => deleteScheme(scheme.id)}
-                        onExportPdf={() => exportSchemeDocument(scheme, "pdf")}
-                        onExportWord={() => exportSchemeDocument(scheme, "word")}
-                      />
-                    ))
-                  )}
+        <>
+          <section className="mb-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+            <SchemeStatCard label="Total Schemes" value={String(dashboardSummary.totalSchemes)} />
+            <SchemeStatCard label="Total Lessons" value={String(dashboardSummary.totalLessons)} />
+            <SchemeStatCard
+              label="Lessons Delivered"
+              value={String(dashboardSummary.lessonsDelivered)}
+            />
+            <SchemeStatCard
+              label="Outcomes Covered"
+              value={String(dashboardSummary.outcomesCovered)}
+            />
+            <SchemeStatCard
+              label="Average Coverage"
+              value={`${dashboardSummary.averageCoveragePercent}%`}
+            />
+          </section>
+
+          <div className="grid gap-6 lg:grid-cols-3">
+            {planningTerms.map((term) => {
+              const schemes = schemesByTerm.get(term.name) ?? [];
+              return (
+                <div key={term.id}>
+                  <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-slate-500">
+                    {term.name}
+                  </h2>
+                  <div className="space-y-3">
+                    {schemes.length === 0 ? (
+                      <div className="rounded-2xl border border-dashed border-slate-200 px-4 py-8 text-center text-sm text-slate-400">
+                        No schemes yet
+                      </div>
+                    ) : (
+                      schemes.map((scheme) => (
+                        <SchemeHealthCard
+                          key={scheme.id}
+                          scheme={scheme}
+                          summary={buildSchemeProgressSummary(scheme)}
+                          onView={() => openSchemeView(scheme)}
+                          onEdit={() => startEditScheme(scheme)}
+                          onDelete={() => deleteScheme(scheme.id)}
+                          onExportPdf={() => exportSchemeDocument(scheme, "pdf")}
+                          onExportWord={() => exportSchemeDocument(scheme, "word")}
+                        />
+                      ))
+                    )}
+                  </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        </>
       )}
     </div>
   );
 }
 
-function SchemeCard({
-  scheme,
-  onView,
-  onEdit,
-  onDelete,
-  onExportPdf,
-  onExportWord,
-}: {
-  scheme: SchemeOfWork;
-  onView: () => void;
-  onEdit: () => void;
-  onDelete: () => void;
-  onExportPdf: () => void;
-  onExportWord: () => void;
-}) {
-  const topicName = getTopicName(scheme.topicId) || scheme.title;
-  const theme = getTopicTheme(topicName);
-  const schemePathways = getSchemeSelectedPathways(scheme);
-  const filledLessons = scheme.lessons.filter(lessonHasContent).length;
-  const coverage = scheme.lessons.length ? filledLessons / scheme.lessons.length : 0;
-
+function SchemeStatCard({ label, value }: { label: string; value: string }) {
   return (
-    <Card padding={false} className="overflow-hidden transition-shadow hover:shadow-md">
-      <button type="button" onClick={onView} className="w-full p-5 text-left">
-        <div className="flex items-start gap-3">
-          <TopicIcon name={topicName} size="sm" />
-          <div className="min-w-0 flex-1">
-            <p className="font-semibold text-slate-900">{schemeDisplayTitle(scheme)}</p>
-            <p className="mt-1 text-sm text-slate-500">
-              {scheme.classGroup || "No class set"}
-              {scheme.topicId ? ` · ${getTopicName(scheme.topicId)}` : ""}
-            </p>
-            <div className="mt-3 flex flex-wrap gap-1.5">
-              {schemePathways.map((pathwayId) => (
-                <Badge key={pathwayId} tone="blue">
-                  {getPathwayLabel(pathwayId)}
-                </Badge>
-              ))}
-              <Badge tone="slate">{getYearGroupLabel(scheme.yearGroup)}</Badge>
-              {scheme.skillId && (
-                <Badge tone="green">{getSkillName(scheme.skillId)}</Badge>
-              )}
-            </div>
-            <div className="mt-3 flex items-center gap-3 text-xs text-slate-500">
-              <span>{lessonCountLabel(scheme)}</span>
-            </div>
-            <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-100">
-              <div
-                className={`h-full rounded-full ${theme.bar}`}
-                style={{ width: `${coverage * 100}%` }}
-              />
-            </div>
-          </div>
-        </div>
-      </button>
-
-      <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 bg-slate-50/50 px-4 py-3">
-        <Button variant="secondary" className="h-8 text-xs" onClick={onView}>
-          Open
-        </Button>
-        <Button variant="ghost" className="h-8 text-xs" onClick={onEdit}>
-          Edit
-        </Button>
-        <Button variant="ghost" className="h-8 text-xs" onClick={onExportPdf}>
-          PDF
-        </Button>
-        <Button variant="ghost" className="h-8 text-xs" onClick={onExportWord}>
-          Word
-        </Button>
-        <Button
-          variant="ghost"
-          className="ml-auto h-8 text-xs text-rose-600"
-          onClick={onDelete}
-        >
-          Delete
-        </Button>
-      </div>
+    <Card className="text-center">
+      <p className="text-xs font-medium uppercase tracking-wide text-slate-500">{label}</p>
+      <p className="mt-1 text-2xl font-semibold text-slate-900">{value}</p>
     </Card>
   );
 }

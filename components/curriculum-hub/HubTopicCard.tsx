@@ -1,16 +1,20 @@
 "use client";
 
 import { Badge } from "@/components/ui/Badge";
+import { ProgressBar } from "@/components/ui/ProgressBar";
 import { TOPIC_THEMES } from "@/lib/design/topic-theme";
+import type { TopicTeachingStats } from "@/lib/progress/hub-stats";
 import type { HubTopicGroup } from "@/lib/curriculum-hub/engine";
 
 interface HubTopicCardProps {
   topic: HubTopicGroup;
+  stats?: TopicTeachingStats;
   onClick: () => void;
 }
 
-export function HubTopicCard({ topic, onClick }: HubTopicCardProps) {
+export function HubTopicCard({ topic, stats, onClick }: HubTopicCardProps) {
   const theme = TOPIC_THEMES[topic.color];
+  const taughtPercent = stats?.taughtPercent ?? 0;
 
   return (
     <button
@@ -32,10 +36,39 @@ export function HubTopicCard({ topic, onClick }: HubTopicCardProps) {
           <p className="mt-0.5 font-semibold text-slate-900 group-hover:text-teal-900">
             {topic.name}
           </p>
-          <p className="mt-1 text-sm text-slate-600">
-            {topic.totalCount} outcome{topic.totalCount !== 1 ? "s" : ""}
-            {topic.yearRange ? ` · ${topic.yearRange}` : ""}
-          </p>
+
+          {stats ? (
+            <>
+              <p className="mt-2 text-xs text-slate-600">
+                <span className="font-semibold">Outcomes:</span> {stats.totalOutcomes}
+              </p>
+              <div className="mt-2 grid grid-cols-3 gap-1 text-[11px] text-slate-600">
+                <span>
+                  <span className="font-semibold text-emerald-700">{stats.taught}</span> taught
+                </span>
+                <span>
+                  <span className="font-semibold text-blue-700">{stats.planned}</span> planned
+                </span>
+                <span>
+                  <span className="font-semibold text-amber-700">{stats.remaining}</span> remaining
+                </span>
+              </div>
+              <div className="mt-3">
+                <ProgressBar
+                  value={taughtPercent}
+                  label={topic.name}
+                  variant="teal"
+                  showPercent
+                />
+              </div>
+            </>
+          ) : (
+            <p className="mt-1 text-sm text-slate-600">
+              {topic.totalCount} outcome{topic.totalCount !== 1 ? "s" : ""}
+              {topic.yearRange ? ` · ${topic.yearRange}` : ""}
+            </p>
+          )}
+
           {topic.pathwayLabels.length > 0 && (
             <div className="mt-2 flex flex-wrap gap-1">
               {topic.pathwayLabels.map((label) => (
@@ -45,18 +78,6 @@ export function HubTopicCard({ topic, onClick }: HubTopicCardProps) {
               ))}
             </div>
           )}
-          <p className="mt-2 text-xs text-slate-500">
-            {topic.skillsCount} skill{topic.skillsCount !== 1 ? "s" : ""} available
-          </p>
-          <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/70">
-            <div
-              className={`h-full rounded-full transition-all ${theme.bar}`}
-              style={{ width: `${Math.max(topic.coverage * 100, 8)}%` }}
-            />
-          </div>
-          <p className="mt-1.5 text-xs text-slate-500">
-            {topic.visibleCount} visible outcomes in your context
-          </p>
         </div>
       </div>
     </button>

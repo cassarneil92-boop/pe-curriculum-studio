@@ -10,7 +10,9 @@ import { HubTopicCard } from "@/components/curriculum-hub/HubTopicCard";
 import { HubTopicDetail } from "@/components/curriculum-hub/HubTopicDetail";
 import { Card } from "@/components/ui/Card";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { useApp } from "@/components/providers/AppProvider";
 import { useTeacherContext } from "@/hooks/useTeacherContext";
+import { buildTopicTeachingStats } from "@/lib/progress/hub-stats";
 import {
   filterOutcomesByPathwayAndYear,
   filterOutcomesForHub,
@@ -25,6 +27,7 @@ import type { YearGroupId } from "@/lib/year-groups";
 import { IMPORTED_LEARNING_OUTCOMES } from "@/src/lib/curriculum/coverage";
 
 export default function CurriculumPage() {
+  const { data } = useApp();
   const { context } = useTeacherContext();
   const [filters, setFilters] = useState<HubFilterState>(() =>
     createDefaultHubFilters(context)
@@ -171,6 +174,12 @@ export default function CurriculumPage() {
               <HubTopicCard
                 key={topic.id}
                 topic={topic}
+                stats={buildTopicTeachingStats(
+                  topic,
+                  data.lessons,
+                  data.schemes,
+                  data.calendar
+                )}
                 onClick={() => handleTopicSelect(topic)}
               />
             ))}

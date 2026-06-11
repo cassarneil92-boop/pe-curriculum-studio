@@ -106,3 +106,43 @@ export function buildTopicProgressSummaries(
 export function countDeliveredLessons(lessons: LessonPlan[]): number {
   return lessons.filter((l) => l.deliveryStatus === "delivered").length;
 }
+
+export interface SchemesDashboardSummary {
+  totalSchemes: number;
+  totalLessons: number;
+  lessonsDelivered: number;
+  outcomesCovered: number;
+  averageCoveragePercent: number;
+}
+
+export function buildSchemesDashboardSummary(
+  schemes: SchemeOfWork[]
+): SchemesDashboardSummary {
+  const summaries = schemes.map(buildSchemeProgressSummary);
+  const totalLessons = summaries.reduce((n, s) => n + s.totalLessons, 0);
+  const lessonsDelivered = summaries.reduce((n, s) => n + s.deliveredLessons, 0);
+  const outcomesCovered = summaries.reduce((n, s) => n + s.taughtOutcomes, 0);
+
+  const coveragePercents = summaries.map((s) =>
+    s.plannedOutcomes > 0
+      ? Math.round((s.taughtOutcomes / s.plannedOutcomes) * 100)
+      : s.totalLessons > 0
+        ? Math.round((s.deliveredLessons / s.totalLessons) * 100)
+        : 0
+  );
+
+  const averageCoveragePercent =
+    coveragePercents.length > 0
+      ? Math.round(
+          coveragePercents.reduce((n, p) => n + p, 0) / coveragePercents.length
+        )
+      : 0;
+
+  return {
+    totalSchemes: schemes.length,
+    totalLessons,
+    lessonsDelivered,
+    outcomesCovered,
+    averageCoveragePercent,
+  };
+}

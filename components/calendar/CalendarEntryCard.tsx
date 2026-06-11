@@ -45,11 +45,18 @@ export function CalendarEntryCard({
       >
         <div className="flex items-start justify-between gap-2">
           <p className="text-sm font-semibold text-slate-800">{entry.title}</p>
-          {entry.deliveryStatus === "delivered" && (
-            <span className="text-green-600" title="Delivered">
-              ✓
-            </span>
-          )}
+          <div className="flex shrink-0 items-center gap-1">
+            {entry.reflection?.trim() && (
+              <span className="text-teal-600" title="Reflection added">
+                ✎
+              </span>
+            )}
+            {entry.deliveryStatus === "delivered" && (
+              <span className="text-green-600" title="Delivered">
+                ✓
+              </span>
+            )}
+          </div>
         </div>
         {entry.sport && <p className={`mt-1 text-xs ${theme.text}`}>{entry.sport}</p>}
       </button>
