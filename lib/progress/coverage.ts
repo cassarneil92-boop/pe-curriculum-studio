@@ -49,6 +49,7 @@ export function collectTaughtOutcomeIds(
 
   for (const entry of calendar) {
     if (entry.deliveryStatus !== "delivered") continue;
+    if (entry.linkedLessonId || entry.linkedSchemeId) continue;
     for (const id of entry.loIds ?? []) {
       if (id) ids.add(id);
     }

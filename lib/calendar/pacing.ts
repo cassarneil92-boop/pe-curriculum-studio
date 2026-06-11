@@ -16,6 +16,18 @@ export interface TermUnitBlock {
   totalLessons: number;
   deliveredLessons: number;
   scheduledLessons: number;
+  scheduled: boolean;
+}
+
+export interface DraftSchemeBlock {
+  id: string;
+  schemeId: string;
+  title: string;
+  topicName: string;
+  theme: TopicTheme;
+  totalLessons: number;
+  deliveredLessons: number;
+  lessonsStillToTeach: number;
 }
 
 export function buildTermUnitBlocks(
@@ -47,10 +59,47 @@ export function buildTermUnitBlocks(
       totalLessons: scheme.lessons.length,
       deliveredLessons: delivered,
       scheduledLessons: linked.length,
+      scheduled: true,
     });
   }
 
   return blocks.sort((a, b) => a.startDate.localeCompare(b.startDate));
+}
+
+export function buildDraftSchemeBlocks(
+  schemes: SchemeOfWork[],
+  calendar: CalendarEntry[]
+): DraftSchemeBlock[] {
+  const drafts: DraftSchemeBlock[] = [];
+
+  for (const scheme of schemes) {
+    const hasScheduled = calendar.some(
+      (e) => e.linkedSchemeId === scheme.id && e.startDate
+    );
+    if (hasScheduled) continue;
+    if (scheme.lessons.length === 0) continue;
+
+    const topicName = scheme.topicId
+      ? getTopicDisplayName(scheme.topicId)
+      : "PE Unit";
+    const delivered = scheme.lessons.filter((l) => l.deliveryStatus === "delivered").length;
+    const remaining = scheme.lessons.filter(
+      (l) => l.deliveryStatus !== "delivered" && l.deliveryStatus !== "skipped"
+    ).length;
+
+    drafts.push({
+      id: scheme.id,
+      schemeId: scheme.id,
+      title: schemeDisplayTitle(scheme) || topicName,
+      topicName,
+      theme: getTopicTheme(topicName),
+      totalLessons: scheme.lessons.length,
+      deliveredLessons: delivered,
+      lessonsStillToTeach: remaining,
+    });
+  }
+
+  return drafts;
 }
 
 export function blockSpansWeek(

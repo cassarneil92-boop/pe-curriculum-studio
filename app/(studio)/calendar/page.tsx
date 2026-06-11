@@ -10,6 +10,7 @@ export default function CalendarPage() {
   const hubPrefillApplied = useRef(false);
   const [showCustomEntry, setShowCustomEntry] = useState(false);
   const [showScheduleScheme, setShowScheduleScheme] = useState(false);
+  const [scheduleSchemePrefill, setScheduleSchemePrefill] = useState<string | undefined>();
 
   useEffect(() => {
     if (hubPrefillApplied.current || !searchParams || searchParams.get("create") !== "1") {
@@ -30,8 +31,15 @@ export default function CalendarPage() {
         showCustomEntry={showCustomEntry}
         onCloseCustomEntry={() => setShowCustomEntry(false)}
         showScheduleScheme={showScheduleScheme}
-        onCloseScheduleScheme={() => setShowScheduleScheme(false)}
-        onOpenScheduleScheme={() => setShowScheduleScheme(true)}
+        onCloseScheduleScheme={() => {
+          setShowScheduleScheme(false);
+          setScheduleSchemePrefill(undefined);
+        }}
+        onOpenScheduleScheme={(prefill) => {
+          setScheduleSchemePrefill(prefill?.schemeId);
+          setShowScheduleScheme(true);
+        }}
+        scheduleSchemePrefill={scheduleSchemePrefill}
         onOpenCustomEntry={() => setShowCustomEntry(true)}
       />
     </div>

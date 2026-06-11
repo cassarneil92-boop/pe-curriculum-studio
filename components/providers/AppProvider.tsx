@@ -10,6 +10,7 @@ import {
   type ReactNode,
 } from "react";
 import type {
+  AcademicCalendarSettings,
   AppData,
   CalendarEntry,
   LessonPlan,
@@ -28,6 +29,7 @@ interface AppContextValue {
   data: AppData;
   hydrated: boolean;
   updateTeacher: (teacher: TeacherProfile) => void;
+  updateAcademicCalendar: (settings: AcademicCalendarSettings) => void;
   completeSetup: () => void;
   addLesson: (lesson: Omit<LessonPlan, "id" | "createdAt" | "updatedAt">) => LessonPlan;
   updateLesson: (id: string, lesson: Partial<LessonPlan>) => void;
@@ -59,6 +61,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const updateTeacher = useCallback((teacher: TeacherProfile) => {
     setData((prev) => ({ ...prev, teacher }));
+  }, []);
+
+  const updateAcademicCalendar = useCallback((academicCalendar: AcademicCalendarSettings) => {
+    setData((prev) => ({ ...prev, academicCalendar }));
   }, []);
 
   const completeSetup = useCallback(() => {
@@ -147,6 +153,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       data,
       hydrated,
       updateTeacher,
+      updateAcademicCalendar,
       completeSetup,
       addLesson,
       updateLesson,
@@ -164,6 +171,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       data,
       hydrated,
       updateTeacher,
+      updateAcademicCalendar,
       completeSetup,
       addLesson,
       updateLesson,

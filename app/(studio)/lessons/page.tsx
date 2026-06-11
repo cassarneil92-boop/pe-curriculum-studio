@@ -13,6 +13,7 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { DeliveryStatusBadge } from "@/components/progress/DeliveryStatusBadge";
 import { LessonDeliveryControls } from "@/components/progress/DeliveryControls";
 import { useApp } from "@/components/providers/AppProvider";
+import { useDeliverySync } from "@/hooks/useDeliverySync";
 import { getTopicTheme } from "@/lib/design/topic-theme";
 import {
   duplicateLessonData,
@@ -24,13 +25,14 @@ import {
 } from "@/lib/lesson-plans/helpers";
 import { exportLessonDocument, printLessonPreview } from "@/lib/lesson-plans/export";
 import { getYearGroupLabel } from "@/lib/year-groups";
-import type { LessonPlan } from "@/lib/types";
+import type { LessonDeliveryStatus, LessonPlan } from "@/lib/types";
 
 type LibraryView = "grid" | "preview";
 
 export default function LessonsPage() {
   const router = useRouter();
-  const { data, addLesson, updateLesson, deleteLesson } = useApp();
+  const { data, addLesson, deleteLesson } = useApp();
+  const { setLessonDelivery } = useDeliverySync();
   const [view, setView] = useState<LibraryView>("grid");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [printOnLoad, setPrintOnLoad] = useState(false);
@@ -102,7 +104,7 @@ export default function LessonsPage() {
           <LessonDeliveryControls
             lesson={selectedLesson}
             status={selectedLesson.deliveryStatus}
-            onChange={(patch) => updateLesson(selectedLesson.id, patch)}
+            onDeliveryChange={(status) => setLessonDelivery(selectedLesson, status)}
           />
         </Card>
 
@@ -140,6 +142,7 @@ export default function LessonsPage() {
             <LessonLibraryCard
               key={lesson.id}
               lesson={lesson}
+              onDeliveryChange={(status) => setLessonDelivery(lesson, status)}
               onView={() => openPreview(lesson)}
               onEdit={() => router.push(`/lesson-builder?edit=${lesson.id}`)}
               onDuplicate={() => handleDuplicate(lesson)}
@@ -156,6 +159,7 @@ export default function LessonsPage() {
 
 function LessonLibraryCard({
   lesson,
+  onDeliveryChange,
   onView,
   onEdit,
   onDuplicate,
@@ -164,6 +168,7 @@ function LessonLibraryCard({
   onExportWord,
 }: {
   lesson: LessonPlan;
+  onDeliveryChange: (status: LessonDeliveryStatus) => void;
   onView: () => void;
   onEdit: () => void;
   onDuplicate: () => void;
@@ -194,11 +199,20 @@ function LessonLibraryCard({
 
         <div className="mt-3 flex flex-wrap gap-1.5">
           <DeliveryStatusBadge status={lesson.deliveryStatus} />
+          {lesson.deliveryStatus === "delivered" && lesson.deliveredDate && (
+            <Badge tone="green">Delivered {lesson.deliveredDate}</Badge>
+          )}
           <Badge tone="teal">{getLessonPathwayLabel(lesson)}</Badge>
           <Badge tone="slate">{topicName}</Badge>
           <Badge tone="blue">{getLessonSkillName(lesson)}</Badge>
           <Badge tone="amber">{lesson.selectedLearningOutcomeIds.length} LOs</Badge>
         </div>
+
+        <LessonDeliveryControls
+          lesson={lesson}
+          compact
+          onDeliveryChange={onDeliveryChange}
+        />
 
         <p className="mt-3 text-xs text-slate-400">
           Updated {formatTimestamp(lesson.updatedAt)}

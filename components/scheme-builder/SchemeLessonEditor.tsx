@@ -8,8 +8,13 @@ import {
 } from "@/lib/scheme-builder/lesson-actions";
 import { SchemeLearningOutcomeCard } from "@/components/scheme-builder/SchemeLearningOutcomeCard";
 import { SchemeLessonDeliveryControls } from "@/components/progress/SchemeLessonDeliveryControls";
+import {
+  markSchemeLessonDelivered,
+  markSchemeLessonPlanned,
+  markSchemeLessonSkipped,
+} from "@/lib/progress/delivery";
 import { resolveSchemeLearningOutcomes } from "@/lib/scheme-builder/helpers";
-import type { SOWLesson } from "@/lib/types";
+import type { LessonDeliveryStatus, SOWLesson } from "@/lib/types";
 
 interface SchemeLessonEditorProps {
   lesson: SOWLesson;
@@ -185,7 +190,14 @@ export function SchemeLessonEditor({
       </div>
 
       {onLessonChange && (
-        <SchemeLessonDeliveryControls lesson={lesson} onChange={onLessonChange} />
+        <SchemeLessonDeliveryControls
+          lesson={lesson}
+          onDeliveryChange={(status: LessonDeliveryStatus) => {
+            if (status === "delivered") onLessonChange(markSchemeLessonDelivered(lesson));
+            else if (status === "skipped") onLessonChange(markSchemeLessonSkipped(lesson));
+            else onLessonChange(markSchemeLessonPlanned(lesson));
+          }}
+        />
       )}
 
       <Section

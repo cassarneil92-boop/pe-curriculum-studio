@@ -81,6 +81,15 @@ export function markLessonSkipped(lesson: LessonPlan): LessonPlan {
   };
 }
 
+export function markLessonMoved(lesson: LessonPlan): LessonPlan {
+  return {
+    ...lesson,
+    deliveryStatus: "moved",
+    deliveredDate: undefined,
+    taughtOutcomeIds: [],
+  };
+}
+
 export function markSchemeLessonDelivered(
   lesson: SOWLesson,
   deliveredDate = new Date().toISOString().slice(0, 10)
@@ -106,6 +115,15 @@ export function markSchemeLessonSkipped(lesson: SOWLesson): SOWLesson {
   return {
     ...lesson,
     deliveryStatus: "skipped",
+    deliveredDate: undefined,
+    taughtOutcomeIds: [],
+  };
+}
+
+export function markSchemeLessonMoved(lesson: SOWLesson): SOWLesson {
+  return {
+    ...lesson,
+    deliveryStatus: "moved",
     deliveredDate: undefined,
     taughtOutcomeIds: [],
   };
@@ -157,4 +175,10 @@ export function deliveryStatusLabel(status?: LessonDeliveryStatus): string {
     default:
       return "Planned";
   }
+}
+
+export function lessonsStillToTeach(scheme: SchemeOfWork): number {
+  return scheme.lessons.filter(
+    (l) => l.deliveryStatus !== "delivered" && l.deliveryStatus !== "skipped"
+  ).length;
 }

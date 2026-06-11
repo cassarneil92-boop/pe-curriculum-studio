@@ -1,7 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useApp } from "@/components/providers/AppProvider";
+import {
+  defaultAcademicCalendarSettings,
+  migrateAcademicCalendarSettings,
+} from "@/lib/calendar/academic-settings";
+import type { AcademicCalendarSettings, TermDateRange } from "@/lib/types";
 import { SchoolSetupFields } from "@/components/shared/SchoolSetupFields";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -20,9 +25,12 @@ import {
 import type { PathwayId, YearGroup } from "@/lib/types";
 
 export default function SettingsPage() {
-  const { data, updateTeacher } = useApp();
+  const { data, updateTeacher, updateAcademicCalendar } = useApp();
   const { accessMode, setAccessMode, context } = useTeacherContext();
   const [form, setForm] = useState(data.teacher);
+  const [academicForm, setAcademicForm] = useState<AcademicCalendarSettings>(() =>
+    migrateAcademicCalendarSettings(data.academicCalendar)
+  );
   const [saved, setSaved] = useState(false);
   const previewContext = buildTeacherContext(form, accessMode);
 
@@ -49,10 +57,26 @@ export default function SettingsPage() {
     });
   };
 
+  useEffect(() => {
+    setAcademicForm(migrateAcademicCalendarSettings(data.academicCalendar));
+  }, [data.academicCalendar]);
+
   const handleSave = () => {
     updateTeacher(form);
+    updateAcademicCalendar(academicForm);
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
+  };
+
+  const updateTerm = (term: "term1" | "term2" | "term3", patch: Partial<TermDateRange>) => {
+    setAcademicForm((prev) => ({
+      ...prev,
+      [term]: { ...prev[term], ...patch },
+    }));
+  };
+
+  const resetAcademicDefaults = () => {
+    setAcademicForm(defaultAcademicCalendarSettings());
   };
 
   return (
@@ -161,6 +185,37 @@ export default function SettingsPage() {
 
         <Card>
           <CardHeader
+            title="Calendar / Academic Year"
+            description="Set your academic year and term dates for Calendar Term View, dashboard pacing, and Teaching Progress."
+          />
+          <div className="space-y-4">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <DateField
+                label="Academic year start"
+                value={academicForm.academicYearStart}
+                onChange={(value) =>
+                  setAcademicForm((prev) => ({ ...prev, academicYearStart: value }))
+                }
+              />
+              <DateField
+                label="Academic year end"
+                value={academicForm.academicYearEnd}
+                onChange={(value) =>
+                  setAcademicForm((prev) => ({ ...prev, academicYearEnd: value }))
+                }
+              />
+            </div>
+            <TermFields label="Term 1" range={academicForm.term1} onChange={(patch) => updateTerm("term1", patch)} />
+            <TermFields label="Term 2" range={academicForm.term2} onChange={(patch) => updateTerm("term2", patch)} />
+            <TermFields label="Term 3" range={academicForm.term3} onChange={(patch) => updateTerm("term3", patch)} />
+            <Button variant="ghost" className="text-xs" onClick={resetAcademicDefaults}>
+              Reset to Malta defaults
+            </Button>
+          </div>
+        </Card>
+
+        <Card>
+          <CardHeader
             title="Export defaults"
             description="Lesson plans and schemes support PDF, Word, and print from their detail view."
           />
@@ -204,6 +259,48 @@ export default function SettingsPage() {
           <Button onClick={handleSave}>Save settings</Button>
           {saved && <span className="text-sm text-teal-600">Saved</span>}
         </div>
+      </div>
+    </div>
+  );
+}
+
+function DateField({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <label className="block text-sm">
+      <span className="mb-1 block font-medium text-slate-700">{label}</span>
+      <input
+        type="date"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+      />
+    </label>
+  );
+}
+
+function TermFields({
+  label,
+  range,
+  onChange,
+}: {
+  label: string;
+  range: TermDateRange;
+  onChange: (patch: Partial<TermDateRange>) => void;
+}) {
+  return (
+    <div className="rounded-lg border border-slate-200 p-3">
+      <p className="mb-2 text-sm font-semibold text-slate-800">{label}</p>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <DateField label="Start" value={range.start} onChange={(start) => onChange({ start })} />
+        <DateField label="End" value={range.end} onChange={(end) => onChange({ end })} />
       </div>
     </div>
   );

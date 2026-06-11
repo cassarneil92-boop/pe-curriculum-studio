@@ -18,10 +18,16 @@ import {
 import { activityLabels, isActivitiesEmpty } from "@/lib/scheme-builder/lesson-actions";
 import { getPathwayLabel } from "@/lib/constants";
 import { getYearGroupLabel } from "@/lib/year-groups";
-import type { SchemeOfWork, SOWLesson } from "@/lib/types";
+import { SchemeLessonDeliveryControls } from "@/components/progress/SchemeLessonDeliveryControls";
+import type { LessonDeliveryStatus, SchemeOfWork, SOWLesson } from "@/lib/types";
 
 interface SOWScreenViewProps {
   scheme: SchemeOfWork;
+  editableDelivery?: boolean;
+  onLessonDeliveryChange?: (
+    lessonNumber: number,
+    status: LessonDeliveryStatus
+  ) => void;
 }
 
 type LessonFilter = "all" | "with-content" | "empty";
@@ -92,10 +98,14 @@ function LessonScreenCard({
   lesson,
   expanded,
   onToggle,
+  editableDelivery,
+  onLessonDeliveryChange,
 }: {
   lesson: SOWLesson;
   expanded: boolean;
   onToggle: () => void;
+  editableDelivery?: boolean;
+  onLessonDeliveryChange?: (lessonNumber: number, status: LessonDeliveryStatus) => void;
 }) {
   const resolvedOutcomes = resolveSchemeLearningOutcomes(lesson.learningOutcomeIds);
   const wilf = formatWilfLines(lesson.wilf);
@@ -144,6 +154,13 @@ function LessonScreenCard({
             : "scheme-lesson-body hidden space-y-3 p-5 print:block"
         }
       >
+        {editableDelivery && onLessonDeliveryChange && (
+          <SchemeLessonDeliveryControls
+            lesson={lesson}
+            onDeliveryChange={(status) => onLessonDeliveryChange(lesson.lessonNumber, status)}
+          />
+        )}
+
         <LessonSection title="Learning Outcomes" tone="teal">
           {resolvedOutcomes.length > 0 ? (
             <div className="space-y-2">
@@ -192,7 +209,11 @@ function LessonScreenCard({
   );
 }
 
-export function SOWScreenView({ scheme }: SOWScreenViewProps) {
+export function SOWScreenView({
+  scheme,
+  editableDelivery = false,
+  onLessonDeliveryChange,
+}: SOWScreenViewProps) {
   const title = schemeDisplayTitle(scheme);
   const topicName = getTopicName(scheme.topicId);
   const skillName = getSkillName(scheme.skillId);
@@ -275,6 +296,8 @@ export function SOWScreenView({ scheme }: SOWScreenViewProps) {
               lesson={lesson}
               expanded={!collapsedIds.has(lesson.id)}
               onToggle={() => toggleLesson(lesson.id)}
+              editableDelivery={editableDelivery}
+              onLessonDeliveryChange={onLessonDeliveryChange}
             />
           ))
         )}

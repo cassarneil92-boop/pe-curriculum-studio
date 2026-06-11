@@ -10,6 +10,7 @@ import { SOWPreviewTable } from "@/components/scheme-builder/SOWPreviewTable";
 import { SOWSchemeSetup } from "@/components/scheme-builder/SOWSchemeSetup";
 import { SOWScreenView } from "@/components/scheme-builder/SOWScreenView";
 import { useApp } from "@/components/providers/AppProvider";
+import { useDeliverySync } from "@/hooks/useDeliverySync";
 import { TopicIcon } from "@/components/design/TopicIcon";
 import { StickyActionBar } from "@/components/layout/StickyActionBar";
 import { ExportMenu } from "@/components/shared/ExportMenu";
@@ -121,6 +122,7 @@ export default function SchemesPage() {
   const searchParams = useSearchParams();
   const hubPrefillApplied = useRef(false);
   const { data, addScheme, updateScheme, deleteScheme } = useApp();
+  const { setSchemeLessonDelivery } = useDeliverySync();
   const { context } = useTeacherContext();
 
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -545,9 +547,13 @@ export default function SchemesPage() {
     }
   }, [draft, activeLessonIndex]);
 
-  if (viewingScheme) {
-    const exportHtml = buildSchemeExportHtml(viewingScheme);
-    const exportFilename = buildSchemeExportFilename(viewingScheme);
+  const liveViewingScheme = viewingScheme
+    ? data.schemes.find((s) => s.id === viewingScheme.id) ?? viewingScheme
+    : null;
+
+  if (liveViewingScheme) {
+    const exportHtml = buildSchemeExportHtml(liveViewingScheme);
+    const exportFilename = buildSchemeExportFilename(liveViewingScheme);
 
     return (
       <div className="scheme-print-area -mx-6 lg:-mx-10">
@@ -558,13 +564,13 @@ export default function SchemesPage() {
                 Scheme of work
               </p>
               <p className="truncate text-sm font-semibold text-slate-900">
-                {schemeDisplayTitle(viewingScheme)}
+                {schemeDisplayTitle(liveViewingScheme)}
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <SchemeViewToggle mode={displayMode} onChange={setDisplayMode} />
               <ExportMenu html={exportHtml} filename={exportFilename} />
-              <Button variant="secondary" onClick={() => startEditScheme(viewingScheme)}>
+              <Button variant="secondary" onClick={() => startEditScheme(liveViewingScheme)}>
                 Edit
               </Button>
               <Button variant="ghost" onClick={closeViewer}>
@@ -576,9 +582,15 @@ export default function SchemesPage() {
 
         <div className="px-6 pt-6 lg:px-10">
           {displayMode === "screen" ? (
-            <SOWScreenView scheme={viewingScheme} />
+            <SOWScreenView
+              scheme={liveViewingScheme}
+              editableDelivery
+              onLessonDeliveryChange={(lessonNumber, status) =>
+                setSchemeLessonDelivery(liveViewingScheme, lessonNumber, status)
+              }
+            />
           ) : (
-            <SOWPreviewTable scheme={viewingScheme} />
+            <SOWPreviewTable scheme={liveViewingScheme} />
           )}
         </div>
       </div>
@@ -685,7 +697,33 @@ export default function SchemesPage() {
                 {alignmentReady && activeLesson ? (
                   <SchemeLessonEditor
                     lesson={activeLesson}
-                    onLessonChange={(next) => updateLesson(activeLessonIndex, next)}
+                    onLessonChange={(next) => {
+                      const prev = activeLesson;
+                      updateLesson(activeLessonIndex, next);
+                      if (
+                        editingId &&
+                        draft &&
+                        prev.deliveryStatus !== next.deliveryStatus
+                      ) {
+                        const updatedLessons = draft.lessons.map((l, i) =>
+                          i === activeLessonIndex ? next : l
+                        );
+                        const schemeForSync: SchemeOfWork = {
+                          ...draft,
+                          lessons: updatedLessons,
+                          id: editingId,
+                          createdAt:
+                            data.schemes.find((s) => s.id === editingId)?.createdAt ?? "",
+                          updatedAt: new Date().toISOString(),
+                        };
+                        setSchemeLessonDelivery(
+                          schemeForSync,
+                          next.lessonNumber,
+                          next.deliveryStatus ?? "planned",
+                          next.deliveredDate
+                        );
+                      }
+                    }}
                     onRemoveOutcome={(id) =>
                       updateLesson(activeLessonIndex, removeOutcomeFromLesson(activeLesson, id))
                     }

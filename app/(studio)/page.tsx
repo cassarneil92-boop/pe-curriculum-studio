@@ -15,8 +15,10 @@ import { getContextualYearGroupLabel } from "@/lib/teacher-context";
 import { countImportedOutcomeVisibility } from "@/lib/teacher-context";
 import { getYearGroupLabel } from "@/lib/year-groups";
 import { getLessonTopicName } from "@/lib/lesson-plans/helpers";
+import { migrateAcademicCalendarSettings } from "@/lib/calendar/academic-settings";
 import { buildTermUnitBlocks, currentUnitBlock, upcomingUnitBlock } from "@/lib/calendar/pacing";
-import { startOfWeek, toIso, addDays } from "@/lib/calendar/dates";
+import { formatShortDate, startOfWeek, termRangeFromSettings, toIso, addDays } from "@/lib/calendar/dates";
+import { lessonsStillToTeach } from "@/lib/progress/delivery";
 import { collectRemainingOutcomeIds, collectTaughtOutcomeIds } from "@/lib/progress/coverage";
 import { getPlanningOutcomes } from "@/src/lib/curriculum/planning";
 import { resolveSchoolDisplayName } from "@/src/lib/schools";
@@ -37,9 +39,23 @@ export default function DashboardPage() {
   const weekStart = toIso(startOfWeek(new Date()));
   const weekEnd = toIso(addDays(startOfWeek(new Date()), 6));
 
+  const academicSettings = useMemo(
+    () => migrateAcademicCalendarSettings(data.academicCalendar),
+    [data.academicCalendar]
+  );
+  const academicRange = useMemo(
+    () => termRangeFromSettings(academicSettings),
+    [academicSettings]
+  );
+
   const termBlocks = useMemo(
     () => buildTermUnitBlocks(schemes, calendar),
     [schemes, calendar]
+  );
+
+  const schemeLessonsRemaining = useMemo(
+    () => schemes.reduce((sum, scheme) => sum + lessonsStillToTeach(scheme), 0),
+    [schemes]
   );
   const currentUnit = currentUnitBlock(termBlocks, today);
   const upcomingUnit = upcomingUnitBlock(termBlocks, today);
@@ -139,11 +155,19 @@ export default function DashboardPage() {
           hint="Marked as taught"
         />
         <DashboardStat
-          label="Outcomes remaining"
-          value={String(outcomesRemaining)}
-          hint="In your teaching context"
+          label="Lessons still to teach"
+          value={String(schemeLessonsRemaining)}
+          hint="Across your schemes of work"
         />
       </section>
+
+      <p className="-mt-6 text-xs text-slate-500">
+        Academic year: {formatShortDate(academicRange.start)} –{" "}
+        {formatShortDate(academicRange.end)} ·{" "}
+        <Link href="/settings" className="font-medium text-teal-700 hover:text-teal-800">
+          Edit in Settings
+        </Link>
+      </p>
 
       {upcomingUnit && !currentUnit && (
         <Card className="border-teal-100 bg-teal-50/30">
@@ -292,6 +316,10 @@ export default function DashboardPage() {
             <div>
               <p className="text-2xl font-semibold text-slate-700">{coverage.total}</p>
               <p className="text-sm text-slate-500">total imported</p>
+            </div>
+            <div>
+              <p className="text-2xl font-semibold text-amber-700">{outcomesRemaining}</p>
+              <p className="text-sm text-slate-500">outcomes still to teach</p>
             </div>
           </div>
         </Card>

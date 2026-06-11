@@ -1,4 +1,8 @@
 import type { AppData, TeacherProfile } from "./types";
+import {
+  defaultAcademicCalendarSettings,
+  migrateAcademicCalendarSettings,
+} from "./calendar/academic-settings";
 import { migrateCalendarEntry } from "./calendar/migrate";
 import { migrateLessons } from "./lesson-plans/migrate";
 import { migrateScheme } from "./scheme-builder/migrate";
@@ -26,6 +30,7 @@ export const DEFAULT_APP_DATA: AppData = {
   schemes: [],
   calendar: [],
   resources: [],
+  academicCalendar: defaultAcademicCalendarSettings(),
   setupComplete: false,
 };
 
@@ -53,6 +58,7 @@ function migrateAppData(parsed: AppData): AppData {
         yearGroup: migrateYearGroupValue(entry.yearGroup),
       })
     ),
+    academicCalendar: migrateAcademicCalendarSettings(parsed.academicCalendar),
   };
 }
 

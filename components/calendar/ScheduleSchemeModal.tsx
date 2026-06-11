@@ -9,6 +9,7 @@ import type { CalendarEntry, SchemeOfWork } from "@/lib/types";
 
 interface ScheduleSchemeModalProps {
   schemes: SchemeOfWork[];
+  initialSchemeId?: string;
   onClose: () => void;
   onSchedule: (entries: Omit<CalendarEntry, "id">[]) => void;
 }
@@ -23,10 +24,11 @@ const WEEKDAYS = [
 
 export function ScheduleSchemeModal({
   schemes,
+  initialSchemeId,
   onClose,
   onSchedule,
 }: ScheduleSchemeModalProps) {
-  const [schemeId, setSchemeId] = useState(schemes[0]?.id ?? "");
+  const [schemeId, setSchemeId] = useState(initialSchemeId ?? schemes[0]?.id ?? "");
   const [startDate, setStartDate] = useState(new Date().toISOString().slice(0, 10));
   const [frequency, setFrequency] = useState<ScheduleFrequency>("weekly");
   const [lessonCount, setLessonCount] = useState(

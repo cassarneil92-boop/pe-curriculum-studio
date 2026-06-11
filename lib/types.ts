@@ -32,6 +32,20 @@ export type SchemeStatus = "draft" | "in_progress" | "completed";
 /** Manual override for whether an outcome counts as taught. */
 export type OutcomeTaughtStatus = "not_taught" | "taught" | "skipped";
 
+export interface TermDateRange {
+  start: string;
+  end: string;
+}
+
+/** Teacher-configurable academic year and term dates for calendar pacing. */
+export interface AcademicCalendarSettings {
+  academicYearStart: string;
+  academicYearEnd: string;
+  term1: TermDateRange;
+  term2: TermDateRange;
+  term3: TermDateRange;
+}
+
 export interface TeacherProfile {
   educationalSetting: EducationalSetting | "";
   college: string;
@@ -246,6 +260,7 @@ export interface AppData {
   schemes: SchemeOfWork[];
   calendar: CalendarEntry[];
   resources: ResourceItem[];
+  academicCalendar?: AcademicCalendarSettings;
   setupComplete: boolean;
 }
 

@@ -38,7 +38,19 @@ export default function CurriculumAnalyticsPage() {
 
       <p className="mb-4 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
         Only lessons marked <strong>delivered</strong> count as taught. Planned lessons and schemes
-        show intended coverage only. Official curriculum wording is never modified.
+        show intended coverage only. Mark delivery from{" "}
+        <Link href="/calendar" className="font-medium text-teal-700 hover:text-teal-800">
+          Calendar
+        </Link>
+        ,{" "}
+        <Link href="/lessons" className="font-medium text-teal-700 hover:text-teal-800">
+          Lesson Plans
+        </Link>
+        , or{" "}
+        <Link href="/schemes" className="font-medium text-teal-700 hover:text-teal-800">
+          Schemes of Work
+        </Link>
+        . Official curriculum wording is never modified.
       </p>
 
       <div className="mb-6 flex flex-wrap gap-2">

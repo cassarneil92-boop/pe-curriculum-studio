@@ -18,7 +18,7 @@ import {
   decodeCalendarDrag,
   entryOnDate,
 } from "@/lib/calendar/helpers";
-import { syncLinkedDeliveryStatus } from "@/lib/calendar/delivery-sync";
+import { useDeliverySync } from "@/hooks/useDeliverySync";
 import {
   addDays,
   formatShortDate,
@@ -27,6 +27,10 @@ import {
   toIso,
 } from "@/lib/calendar/dates";
 import type { CalendarEntry, LessonDeliveryStatus } from "@/lib/types";
+
+interface ScheduleSchemePrefill {
+  schemeId: string;
+}
 
 export type CalendarViewMode = "term" | "month" | "week" | "agenda";
 
@@ -37,8 +41,9 @@ interface CalendarPlannerProps {
   onCloseCustomEntry: () => void;
   showScheduleScheme: boolean;
   onCloseScheduleScheme: () => void;
-  onOpenScheduleScheme: () => void;
+  onOpenScheduleScheme: (prefill?: ScheduleSchemePrefill) => void;
   onOpenCustomEntry: () => void;
+  scheduleSchemePrefill?: string;
 }
 
 export function CalendarPlanner({
@@ -48,15 +53,10 @@ export function CalendarPlanner({
   onCloseScheduleScheme,
   onOpenScheduleScheme,
   onOpenCustomEntry,
+  scheduleSchemePrefill,
 }: CalendarPlannerProps) {
-  const {
-    data,
-    addCalendarEntry,
-    updateCalendarEntry,
-    deleteCalendarEntry,
-    updateLesson,
-    updateScheme,
-  } = useApp();
+  const { data, addCalendarEntry, updateCalendarEntry, deleteCalendarEntry } = useApp();
+  const { setCalendarDelivery } = useDeliverySync();
 
   const [viewMode, setViewMode] = useState<CalendarViewMode>("term");
   const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date()));
@@ -98,18 +98,6 @@ export function CalendarPlanner({
   const sortedEntries = [...data.calendar]
     .filter((e) => e.startDate)
     .sort((a, b) => a.startDate.localeCompare(b.startDate));
-
-  const applyDeliverySync = (entry: CalendarEntry, status: LessonDeliveryStatus) => {
-    const { lessonUpdates, schemeUpdates } = syncLinkedDeliveryStatus(
-      entry,
-      status,
-      data.lessons,
-      data.schemes
-    );
-    for (const { id, patch } of lessonUpdates) updateLesson(id, patch);
-    for (const { id, patch } of schemeUpdates) updateScheme(id, patch);
-    updateCalendarEntry(entry.id, { deliveryStatus: status });
-  };
 
   const handleDropOnDate = (iso: string, raw: string) => {
     const payload = decodeCalendarDrag(raw);
@@ -169,7 +157,11 @@ export function CalendarPlanner({
           </Button>
         ))}
         <div className="ml-auto flex flex-wrap gap-2">
-          <Button variant="secondary" className="text-xs" onClick={onOpenScheduleScheme}>
+          <Button
+            variant="secondary"
+            className="text-xs"
+            onClick={() => onOpenScheduleScheme()}
+          >
             Schedule scheme
           </Button>
           <Button variant="secondary" className="text-xs" onClick={onOpenCustomEntry}>
@@ -184,10 +176,12 @@ export function CalendarPlanner({
             <CalendarTermView
               schemes={data.schemes}
               calendar={data.calendar}
+              academicCalendar={data.academicCalendar}
               onSelectBlock={(schemeId) => {
                 const entry = data.calendar.find((e) => e.linkedSchemeId === schemeId);
                 if (entry) setSelectedId(entry.id);
               }}
+              onScheduleDraft={(schemeId) => onOpenScheduleScheme({ schemeId })}
             />
           )}
 
@@ -254,6 +248,8 @@ export function CalendarPlanner({
                               entry={entry}
                               active={selectedId === entry.id}
                               onSelect={() => setSelectedId(entry.id)}
+                              showQuickActions
+                              onDeliveryChange={(status) => setCalendarDelivery(entry, status)}
                             />
                           ))
                         )}
@@ -304,13 +300,8 @@ export function CalendarPlanner({
           {selected ? (
             <CalendarEntryDetail
               entry={selected}
-              onUpdate={(patch) => {
-                if (patch.deliveryStatus) {
-                  applyDeliverySync({ ...selected, ...patch }, patch.deliveryStatus);
-                } else {
-                  updateCalendarEntry(selected.id, patch);
-                }
-              }}
+              onDeliveryChange={(status) => setCalendarDelivery(selected, status)}
+              onUpdate={(patch) => updateCalendarEntry(selected.id, patch)}
               onDelete={() => {
                 deleteCalendarEntry(selected.id);
                 setSelectedId(null);
@@ -337,6 +328,7 @@ export function CalendarPlanner({
       {showScheduleScheme && (
         <ScheduleSchemeModal
           schemes={data.schemes}
+          initialSchemeId={scheduleSchemePrefill}
           onClose={onCloseScheduleScheme}
           onSchedule={handleScheduleScheme}
         />

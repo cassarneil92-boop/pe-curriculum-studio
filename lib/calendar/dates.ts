@@ -54,7 +54,10 @@ export function daysInMonth(date: Date): number {
   return endOfMonth(date).getDate();
 }
 
-/** Default Maltese school term window: September → February. */
+import type { AcademicCalendarSettings } from "@/lib/types";
+import { academicYearRange } from "./academic-settings";
+
+/** Default Maltese school term window: September → February (legacy fallback). */
 export function defaultTermRange(reference = new Date()): { start: Date; end: Date } {
   const year =
     reference.getMonth() >= 8 ? reference.getFullYear() : reference.getFullYear() - 1;
@@ -62,6 +65,15 @@ export function defaultTermRange(reference = new Date()): { start: Date; end: Da
     start: new Date(year, 8, 1),
     end: new Date(year + 1, 1, 28),
   };
+}
+
+export function termRangeFromSettings(
+  settings?: AcademicCalendarSettings | null
+): { start: Date; end: Date } {
+  if (!settings?.academicYearStart || !settings?.academicYearEnd) {
+    return defaultTermRange();
+  }
+  return academicYearRange(settings);
 }
 
 export function weeksBetween(start: Date, end: Date): Date[] {
