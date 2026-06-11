@@ -1,4 +1,9 @@
-import type { LessonPlan, SchemeOfWork } from "@/lib/types";
+import type { CalendarEntry, LessonPlan, SchemeOfWork } from "@/lib/types";
+import {
+  collectPlannedOutcomeIds,
+  collectRemainingOutcomeIds,
+  collectTaughtOutcomeIds,
+} from "@/lib/progress/coverage";
 import type { LearningOutcome } from "@/src/lib/curriculum/types";
 import { getPlanningOutcomes } from "@/src/lib/curriculum/planning";
 import { getValueById } from "@/src/lib/curriculum/registry";
@@ -11,6 +16,8 @@ import {
 } from "../frameworks/learning-areas";
 import { getFitnessStrandForCode, getFitnessStrandLabel, type FitnessStrandId } from "../frameworks/fitness-strands";
 
+export type CoverageMode = "planned" | "taught" | "remaining";
+
 export interface CoverageSlice {
   id: string;
   label: string;
@@ -18,13 +25,19 @@ export interface CoverageSlice {
   taughtOutcomes: number;
   coveragePercent: number;
   status: "strong" | "moderate" | "weak" | "missing";
+  /** Mode-specific count shown in the bar label. */
+  modeCount?: number;
 }
 
 export interface CurriculumAnalyticsReport {
   generatedAt: string;
+  mode: CoverageMode;
   summary: {
     totalCurriculumOutcomes: number;
+    plannedOutcomeIds: number;
     taughtOutcomeIds: number;
+    remainingOutcomeIds: number;
+    modeOutcomeIds: number;
     overallCoveragePercent: number;
     lessonsAnalysed: number;
     schemesAnalysed: number;
@@ -42,26 +55,6 @@ export interface CurriculumAnalyticsReport {
   missingAreas: string[];
 }
 
-function collectTaughtOutcomeIds(
-  lessons: LessonPlan[],
-  schemes: SchemeOfWork[]
-): Set<string> {
-  const ids = new Set<string>();
-  for (const lesson of lessons) {
-    for (const id of lesson.selectedLearningOutcomeIds ?? []) {
-      if (id) ids.add(id);
-    }
-  }
-  for (const scheme of schemes) {
-    for (const lesson of scheme.lessons ?? []) {
-      for (const id of lesson.learningOutcomeIds ?? []) {
-        if (id) ids.add(id);
-      }
-    }
-  }
-  return ids;
-}
-
 function coverageStatus(percent: number): CoverageSlice["status"] {
   if (percent >= 70) return "strong";
   if (percent >= 40) return "moderate";
@@ -73,27 +66,51 @@ function buildSlice(
   id: string,
   label: string,
   outcomes: LearningOutcome[],
-  taught: Set<string>
+  active: Set<string>,
+  mode: CoverageMode
 ): CoverageSlice {
   const total = outcomes.length;
-  const taughtCount = outcomes.filter((o) => taught.has(o.id)).length;
-  const coveragePercent = total > 0 ? Math.round((taughtCount / total) * 100) : 0;
+  const modeCount = outcomes.filter((o) => active.has(o.id)).length;
+  const coveragePercent = total > 0 ? Math.round((modeCount / total) * 100) : 0;
   return {
     id,
     label,
     totalOutcomes: total,
-    taughtOutcomes: taughtCount,
+    taughtOutcomes: modeCount,
     coveragePercent,
     status: coverageStatus(coveragePercent),
+    modeCount,
   };
+}
+
+function resolveActiveOutcomeSet(
+  mode: CoverageMode,
+  lessons: LessonPlan[],
+  schemes: SchemeOfWork[],
+  calendar: CalendarEntry[],
+  curriculumOutcomes: LearningOutcome[]
+): Set<string> {
+  const planned = collectPlannedOutcomeIds(lessons, schemes);
+  const taught = collectTaughtOutcomeIds(lessons, schemes, calendar);
+  const allIds = curriculumOutcomes.map((o) => o.id);
+
+  if (mode === "planned") return planned;
+  if (mode === "taught") return taught;
+  return collectRemainingOutcomeIds(allIds, taught);
 }
 
 export function buildCurriculumAnalytics(
   lessons: LessonPlan[],
   schemes: SchemeOfWork[],
-  curriculumOutcomes: LearningOutcome[] = getPlanningOutcomes()
+  curriculumOutcomes: LearningOutcome[] = getPlanningOutcomes(),
+  mode: CoverageMode = "taught",
+  calendar: CalendarEntry[] = []
 ): CurriculumAnalyticsReport {
-  const taught = collectTaughtOutcomeIds(lessons, schemes);
+  const planned = collectPlannedOutcomeIds(lessons, schemes);
+  const taught = collectTaughtOutcomeIds(lessons, schemes, calendar);
+  const allIds = curriculumOutcomes.map((o) => o.id);
+  const remaining = collectRemainingOutcomeIds(allIds, taught);
+  const active = resolveActiveOutcomeSet(mode, lessons, schemes, calendar, curriculumOutcomes);
 
   const byTopic = new Map<string, LearningOutcome[]>();
   const byPathway = new Map<string, LearningOutcome[]>();
@@ -164,16 +181,17 @@ export function buildCurriculumAnalytics(
     labelFn: (id: string) => string
   ): CoverageSlice[] =>
     [...map.entries()]
-      .map(([id, outcomes]) => buildSlice(id, labelFn(id), outcomes, taught))
+      .map(([id, outcomes]) => buildSlice(id, labelFn(id), outcomes, active, mode))
       .sort((a, b) => b.coveragePercent - a.coveragePercent);
 
   const topicSlices = sliceFromMap(byTopic, getPlanningTopicDisplayName);
-  const overallTaught = [...taught].filter((id) =>
+
+  const modeCount = [...active].filter((id) =>
     curriculumOutcomes.some((o) => o.id === id)
   ).length;
 
   const overrepresented = topicSlices.filter(
-    (s) => s.coveragePercent >= 70 && s.taughtOutcomes >= 3
+    (s) => s.coveragePercent >= 70 && (s.modeCount ?? 0) >= 3
   );
   const underrepresented = topicSlices.filter(
     (s) => s.totalOutcomes >= 3 && s.coveragePercent < 30
@@ -185,12 +203,22 @@ export function buildCurriculumAnalytics(
 
   return {
     generatedAt: new Date().toISOString(),
+    mode,
     summary: {
       totalCurriculumOutcomes: curriculumOutcomes.length,
-      taughtOutcomeIds: overallTaught,
+      plannedOutcomeIds: [...planned].filter((id) =>
+        curriculumOutcomes.some((o) => o.id === id)
+      ).length,
+      taughtOutcomeIds: [...taught].filter((id) =>
+        curriculumOutcomes.some((o) => o.id === id)
+      ).length,
+      remainingOutcomeIds: [...remaining].filter((id) =>
+        curriculumOutcomes.some((o) => o.id === id)
+      ).length,
+      modeOutcomeIds: modeCount,
       overallCoveragePercent:
         curriculumOutcomes.length > 0
-          ? Math.round((overallTaught / curriculumOutcomes.length) * 100)
+          ? Math.round((modeCount / curriculumOutcomes.length) * 100)
           : 0,
       lessonsAnalysed: lessons.length,
       schemesAnalysed: schemes.length,
@@ -200,11 +228,11 @@ export function buildCurriculumAnalytics(
     byYearGroup: sliceFromMap(byYear, (id) => id),
     bySkill: sliceFromMap(bySkill, (id) => id),
     byLearningArea: [...byLearningArea.entries()].map(([id, outcomes]) =>
-      buildSlice(id, getLearningAreaLabel(id), outcomes, taught)
+      buildSlice(id, getLearningAreaLabel(id), outcomes, active, mode)
     ),
     byHolisticDevelopment: sliceFromMap(byHolistic, () => "Holistic Development"),
     byFitnessStrand: [...byFitness.entries()].map(([id, outcomes]) =>
-      buildSlice(id, getFitnessStrandLabel(id), outcomes, taught)
+      buildSlice(id, getFitnessStrandLabel(id), outcomes, active, mode)
     ),
     byValues: sliceFromMap(byValues, (id) => getValueById(id)?.description ?? id),
     overrepresented,

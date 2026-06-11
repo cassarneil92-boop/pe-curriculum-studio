@@ -1,5 +1,6 @@
 import type { SchemeOfWork, SOWLesson, SOWWeek } from "@/lib/types";
 import { generateId } from "@/lib/storage";
+import { migrateSchemeProgress } from "@/lib/progress/migrate";
 import { migrateYearGroupValue } from "@/lib/year-groups";
 import { ACTIVITY_TEMPLATE } from "./constants";
 
@@ -33,7 +34,7 @@ export function migrateScheme(scheme: Partial<SchemeOfWork> & { weeks?: SOWWeek[
         ? scheme.selectedPathways
         : [pathway];
 
-    return {
+    return migrateSchemeProgress({
       id: scheme.id ?? generateId(),
       title: scheme.title ?? "",
       classGroup: scheme.classGroup ?? "",
@@ -47,7 +48,7 @@ export function migrateScheme(scheme: Partial<SchemeOfWork> & { weeks?: SOWWeek[
       lessons,
       createdAt: scheme.createdAt ?? now,
       updatedAt: scheme.updatedAt ?? now,
-    };
+    });
   }
 
   const legacyWeeks = scheme.weeks ?? [];
@@ -62,7 +63,7 @@ export function migrateScheme(scheme: Partial<SchemeOfWork> & { weeks?: SOWWeek[
       ? scheme.selectedPathways
       : [pathway];
 
-  return {
+  return migrateSchemeProgress({
     id: scheme.id ?? generateId(),
     title: scheme.title ?? "",
     classGroup: "",
@@ -76,7 +77,7 @@ export function migrateScheme(scheme: Partial<SchemeOfWork> & { weeks?: SOWWeek[
     lessons,
     createdAt: scheme.createdAt ?? now,
     updatedAt: scheme.updatedAt ?? now,
-  };
+  });
 }
 
 function createLegacyEmptyLesson(): SOWLesson {

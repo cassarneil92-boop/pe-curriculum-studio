@@ -1,4 +1,5 @@
 import type { AppData, TeacherProfile } from "./types";
+import { migrateCalendarEntry } from "./calendar/migrate";
 import { migrateLessons } from "./lesson-plans/migrate";
 import { migrateScheme } from "./scheme-builder/migrate";
 import { migrateYearGroupList, migrateYearGroupValue } from "./year-groups";
@@ -46,10 +47,12 @@ function migrateAppData(parsed: AppData): AppData {
     teacher: migrateTeacher(parsed.teacher),
     lessons: migrateLessons(parsed.lessons ?? []),
     schemes: (parsed.schemes ?? []).map((scheme) => migrateScheme(scheme)),
-    calendar: (parsed.calendar ?? []).map((entry) => ({
-      ...entry,
-      yearGroup: migrateYearGroupValue(entry.yearGroup),
-    })),
+    calendar: (parsed.calendar ?? []).map((entry) =>
+      migrateCalendarEntry({
+        ...entry,
+        yearGroup: migrateYearGroupValue(entry.yearGroup),
+      })
+    ),
   };
 }
 

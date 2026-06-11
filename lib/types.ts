@@ -23,6 +23,15 @@ export type PlanningLevel = "macro" | "meso" | "micro" | "daily";
 
 export type ExportFormat = "pdf" | "word" | "print";
 
+/** Teacher delivery status for a lesson or calendar entry. */
+export type LessonDeliveryStatus = "planned" | "delivered" | "skipped" | "moved";
+
+/** Overall scheme progress status. */
+export type SchemeStatus = "draft" | "in_progress" | "completed";
+
+/** Manual override for whether an outcome counts as taught. */
+export type OutcomeTaughtStatus = "not_taught" | "taught" | "skipped";
+
 export interface TeacherProfile {
   educationalSetting: EducationalSetting | "";
   college: string;
@@ -54,8 +63,22 @@ export interface CalendarEntry {
   skills: string[];
   startDate: string;
   endDate: string;
+  /** Optional start time (HH:mm). */
+  startTime?: string;
+  /** Optional end time (HH:mm). */
+  endTime?: string;
+  classGroup?: string;
+  topicId?: string;
   notes: string;
   loIds: string[];
+  /** Linked saved lesson plan. */
+  linkedLessonId?: string;
+  /** Linked scheme of work. */
+  linkedSchemeId?: string;
+  /** Lesson number within linked scheme. */
+  linkedSchemeLessonNumber?: number;
+  deliveryStatus?: LessonDeliveryStatus;
+  reflection?: string;
 }
 
 export type LessonEndingType =
@@ -129,6 +152,15 @@ export interface LessonPlan {
   pedagogicalModels?: PedagogicalModelId[];
   /** Collaboration scope — prepared for future multi-user sync. */
   scope?: CollaborationScope;
+  /** Defaults to planned when saved. */
+  deliveryStatus?: LessonDeliveryStatus;
+  plannedDate?: string;
+  deliveredDate?: string;
+  reflection?: string;
+  /** Outcomes marked taught when delivered (derived + overridable). */
+  taughtOutcomeIds?: string[];
+  /** Per-outcome manual overrides keyed by outcome id. */
+  outcomeOverrides?: Record<string, OutcomeTaughtStatus>;
   createdAt: string;
   updatedAt: string;
 }
@@ -149,6 +181,12 @@ export interface SOWLesson {
   wilf: string;
   activities: string;
   resources: string[];
+  deliveryStatus?: LessonDeliveryStatus;
+  plannedDate?: string;
+  deliveredDate?: string;
+  reflection?: string;
+  taughtOutcomeIds?: string[];
+  outcomeOverrides?: Record<string, OutcomeTaughtStatus>;
 }
 
 export interface SchemeOfWork {
@@ -168,6 +206,7 @@ export interface SchemeOfWork {
   lessons: SOWLesson[];
   pedagogicalModels?: PedagogicalModelId[];
   scope?: CollaborationScope;
+  status?: SchemeStatus;
   createdAt: string;
   updatedAt: string;
   /** @deprecated Migrated to lessons */

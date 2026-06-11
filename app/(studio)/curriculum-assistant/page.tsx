@@ -35,6 +35,7 @@ export default function CurriculumAssistantPage() {
       teacherContext: context,
       lessons: data.lessons,
       schemes: data.schemes,
+      calendar: data.calendar,
       activeScheme,
     });
     setResponse(result);

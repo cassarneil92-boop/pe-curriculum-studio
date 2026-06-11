@@ -22,6 +22,7 @@ import { useTeacherContext } from "@/hooks/useTeacherContext";
 import { getDefaultHubPathways } from "@/lib/curriculum-hub/pathway-defaults";
 import { DEFAULT_YEAR_GROUP_ID, getPathwayLabel } from "@/lib/constants";
 import { getTopicTheme } from "@/lib/design/topic-theme";
+import { syncSchemeStatus } from "@/lib/progress/delivery";
 import { buildSchemeExportHtml } from "@/lib/export";
 import { parseHubPathwaysFromQuery } from "@/lib/curriculum-hub/planning-links";
 import { SOW_TERMS } from "@/lib/scheme-builder/constants";
@@ -484,10 +485,11 @@ export default function SchemesPage() {
 
   const handleSave = () => {
     if (!draft) return;
+    const payload = syncSchemeStatus(draft);
     if (editingId) {
-      updateScheme(editingId, draft);
+      updateScheme(editingId, payload);
     } else {
-      addScheme(draft);
+      addScheme(payload);
     }
     closeBuilder();
   };
@@ -683,6 +685,7 @@ export default function SchemesPage() {
                 {alignmentReady && activeLesson ? (
                   <SchemeLessonEditor
                     lesson={activeLesson}
+                    onLessonChange={(next) => updateLesson(activeLessonIndex, next)}
                     onRemoveOutcome={(id) =>
                       updateLesson(activeLessonIndex, removeOutcomeFromLesson(activeLesson, id))
                     }

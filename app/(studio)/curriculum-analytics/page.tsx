@@ -1,66 +1,78 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useApp } from "@/components/providers/AppProvider";
 import { CoverageBar } from "@/components/intelligence/CoverageBar";
 import { CoverageHeatmap } from "@/components/intelligence/CoverageHeatmap";
 import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { buildCurriculumAnalytics } from "@/src/lib/intelligence/analytics/coverage-analytics";
+import {
+  buildCurriculumAnalytics,
+  type CoverageMode,
+} from "@/src/lib/intelligence/analytics/coverage-analytics";
+
+const MODE_LABELS: Record<CoverageMode, string> = {
+  planned: "Planned coverage",
+  taught: "Taught coverage",
+  remaining: "Remaining to teach",
+};
 
 export default function CurriculumAnalyticsPage() {
   const { data } = useApp();
+  const [mode, setMode] = useState<CoverageMode>("taught");
 
   const report = useMemo(
-    () => buildCurriculumAnalytics(data.lessons, data.schemes),
-    [data.lessons, data.schemes]
+    () => buildCurriculumAnalytics(data.lessons, data.schemes, undefined, mode, data.calendar),
+    [data.lessons, data.schemes, data.calendar, mode]
   );
 
   return (
     <div>
       <PageHeader
-        title="Curriculum Analytics"
-        description="Coverage intelligence from your saved lessons and schemes — compared against the full planning curriculum."
+        title="Coverage Tracker"
+        description="See what you have planned, what you have delivered, and what is still left to teach."
       />
 
-      <p className="mb-6 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
-        Analytics reflect <strong>outcomes you have selected</strong> in lesson plans and schemes.
-        Official curriculum wording is never modified.{" "}
-        <Link href="/curriculum-coverage" className="font-medium text-teal-700 hover:underline">
-          Curriculum Coverage
-        </Link>{" "}
-        audits imported metadata quality separately.
+      <p className="mb-4 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
+        Only lessons marked <strong>delivered</strong> count as taught. Planned lessons and schemes
+        show intended coverage only. Official curriculum wording is never modified.
       </p>
 
+      <div className="mb-6 flex flex-wrap gap-2">
+        {(["planned", "taught", "remaining"] as CoverageMode[]).map((value) => (
+          <Button
+            key={value}
+            variant={mode === value ? "primary" : "secondary"}
+            onClick={() => setMode(value)}
+          >
+            {MODE_LABELS[value]}
+          </Button>
+        ))}
+      </div>
+
       <section className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <SummaryCard label="Overall taught coverage" value={`${report.summary.overallCoveragePercent}%`} />
-        <SummaryCard label="Outcomes in plans" value={String(report.summary.taughtOutcomeIds)} />
-        <SummaryCard label="Lessons analysed" value={String(report.summary.lessonsAnalysed)} />
-        <SummaryCard label="Schemes analysed" value={String(report.summary.schemesAnalysed)} />
+        <SummaryCard label="Planned outcomes" value={String(report.summary.plannedOutcomeIds)} />
+        <SummaryCard label="Taught outcomes" value={String(report.summary.taughtOutcomeIds)} />
+        <SummaryCard label="Remaining outcomes" value={String(report.summary.remainingOutcomeIds)} />
+        <SummaryCard
+          label={`${MODE_LABELS[mode]} %`}
+          value={`${report.summary.overallCoveragePercent}%`}
+        />
       </section>
 
-      {report.overrepresented.length > 0 && (
-        <Card className="mb-6 border-teal-100 bg-teal-50/30">
-          <CardHeader title="Overrepresented topics" description="High teaching frequency relative to curriculum breadth." />
-          <div className="flex flex-wrap gap-2">
-            {report.overrepresented.map((s) => (
-              <Badge key={s.id} tone="teal">
-                {s.label} {s.coveragePercent}%
-              </Badge>
-            ))}
-          </div>
-        </Card>
-      )}
-
-      {report.underrepresented.length > 0 && (
+      {report.underrepresented.length > 0 && mode !== "planned" && (
         <Card className="mb-6 border-amber-100 bg-amber-50/30">
-          <CardHeader title="Underrepresented topics" description="Curriculum gaps in your current planning." />
+          <CardHeader
+            title="Topics needing attention"
+            description="Low coverage in your current teaching context."
+          />
           <div className="flex flex-wrap gap-2">
             {report.underrepresented.map((s) => (
               <Badge key={s.id} tone="amber">
-                {s.label} {s.coveragePercent}%
+                {s.label}: {s.modeCount ?? 0}/{s.totalOutcomes}
               </Badge>
             ))}
           </div>
@@ -69,7 +81,7 @@ export default function CurriculumAnalyticsPage() {
 
       <div className="mb-8 grid gap-6 lg:grid-cols-2">
         <Card>
-          <CardHeader title="Topic coverage" />
+          <CardHeader title="Topic coverage" description={MODE_LABELS[mode]} />
           <div className="space-y-4">
             {report.byTopic.slice(0, 12).map((slice) => (
               <CoverageBar key={slice.id} slice={slice} />
@@ -113,6 +125,14 @@ export default function CurriculumAnalyticsPage() {
           </div>
         </Card>
       </div>
+
+      <p className="mt-8 text-sm text-slate-500">
+        Metadata quality checks live under{" "}
+        <Link href="/settings" className="font-medium text-teal-700 hover:underline">
+          Settings → Advanced tools
+        </Link>
+        .
+      </p>
     </div>
   );
 }

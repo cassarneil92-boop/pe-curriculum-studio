@@ -7,7 +7,8 @@ import {
   getSkillDisplayName,
   getTopicDisplayName,
 } from "@/lib/scheme-builder/curriculum-options";
-import { getLearningOutcomeById, getPathwayById } from "@/src/lib/curriculum";
+import { getPathwayById } from "@/src/lib/curriculum";
+import { resolveLearningOutcomeById } from "@/src/lib/curriculum/metadata";
 
 const CURRICULUM_TO_APP: Partial<Record<string, PathwayId>> = {
   "early-years-pe": "early-years-pe",
@@ -90,7 +91,7 @@ export function buildLessonExportFilename(lesson: LessonPlan): string {
 
 export function getLessonOutcomes(lesson: LessonPlan) {
   return lesson.selectedLearningOutcomeIds
-    .map((id) => getLearningOutcomeById(id))
+    .map((id) => resolveLearningOutcomeById(id))
     .filter(Boolean);
 }
 

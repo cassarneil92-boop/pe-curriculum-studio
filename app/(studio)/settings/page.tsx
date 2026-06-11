@@ -9,7 +9,9 @@ import { Card, CardHeader } from "@/components/ui/Card";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { ContextualYearGroupPicker } from "@/components/shared/ContextualYearGroupPicker";
 import { useTeacherContext } from "@/hooks/useTeacherContext";
-import { PATHWAYS } from "@/lib/constants";
+import Link from "next/link";
+import { ADVANCED_NAV_ITEMS, PATHWAYS } from "@/lib/constants";
+import { NavIcon } from "@/components/layout/NavIcon";
 import {
   buildTeacherContext,
   pruneYearGroupsForPathways,
@@ -166,6 +168,27 @@ export default function SettingsPage() {
             <Badge tone="teal">PDF</Badge>
             <Badge tone="teal">Editable Word</Badge>
             <Badge tone="teal">Printable</Badge>
+          </div>
+        </Card>
+
+        <Card>
+          <CardHeader
+            title="Advanced tools"
+            description="Technical curriculum tools for metadata checks and alignment testing."
+          />
+          <div className="space-y-2">
+            {ADVANCED_NAV_ITEMS.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="flex items-center gap-3 rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-700 transition-colors hover:border-teal-200 hover:bg-teal-50/40"
+              >
+                <span className="text-teal-700">
+                  <NavIcon name={item.icon} />
+                </span>
+                {item.label}
+              </Link>
+            ))}
           </div>
         </Card>
 

@@ -123,18 +123,18 @@ export const NAV_ITEMS = [
   { href: "/lessons", label: "Lesson Plans", icon: "lessons" },
   { href: "/lesson-builder", label: "Lesson Builder", icon: "builder" },
   { href: "/schemes", label: "Schemes of Work", icon: "schemes" },
-  { href: "/curriculum", label: "Curriculum Hub", icon: "curriculum" },
-  { href: "/curriculum-analytics", label: "Curriculum Analytics", icon: "analytics" },
-  { href: "/curriculum-assistant", label: "Curriculum Assistant", icon: "assistant" },
-  { href: "/curriculum-tester", label: "Curriculum Tester", icon: "tester" },
-  { href: "/curriculum-coverage", label: "Curriculum Coverage", icon: "coverage" },
-  {
-    href: "/curriculum-visibility-audit",
-    label: "Visibility Audit",
-    icon: "audit",
-  },
+  { href: "/curriculum", label: "Browse Curriculum", icon: "curriculum" },
+  { href: "/curriculum-analytics", label: "Coverage Tracker", icon: "analytics" },
+  { href: "/curriculum-assistant", label: "Planning Assistant", icon: "assistant" },
   { href: "/resources", label: "Resources", icon: "resources" },
   { href: "/settings", label: "Settings", icon: "settings" },
+] as const;
+
+/** Technical curriculum tools — linked from Settings, routes preserved. */
+export const ADVANCED_NAV_ITEMS = [
+  { href: "/curriculum-tester", label: "Curriculum Tester", icon: "tester" },
+  { href: "/curriculum-coverage", label: "Curriculum Coverage", icon: "coverage" },
+  { href: "/curriculum-visibility-audit", label: "Visibility Audit", icon: "audit" },
 ] as const;
 
 export function getPathwayLabel(id: PathwayId): string {

@@ -7,11 +7,13 @@ import {
   wilfLines,
 } from "@/lib/scheme-builder/lesson-actions";
 import { SchemeLearningOutcomeCard } from "@/components/scheme-builder/SchemeLearningOutcomeCard";
+import { SchemeLessonDeliveryControls } from "@/components/progress/SchemeLessonDeliveryControls";
 import { resolveSchemeLearningOutcomes } from "@/lib/scheme-builder/helpers";
 import type { SOWLesson } from "@/lib/types";
 
 interface SchemeLessonEditorProps {
   lesson: SOWLesson;
+  onLessonChange?: (lesson: SOWLesson) => void;
   onRemoveOutcome: (id: string) => void;
   onRemoveWalt: (text: string) => void;
   onEditWalt: (oldText: string, newText: string) => void;
@@ -156,6 +158,7 @@ function RemovableChip({
 
 export function SchemeLessonEditor({
   lesson,
+  onLessonChange,
   onRemoveOutcome,
   onRemoveWalt,
   onEditWalt,
@@ -180,6 +183,10 @@ export function SchemeLessonEditor({
             : `Lesson ${lesson.lessonNumber}`}
         </p>
       </div>
+
+      {onLessonChange && (
+        <SchemeLessonDeliveryControls lesson={lesson} onChange={onLessonChange} />
+      )}
 
       <Section
         title="Learning Outcomes"

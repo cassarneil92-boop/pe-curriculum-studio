@@ -1,3 +1,4 @@
+import { migrateLessonProgress } from "@/lib/progress/migrate";
 import { appPathwayToCurriculum } from "@/lib/scheme-builder/pathway-map";
 import { migrateYearGroupValue } from "@/lib/year-groups";
 import type { LessonActivity, LessonPlan, PathwayId } from "@/lib/types";
@@ -125,7 +126,7 @@ function clearBuilderStorage(): void {
 }
 
 export function migrateLessons(lessons: LegacyLessonPlan[]): LessonPlan[] {
-  const migrated = lessons.map(migrateLegacyLesson);
+  const migrated = lessons.map((lesson) => migrateLessonProgress(migrateLegacyLesson(lesson)));
   const existingIds = new Set(migrated.map((lesson) => lesson.id));
   const fromBuilder = loadBuilderStoragePlans().filter(
     (plan) => !existingIds.has(plan.id)

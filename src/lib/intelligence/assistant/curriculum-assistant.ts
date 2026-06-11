@@ -1,4 +1,4 @@
-import type { LessonPlan, SchemeOfWork } from "@/lib/types";
+import type { CalendarEntry, LessonPlan, SchemeOfWork } from "@/lib/types";
 import { getPlanningOutcomes, getPlanningTopicDisplayName } from "@/src/lib/curriculum/planning";
 import { getPlanningOutcomeSuggestions } from "@/src/lib/curriculum/planning";
 import type { TeacherContextSnapshot } from "@/lib/teacher-context";
@@ -42,6 +42,7 @@ export function queryCurriculumAssistant(
     teacherContext: TeacherContextSnapshot;
     lessons: LessonPlan[];
     schemes: SchemeOfWork[];
+    calendar?: CalendarEntry[];
     activeScheme?: SchemeOfWork;
   }
 ): AssistantResponse {
@@ -117,10 +118,16 @@ export function queryCurriculumAssistant(
 
   // Coverage overview
   if (q.includes("coverage") || q.includes("analytics")) {
-    const report = buildCurriculumAnalytics(context.lessons, context.schemes);
+    const report = buildCurriculumAnalytics(
+      context.lessons,
+      context.schemes,
+      undefined,
+      "taught",
+      context.calendar ?? []
+    );
     const topGaps = report.underrepresented.slice(0, 5);
-    answer = `Overall taught coverage: **${report.summary.overallCoveragePercent}%** (${report.summary.taughtOutcomeIds} outcomes across ${report.summary.lessonsAnalysed} lessons and ${report.summary.schemesAnalysed} schemes).\n\nUnderrepresented topics:\n${topGaps.map((t) => `• ${t.label}: ${t.coveragePercent}%`).join("\n") || "None identified yet."}`;
-    suggestions.push("Open Curriculum Analytics for full heat maps and pathway breakdown.");
+    answer = `Taught coverage: **${report.summary.overallCoveragePercent}%** (${report.summary.taughtOutcomeIds} delivered outcomes). Planned: ${report.summary.plannedOutcomeIds}. Remaining: ${report.summary.remainingOutcomeIds}.\n\nUnderrepresented topics:\n${topGaps.map((t) => `• ${t.label}: ${t.coveragePercent}%`).join("\n") || "None identified yet."}`;
+    suggestions.push("Open Coverage Tracker for full heat maps and pathway breakdown.");
     return { answer, relatedOutcomeCodes, relatedTopicIds, suggestions };
   }
 

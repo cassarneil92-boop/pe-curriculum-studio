@@ -10,6 +10,8 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { DeliveryStatusBadge } from "@/components/progress/DeliveryStatusBadge";
+import { LessonDeliveryControls } from "@/components/progress/DeliveryControls";
 import { useApp } from "@/components/providers/AppProvider";
 import { getTopicTheme } from "@/lib/design/topic-theme";
 import {
@@ -28,7 +30,7 @@ type LibraryView = "grid" | "preview";
 
 export default function LessonsPage() {
   const router = useRouter();
-  const { data, addLesson, deleteLesson } = useApp();
+  const { data, addLesson, updateLesson, deleteLesson } = useApp();
   const [view, setView] = useState<LibraryView>("grid");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [printOnLoad, setPrintOnLoad] = useState(false);
@@ -93,6 +95,16 @@ export default function LessonsPage() {
             </Button>
           </div>
         </div>
+
+        <Card className="no-print mb-6 p-4">
+          <p className="mb-2 text-sm font-semibold text-slate-800">Lesson progress</p>
+          <DeliveryStatusBadge status={selectedLesson.deliveryStatus} />
+          <LessonDeliveryControls
+            lesson={selectedLesson}
+            status={selectedLesson.deliveryStatus}
+            onChange={(patch) => updateLesson(selectedLesson.id, patch)}
+          />
+        </Card>
 
         <LessonPreview lesson={selectedLesson} />
       </div>
@@ -181,6 +193,7 @@ function LessonLibraryCard({
         </div>
 
         <div className="mt-3 flex flex-wrap gap-1.5">
+          <DeliveryStatusBadge status={lesson.deliveryStatus} />
           <Badge tone="teal">{getLessonPathwayLabel(lesson)}</Badge>
           <Badge tone="slate">{topicName}</Badge>
           <Badge tone="blue">{getLessonSkillName(lesson)}</Badge>
