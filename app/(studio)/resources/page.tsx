@@ -14,7 +14,6 @@ import {
   normaliseResourceCategory,
   RESOURCE_CATEGORIES,
 } from "@/lib/resources/categories";
-import { getTopicDisplayName } from "@/lib/scheme-builder/curriculum-options";
 import { getYearGroupLabel } from "@/lib/year-groups";
 import type { PathwayId, ResourceItem, ResourceVisibilityLevel, YearGroup } from "@/lib/types";
 
@@ -26,7 +25,7 @@ export default function ResourcesPage() {
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [pathwayFilter, setPathwayFilter] = useState("");
   const [yearFilter, setYearFilter] = useState("");
-  const [topicFilter, setTopicFilter] = useState("");
+  const [sportFilter, setSportFilter] = useState("");
   const [form, setForm] = useState({
     title: "",
     category: "lesson-cards",
@@ -64,19 +63,10 @@ export default function ResourcesPage() {
         return false;
       if (pathwayFilter && r.pathway !== pathwayFilter) return false;
       if (yearFilter && r.yearGroup !== yearFilter) return false;
-      if (topicFilter && r.topicId !== topicFilter && r.sport !== topicFilter) return false;
+      if (sportFilter && r.sport !== sportFilter && r.topicId !== sportFilter) return false;
       return true;
     });
-  }, [data.resources, search, categoryFilter, pathwayFilter, yearFilter, topicFilter]);
-
-  const topicOptions = useMemo(() => {
-    const topics = new Set<string>();
-    for (const r of data.resources) {
-      if (r.topicId) topics.add(r.topicId);
-      else if (r.sport) topics.add(r.sport);
-    }
-    return [...topics].sort();
-  }, [data.resources]);
+  }, [data.resources, search, categoryFilter, pathwayFilter, yearFilter, sportFilter]);
 
   const handleFiles = (files: FileList | null) => {
     if (!files || files.length === 0) return;
@@ -186,11 +176,11 @@ export default function ResourcesPage() {
               </option>
             ))}
           </Select>
-          <Select value={topicFilter} onChange={(e) => setTopicFilter(e.target.value)}>
-            <option value="">All topics</option>
-            {topicOptions.map((t) => (
-              <option key={t} value={t}>
-                {getTopicDisplayName(t) || t}
+          <Select value={sportFilter} onChange={(e) => setSportFilter(e.target.value)}>
+            <option value="">All sports</option>
+            {SPORTS.map((s) => (
+              <option key={s} value={s}>
+                {s}
               </option>
             ))}
           </Select>
@@ -375,6 +365,18 @@ function SummaryCard({ label, value }: { label: string; value: string }) {
   );
 }
 
+function formatAddedDate(iso: string): string {
+  try {
+    return new Date(iso).toLocaleDateString("en-GB", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
+  } catch {
+    return "";
+  }
+}
+
 function ResourceCard({
   resource,
   onDelete,
@@ -383,46 +385,65 @@ function ResourceCard({
   onDelete: () => void;
 }) {
   const title = resource.title ?? resource.name;
-  const outcomeCount = resource.learningOutcomeIds?.length ?? 0;
-  const topic = resource.topicId
-    ? getTopicDisplayName(resource.topicId)
-    : resource.sport || "General";
+  const tags = [
+    ...(resource.keywords ?? []),
+    resource.sport,
+    resource.pathway ? getPathwayLabel(resource.pathway) : "",
+  ].filter(Boolean);
+
+  const canPreview = Boolean(resource.externalLink);
+  const canDownload = Boolean(resource.fileName);
 
   return (
     <Card className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
       <div className="min-w-0 flex-1">
-        <p className="font-medium text-slate-900">{title}</p>
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <p className="font-medium text-slate-900">{title}</p>
+          {resource.createdAt && (
+            <p className="text-[10px] text-slate-400">{formatAddedDate(resource.createdAt)}</p>
+          )}
+        </div>
         <div className="mt-2 flex flex-wrap gap-1.5">
           <Badge tone="purple">{getResourceCategoryLabel(resource.category)}</Badge>
           {resource.yearGroup && (
             <Badge tone="slate">{getYearGroupLabel(resource.yearGroup)}</Badge>
           )}
-          <Badge tone="teal">{topic}</Badge>
-          {outcomeCount > 0 && (
-            <Badge tone="blue">{outcomeCount} linked outcome{outcomeCount === 1 ? "" : "s"}</Badge>
-          )}
         </div>
+        {tags.length > 0 && (
+          <div className="mt-2 flex flex-wrap gap-1">
+            {tags.map((tag) => (
+              <span
+                key={tag}
+                className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] text-slate-600"
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
+        )}
         {resource.notes && (
           <p className="mt-2 line-clamp-2 text-xs text-slate-500">{resource.notes}</p>
         )}
       </div>
-      <div className="flex shrink-0 flex-wrap gap-2">
-        {resource.externalLink && (
-          <a
-            href={resource.externalLink}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-xs font-medium text-teal-700 hover:text-teal-800"
-          >
-            Open link
+      <div className="flex shrink-0 flex-wrap items-center gap-1">
+        {canPreview && (
+          <a href={resource.externalLink} target="_blank" rel="noopener noreferrer">
+            <Button variant="ghost" className="h-8 text-xs">
+              Preview
+            </Button>
           </a>
         )}
-        {resource.fileName && (
-          <span className="text-xs text-slate-500" title={resource.fileName}>
-            {resource.fileName}
-          </span>
+        {canDownload && (
+          <Button
+            variant="ghost"
+            className="h-8 text-xs"
+            title={`File: ${resource.fileName} — re-upload to download`}
+            disabled
+          >
+            Download
+          </Button>
         )}
-        <Button variant="ghost" className="text-xs text-rose-600" onClick={onDelete}>
+        <Button variant="ghost" className="h-8 text-xs text-rose-600" onClick={onDelete}>
           Delete
         </Button>
       </div>

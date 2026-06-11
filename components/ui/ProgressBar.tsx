@@ -15,6 +15,8 @@ interface ProgressBarProps {
   value: number;
   max?: number;
   label?: string;
+  /** e.g. "4 / 6 delivered" shown beside the bar */
+  fractionLabel?: string;
   variant?: ProgressVariant;
   showPercent?: boolean;
   className?: string;
@@ -24,6 +26,7 @@ export function ProgressBar({
   value,
   max = 100,
   label,
+  fractionLabel,
   variant = "teal",
   showPercent = true,
   className = "",
@@ -33,10 +36,12 @@ export function ProgressBar({
 
   return (
     <div className={className}>
-      {(label || showPercent) && (
+      {(label || fractionLabel || showPercent) && (
         <div className="mb-1 flex items-center justify-between gap-2 text-xs">
           {label && <span className="font-medium text-slate-600">{label}</span>}
-          {showPercent && <span className="text-slate-500">{percent}%</span>}
+          <span className="text-slate-500">
+            {fractionLabel ?? (showPercent ? `${percent}%` : "")}
+          </span>
         </div>
       )}
       <div className="h-2 overflow-hidden rounded-full bg-slate-100">

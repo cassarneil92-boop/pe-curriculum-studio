@@ -9,7 +9,10 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { ProgressBar } from "@/components/ui/ProgressBar";
+import { buildSchemeProgressSummary } from "@/lib/progress/summary";
 import { buildTeachingWarnings } from "@/lib/progress/warnings";
+import { schemeDisplayTitle } from "@/lib/scheme-builder/helpers";
 import {
   buildCurriculumAnalytics,
   type CoverageMode,
@@ -97,11 +100,48 @@ export default function CurriculumAnalyticsPage() {
         <SummaryCard label="Planned outcomes" value={String(report.summary.plannedOutcomeIds)} />
         <SummaryCard label="Taught outcomes" value={String(report.summary.taughtOutcomeIds)} />
         <SummaryCard label="Remaining outcomes" value={String(report.summary.remainingOutcomeIds)} />
-        <SummaryCard
-          label={`${MODE_LABELS[mode]} %`}
-          value={`${report.summary.overallCoveragePercent}%`}
-        />
+        <Card>
+          <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+            {MODE_LABELS[mode]}
+          </p>
+          <p className="mt-1 text-2xl font-semibold text-slate-900">
+            {report.summary.overallCoveragePercent}%
+          </p>
+          <ProgressBar
+            className="mt-3"
+            value={report.summary.overallCoveragePercent}
+            max={100}
+            showPercent={false}
+            variant="teal"
+          />
+        </Card>
       </section>
+
+      {data.schemes.length > 0 && (
+        <Card className="mb-8">
+          <CardHeader title="Scheme progress" description="Lessons delivered per scheme of work." />
+          <div className="space-y-4">
+            {data.schemes.slice(0, 8).map((scheme) => {
+              const summary = buildSchemeProgressSummary(scheme);
+              const percent =
+                summary.totalLessons > 0
+                  ? Math.round((summary.deliveredLessons / summary.totalLessons) * 100)
+                  : 0;
+              return (
+                <ProgressBar
+                  key={scheme.id}
+                  label={schemeDisplayTitle(scheme)}
+                  value={summary.deliveredLessons}
+                  max={summary.totalLessons || 1}
+                  fractionLabel={`${summary.deliveredLessons} / ${summary.totalLessons} · ${percent}%`}
+                  showPercent={false}
+                  variant={percent >= 80 ? "green" : "teal"}
+                />
+              );
+            })}
+          </div>
+        </Card>
+      )}
 
       {report.underrepresented.length > 0 && mode !== "planned" && (
         <Card className="mb-6 border-amber-100 bg-amber-50/30">

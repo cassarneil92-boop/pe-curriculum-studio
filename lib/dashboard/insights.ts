@@ -76,3 +76,60 @@ export function buildDashboardAttention(
 ) {
   return buildTeachingWarnings(lessons, schemes, calendar).slice(0, 5);
 }
+
+export interface UpcomingLesson {
+  id: string;
+  title: string;
+  date: string;
+  time: string;
+  classGroup: string;
+}
+
+export function buildUpcomingLessons(
+  calendar: CalendarEntry[],
+  today: string,
+  limit = 5
+): UpcomingLesson[] {
+  return calendar
+    .filter((e) => e.startDate && e.startDate >= today)
+    .sort((a, b) => {
+      const dateCmp = a.startDate.localeCompare(b.startDate);
+      if (dateCmp !== 0) return dateCmp;
+      return (a.startTime ?? "").localeCompare(b.startTime ?? "");
+    })
+    .slice(0, limit)
+    .map((e) => ({
+      id: e.id,
+      title: e.title,
+      date: e.startDate,
+      time: e.startTime ? `${e.startTime}${e.endTime ? `–${e.endTime}` : ""}` : "All day",
+      classGroup: e.classGroup ?? "",
+    }));
+}
+
+export interface DashboardCurrentScheme {
+  schemeId: string;
+  title: string;
+  completedLessons: number;
+  totalLessons: number;
+}
+
+export function buildDashboardCurrentScheme(
+  schemes: SchemeOfWork[],
+  calendar: CalendarEntry[],
+  today: string
+): DashboardCurrentScheme | null {
+  const unit = buildDashboardCurrentUnit(schemes, calendar, today);
+  if (!unit) return null;
+
+  const blocks = buildTermUnitBlocks(schemes, calendar);
+  const current = currentUnitBlock(blocks, today);
+  if (!current) return null;
+
+  return {
+    schemeId: current.schemeId,
+    title: unit.title,
+    completedLessons: unit.deliveredLessons,
+    totalLessons: unit.totalLessons,
+  };
+}

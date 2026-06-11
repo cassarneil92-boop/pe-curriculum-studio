@@ -8,6 +8,7 @@ import { useTeacherContext } from "@/hooks/useTeacherContext";
 import { BRAND_FOOTER, BRAND_PATHS } from "@/lib/brand/constants";
 import { NAV_SECTIONS } from "@/lib/constants";
 import { getPathwayLabel } from "@/lib/constants";
+import { getTeacherGreetingName } from "@/lib/design/greeting";
 import { resolveSchoolDisplayName } from "@/src/lib/schools";
 import { NavIcon } from "./NavIcon";
 
@@ -19,28 +20,29 @@ export function Sidebar() {
     data.teacher.school,
     data.teacher.manualSchoolName
   );
+  const displayName = getTeacherGreetingName(data.teacher);
 
   return (
     <aside className="app-sidebar no-print flex w-64 shrink-0 flex-col bg-[#0F766E] text-white">
       <Link
         href="/"
-        className="border-b border-white/10 px-4 py-5 transition-colors hover:bg-white/5"
+        className="border-b border-white/10 px-4 py-4 transition-colors hover:bg-white/5"
       >
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5">
           <Image
             src={BRAND_PATHS.icon}
             alt=""
-            width={40}
-            height={40}
-            className="h-10 w-10 shrink-0 rounded-xl object-contain"
+            width={36}
+            height={36}
+            className="h-9 w-9 shrink-0 rounded-lg object-contain"
             priority
           />
-          <div className="min-w-0">
-            <p className="text-sm font-semibold leading-snug tracking-tight text-white">
-              PE Curriculum
+          <div className="min-w-0 leading-tight">
+            <p className="text-[9px] font-semibold uppercase tracking-[0.2em] text-teal-100/50">
+              Malta
             </p>
-            <p className="text-sm font-semibold leading-snug tracking-tight text-white/90">
-              Studio
+            <p className="text-[13px] font-semibold tracking-tight text-white/95">
+              PE Curriculum Studio
             </p>
           </div>
         </div>
@@ -92,20 +94,23 @@ export function Sidebar() {
 
       <div className="border-t border-white/10 px-4 py-4">
         <div className="rounded-2xl bg-white/10 px-4 py-3 backdrop-blur-sm">
-          <p className="truncate text-sm font-medium text-white">
-            {schoolName || "Your school"}
+          <p className="truncate text-sm font-medium text-white">{displayName}</p>
+          <p className="mt-0.5 truncate text-xs text-teal-100/80">
+            {data.teacher.role?.trim() || context.roleLabel}
           </p>
-          <p className="mt-0.5 text-xs text-teal-100/80">{context.roleLabel}</p>
+          {schoolName && (
+            <p className="mt-1 truncate text-xs text-teal-50/70">{schoolName}</p>
+          )}
           {data.teacher.pathways[0] && (
-            <p className="mt-2 truncate text-xs text-teal-50/70">
+            <p className="mt-1 truncate text-xs text-teal-50/60">
               {getPathwayLabel(data.teacher.pathways[0])}
             </p>
           )}
         </div>
       </div>
 
-      <div className="border-t border-white/10 px-6 py-4">
-        <p className="text-[11px] text-teal-100/60">{BRAND_FOOTER}</p>
+      <div className="border-t border-white/10 px-6 py-3">
+        <p className="text-[10px] text-teal-100/50">{BRAND_FOOTER}</p>
       </div>
     </aside>
   );

@@ -83,6 +83,12 @@ export interface TimetableSlot {
 export type ResourceVisibilityLevel = "private" | "department" | "public-ready";
 
 export interface TeacherProfile {
+  /** Full name */
+  name?: string;
+  /** Shown in dashboard greeting */
+  preferredDisplayName?: string;
+  role?: string;
+  email?: string;
   educationalSetting: EducationalSetting | "";
   college: string;
   school: string;

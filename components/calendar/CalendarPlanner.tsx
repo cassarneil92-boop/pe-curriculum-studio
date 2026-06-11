@@ -61,10 +61,6 @@ export function CalendarPlanner({
     addCalendarEntry,
     updateCalendarEntry,
     deleteCalendarEntry,
-    updateScheme,
-    updatePlanningTerm,
-    addPlanningTerm,
-    removePlanningTerm,
   } = useApp();
   const { setCalendarDelivery } = useDeliverySync();
 
@@ -217,12 +213,6 @@ export function CalendarPlanner({
             <CalendarPlanningTermsView
               terms={planningTerms}
               schemes={data.schemes}
-              onUpdateTerm={updatePlanningTerm}
-              onAddTerm={addPlanningTerm}
-              onRemoveTerm={removePlanningTerm}
-              onMoveScheme={(schemeId, termName) =>
-                updateScheme(schemeId, { term: termName })
-              }
               onOpenScheme={() => router.push("/schemes")}
             />
           )}
