@@ -11,15 +11,22 @@ import {
 } from "./scheme-builder/helpers";
 import { getYearGroupLabel } from "./year-groups";
 
+const SCHEME_FOOTER = "PE Curriculum Studio © Neil Cassar";
+
 function baseStyles(): string {
   return `
-    body { font-family: Georgia, serif; color: #1e293b; line-height: 1.6; max-width: 800px; margin: 2rem auto; padding: 0 1.5rem; }
-    h1 { font-size: 1.5rem; color: #0f766e; border-bottom: 2px solid #99f6e4; padding-bottom: 0.5rem; }
-    h2 { font-size: 1.1rem; margin-top: 1.5rem; color: #334155; }
-    .meta { color: #64748b; font-size: 0.9rem; margin-bottom: 1.5rem; }
-    ul { padding-left: 1.25rem; }
+    @page { size: A4; margin: 18mm 15mm 22mm; }
+    body { font-family: Calibri, Arial, sans-serif; color: #1e293b; line-height: 1.55; max-width: 210mm; margin: 0 auto; padding: 1.5rem; }
+    h1 { font-size: 1.35rem; color: #0f766e; border-bottom: 2px solid #99f6e4; padding-bottom: 0.5rem; margin-bottom: 0.5rem; }
+    h2 { font-size: 1.05rem; margin-top: 1.25rem; color: #334155; }
+    .meta { color: #64748b; font-size: 0.88rem; margin-bottom: 1.25rem; }
+    ul, ol { padding-left: 1.25rem; }
     .section { margin-bottom: 1.25rem; }
-    @media print { body { margin: 0; } }
+    .doc-footer { margin-top: 2rem; padding-top: 0.75rem; border-top: 1px solid #cbd5e1; font-size: 0.75rem; color: #64748b; text-align: center; }
+    @media print {
+      body { margin: 0; padding: 0; }
+      .doc-footer { position: fixed; bottom: 8mm; left: 0; right: 0; border: none; }
+    }
   `;
 }
 
@@ -52,15 +59,17 @@ export function buildSchemeExportHtml(scheme: SchemeOfWork): string {
     .join("");
 
   return `<!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word">
 <head>
   <meta charset="utf-8" />
   <title>${title}</title>
+  <!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View></w:WordDocument></xml><![endif]-->
   <style>
     ${baseStyles()}
-    table { width: 100%; border-collapse: collapse; margin-top: 0.5rem; }
-    th, td { border: 1px solid #cbd5e1; padding: 0.5rem; text-align: left; font-size: 0.9rem; vertical-align: top; }
-    th { background: #f0fdfa; }
+    table { width: 100%; border-collapse: collapse; margin-top: 0.5rem; page-break-inside: auto; }
+    tr { page-break-inside: avoid; page-break-after: auto; }
+    th, td { border: 1px solid #cbd5e1; padding: 0.45rem 0.5rem; text-align: left; font-size: 0.85rem; vertical-align: top; }
+    th { background: #f0fdfa; font-weight: 600; }
   </style>
 </head>
 <body>
@@ -86,6 +95,7 @@ export function buildSchemeExportHtml(scheme: SchemeOfWork): string {
       <tbody>${lessonsHtml}</tbody>
     </table>
   </div>
+  <p class="doc-footer">${SCHEME_FOOTER}</p>
 </body>
 </html>`;
 }

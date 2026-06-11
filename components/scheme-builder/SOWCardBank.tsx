@@ -26,6 +26,8 @@ import {
 import type { PathwayId, SOWLesson } from "@/lib/types";
 import type { LearningOutcome } from "@/src/lib/curriculum";
 
+type CardBankTab = "outcomes" | "walt" | "wilf" | "activities" | "resources";
+
 interface SOWCardBankProps {
   topicName: string;
   skillName: string;
@@ -34,21 +36,27 @@ interface SOWCardBankProps {
   lessons: SOWLesson[];
   selectedLessonIndex: number | null;
   onAddCard: (zone: SOWCardZone, payload: string) => void;
+  /** Vertical tabbed layout for the right planning assistant panel. */
+  compact?: boolean;
 }
 
 function ColumnShell({
   title,
   emoji,
   accent,
+  fullWidth = false,
   children,
 }: {
   title: string;
   emoji: string;
   accent: string;
+  fullWidth?: boolean;
   children: React.ReactNode;
 }) {
   return (
-    <div className={`flex min-w-[200px] flex-1 flex-col rounded-2xl border p-3 ${accent}`}>
+    <div
+      className={`flex flex-col rounded-2xl border p-3 ${fullWidth ? "w-full" : "min-w-[200px] flex-1"} ${accent}`}
+    >
       <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-700">
         {emoji} {title}
       </p>
@@ -147,7 +155,9 @@ export function SOWCardBank({
   lessons,
   selectedLessonIndex,
   onAddCard,
+  compact = false,
 }: SOWCardBankProps) {
+  const [activeTab, setActiveTab] = useState<CardBankTab>("outcomes");
   const disabled = selectedLessonIndex === null;
   const waltIdeas = buildWaltIdeas(topicName, skillName);
   const { strict, additional } = outcomeSuggestions;
@@ -159,6 +169,136 @@ export function SOWCardBank({
     if (disabled) return;
     onAddCard(zone, payload);
   };
+
+  const tabs: { id: CardBankTab; label: string }[] = [
+    { id: "outcomes", label: "LOs" },
+    { id: "walt", label: "WALT" },
+    { id: "wilf", label: "WILF" },
+    { id: "activities", label: "Activities" },
+    { id: "resources", label: "Resources" },
+  ];
+
+  if (compact) {
+    return (
+      <div>
+        <div className="mb-3 flex flex-wrap gap-1">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setActiveTab(tab.id)}
+              className={`rounded-lg px-2.5 py-1 text-xs font-medium transition-colors ${
+                activeTab === tab.id
+                  ? "bg-teal-600 text-white"
+                  : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {activeTab === "outcomes" && (
+          <ColumnShell title="Learning Outcomes" emoji="🎯" accent="border-teal-100 bg-teal-50/30" fullWidth>
+            {!hasOutcomes ? (
+              <p className="text-xs text-slate-500">Complete topic &amp; skill to see LOs.</p>
+            ) : (
+              <>
+                {hasStrict && (
+                  <OutcomeCards
+                    outcomes={strict}
+                    selectedPathways={selectedPathways}
+                    lessons={lessons}
+                    disabled={disabled}
+                    onAdd={(id) => handleAdd("outcomes", id)}
+                  />
+                )}
+                {hasAdditional && (
+                  <OutcomeCards
+                    outcomes={additional}
+                    selectedPathways={selectedPathways}
+                    lessons={lessons}
+                    disabled={disabled}
+                    onAdd={(id) => handleAdd("outcomes", id)}
+                  />
+                )}
+              </>
+            )}
+          </ColumnShell>
+        )}
+
+        {activeTab === "walt" && (
+          <ColumnShell title="WALT Ideas" emoji="💡" accent="border-blue-100 bg-blue-50/30" fullWidth>
+            {waltIdeas.map((idea) => (
+              <SOWPlanningCard
+                key={idea}
+                tone="blue"
+                title={idea}
+                used={isWaltUsedInLessons(lessons, idea)}
+                disabled={disabled}
+                onClick={() => handleAdd("walt", idea)}
+              />
+            ))}
+            <CustomCardInput placeholder="Custom WALT" onAdd={(value) => handleAdd("walt", value)} />
+          </ColumnShell>
+        )}
+
+        {activeTab === "wilf" && (
+          <ColumnShell title="WILF Ideas" emoji="✅" accent="border-purple-100 bg-purple-50/30" fullWidth>
+            {SOW_WILF_CARDS.map((idea) => (
+              <SOWPlanningCard
+                key={idea}
+                tone="purple"
+                title={idea}
+                used={isWilfUsedInLessons(lessons, idea)}
+                disabled={disabled}
+                onClick={() => handleAdd("wilf", idea)}
+              />
+            ))}
+            <CustomCardInput placeholder="Custom WILF" onAdd={(value) => handleAdd("wilf", value)} />
+          </ColumnShell>
+        )}
+
+        {activeTab === "activities" && (
+          <ColumnShell title="Activities" emoji="🏃" accent="border-amber-100 bg-amber-50/30" fullWidth>
+            {SOW_ACTIVITY_CARDS.map((activity) => (
+              <SOWPlanningCard
+                key={activity}
+                tone="amber"
+                title={activity}
+                used={isActivityUsedInLessons(lessons, activity)}
+                disabled={disabled}
+                onClick={() => handleAdd("activities", activity)}
+              />
+            ))}
+            <CustomCardInput
+              placeholder="Custom activity"
+              onAdd={(value) => handleAdd("activities", value)}
+            />
+          </ColumnShell>
+        )}
+
+        {activeTab === "resources" && (
+          <ColumnShell title="Resources" emoji="📦" accent="border-slate-200 bg-slate-50/50" fullWidth>
+            {SOW_RESOURCE_OPTIONS.map((resource) => (
+              <SOWPlanningCard
+                key={resource}
+                tone="green"
+                title={resource}
+                used={isResourceUsedInLessons(lessons, resource)}
+                disabled={disabled}
+                onClick={() => handleAdd("resources", resource)}
+              />
+            ))}
+            <CustomCardInput
+              placeholder="Custom resource"
+              onAdd={(value) => handleAdd("resources", value)}
+            />
+          </ColumnShell>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -173,7 +313,7 @@ export function SOWCardBank({
         </div>
       </div>
 
-      <div className="flex gap-3 overflow-x-auto pb-2">
+      <div className="flex flex-wrap gap-3 pb-2">
         <ColumnShell title="Learning Outcomes" emoji="🎯" accent="border-teal-100 bg-teal-50/30">
           {!hasOutcomes ? (
             <p className="text-xs text-slate-500">Complete topic &amp; skill to see LOs.</p>

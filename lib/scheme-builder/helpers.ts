@@ -112,3 +112,23 @@ export function getSkillName(skillId: string): string {
 export function getTopicName(topicId: string): string {
   return getTopicById(topicId)?.name ?? getTopicDisplayName(topicId);
 }
+
+export function buildSchemeExportFilename(
+  scheme: Pick<SchemeOfWork, "title" | "topicId" | "term" | "yearGroup">
+): string {
+  const title = schemeDisplayTitle(scheme);
+  const base = title.replace(/\s+/g, "-");
+  return base.replace(/[^a-zA-Z0-9-]/g, "").replace(/-+/g, "-") || "scheme-of-work";
+}
+
+export function lessonPreviewTitle(lesson: SOWLesson): string {
+  if (lesson.walt.trim()) {
+    const first = lesson.walt.split("\n")[0]?.trim() ?? "";
+    return first.length > 48 ? `${first.slice(0, 48)}…` : first;
+  }
+  if (lesson.learningOutcomeIds.length > 0) {
+    const outcome = getLearningOutcomeById(lesson.learningOutcomeIds[0]);
+    if (outcome) return outcome.code;
+  }
+  return `Lesson ${lesson.lessonNumber}`;
+}

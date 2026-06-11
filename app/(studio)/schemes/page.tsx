@@ -2,11 +2,17 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { SOWPlanningBoard } from "@/components/scheme-builder/SOWPlanningBoard";
+import { SchemeLessonEditor } from "@/components/scheme-builder/SchemeLessonEditor";
+import { SchemeLessonNavigator } from "@/components/scheme-builder/SchemeLessonNavigator";
+import { SchemePlanningAssistant } from "@/components/scheme-builder/SchemePlanningAssistant";
+import { SchemeViewToggle, type SchemeDisplayMode } from "@/components/scheme-builder/SchemeViewToggle";
 import { SOWPreviewTable } from "@/components/scheme-builder/SOWPreviewTable";
 import { SOWSchemeSetup } from "@/components/scheme-builder/SOWSchemeSetup";
+import { SOWScreenView } from "@/components/scheme-builder/SOWScreenView";
 import { useApp } from "@/components/providers/AppProvider";
 import { TopicIcon } from "@/components/design/TopicIcon";
+import { StickyActionBar } from "@/components/layout/StickyActionBar";
+import { ExportMenu } from "@/components/shared/ExportMenu";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -16,6 +22,7 @@ import { useTeacherContext } from "@/hooks/useTeacherContext";
 import { getDefaultHubPathways } from "@/lib/curriculum-hub/pathway-defaults";
 import { DEFAULT_YEAR_GROUP_ID, getPathwayLabel } from "@/lib/constants";
 import { getTopicTheme } from "@/lib/design/topic-theme";
+import { buildSchemeExportHtml } from "@/lib/export";
 import { parseHubPathwaysFromQuery } from "@/lib/curriculum-hub/planning-links";
 import { SOW_TERMS } from "@/lib/scheme-builder/constants";
 import {
@@ -27,27 +34,45 @@ import {
   resolveSchemeAppPathways,
   type PlanningOutcomeSuggestions,
 } from "@/lib/scheme-builder/curriculum-options";
+import { exportSchemeDocument } from "@/lib/scheme-builder/export";
 import {
+  buildSchemeExportFilename,
   createLessonsForCount,
   getSchemeSelectedPathways,
   getSkillName,
   getTopicName,
   lessonCountLabel,
+  lessonHasContent,
   schemeDisplayTitle,
   suggestedSchemeTitle,
   syncLessonsToCount,
 } from "@/lib/scheme-builder/helpers";
+import {
+  addActivityToLesson,
+  addOutcomeToLesson,
+  addResourceToLesson,
+  addWaltToLesson,
+  addWilfToLesson,
+  removeActivityFromLesson,
+  removeOutcomeFromLesson,
+  removeResourceFromLesson,
+  removeWaltFromLesson,
+  removeWilfFromLesson,
+  replaceActivityInLesson,
+  replaceResourceInLesson,
+  replaceWaltInLesson,
+  replaceWilfInLesson,
+  type SOWCardZone,
+} from "@/lib/scheme-builder/lesson-actions";
 import {
   isAppPathwayVisible,
   pickYearGroupForPathwayFilter,
   pickYearGroupForPathwaysFilter,
 } from "@/lib/teacher-context";
 import { getYearGroupLabel } from "@/lib/year-groups";
-import { AlignmentScoreCard } from "@/components/intelligence/AlignmentScoreCard";
+import { analyseSchemeCoaching } from "@/src/lib/intelligence/coach/scheme-coach";
 import { buildSchemeAdvisoryAlignment } from "@/src/lib/intelligence/advisory/scheme-alignment";
 import type { PathwayId, SchemeOfWork, SOWLesson, YearGroup } from "@/lib/types";
-
-type BuilderView = "build" | "preview";
 
 type SchemeDraft = Omit<SchemeOfWork, "id" | "createdAt" | "updatedAt">;
 
@@ -99,8 +124,10 @@ export default function SchemesPage() {
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draft, setDraft] = useState<SchemeDraft | null>(null);
-  const [builderView, setBuilderView] = useState<BuilderView>("build");
-  const [expandedListId, setExpandedListId] = useState<string | null>(null);
+  const [viewingScheme, setViewingScheme] = useState<SchemeOfWork | null>(null);
+  const [displayMode, setDisplayMode] = useState<SchemeDisplayMode>("screen");
+  const [activeLessonIndex, setActiveLessonIndex] = useState(0);
+  const [setupOpen, setSetupOpen] = useState(true);
 
   const draftPathways = useMemo(
     () => (draft ? resolveSchemeAppPathways(draft.selectedPathways, draft.pathway) : []),
@@ -137,6 +164,17 @@ export default function SchemesPage() {
     if (!draft || !alignmentReady) return null;
     return buildSchemeAdvisoryAlignment(draft, context);
   }, [draft, alignmentReady, context]);
+
+  const coaching = useMemo(() => {
+    if (!draft || !alignmentReady) return null;
+    const preview: SchemeOfWork = {
+      ...draft,
+      id: editingId ?? "preview",
+      createdAt: "",
+      updatedAt: "",
+    };
+    return analyseSchemeCoaching(preview, context);
+  }, [draft, alignmentReady, context, editingId]);
 
   const schemesByTerm = useMemo(() => {
     const map = new Map<string, SchemeOfWork[]>();
@@ -218,7 +256,9 @@ export default function SchemesPage() {
 
     setEditingId(null);
     setDraft(next);
-    setBuilderView("build");
+    setViewingScheme(null);
+    setActiveLessonIndex(0);
+    setSetupOpen(true);
   }, [searchParams, context]);
 
   const startNewScheme = () => {
@@ -236,11 +276,15 @@ export default function SchemesPage() {
 
     setEditingId(null);
     setDraft(next);
-    setBuilderView("build");
+    setViewingScheme(null);
+    setActiveLessonIndex(0);
+    setSetupOpen(true);
+    setDisplayMode("screen");
   };
 
   const startEditScheme = (scheme: SchemeOfWork) => {
     setEditingId(scheme.id);
+    setViewingScheme(null);
 
     const appPathways = getSchemeSelectedPathways(scheme);
     const topicStillValid = isSchemeTopicValid(
@@ -280,13 +324,26 @@ export default function SchemesPage() {
         learningOutcomeIds: lesson.learningOutcomeIds.filter((id) => visibleIds.has(id)),
       })),
     });
-    setBuilderView("build");
+    setActiveLessonIndex(0);
+    setSetupOpen(false);
+    setDisplayMode("screen");
+  };
+
+  const openSchemeView = (scheme: SchemeOfWork) => {
+    setViewingScheme(scheme);
+    setDraft(null);
+    setEditingId(null);
+    setDisplayMode("screen");
   };
 
   const closeBuilder = () => {
     setEditingId(null);
     setDraft(null);
-    setBuilderView("build");
+    setActiveLessonIndex(0);
+  };
+
+  const closeViewer = () => {
+    setViewingScheme(null);
   };
 
   const updateDraft = (patch: Partial<SchemeDraft>) => {
@@ -341,6 +398,7 @@ export default function SchemesPage() {
         lessons: pruneLessonOutcomeSelections(prev.lessons, visibleIds),
       };
     });
+    if (skillId) setSetupOpen(false);
   };
 
   const handleYearGroupChange = (yearGroup: YearGroup) => {
@@ -446,6 +504,85 @@ export default function SchemesPage() {
     });
   };
 
+  const updateLesson = (index: number, lesson: SOWLesson) => {
+    if (!draft) return;
+    updateDraft({
+      lessons: draft.lessons.map((existing, i) => (i === index ? lesson : existing)),
+    });
+  };
+
+  const handleAddCard = (zone: SOWCardZone, payload: string) => {
+    if (!draft) return;
+    const lesson = draft.lessons[activeLessonIndex];
+    if (!lesson) return;
+
+    let next = lesson;
+    switch (zone) {
+      case "outcomes":
+        next = addOutcomeToLesson(lesson, payload);
+        break;
+      case "walt":
+        next = addWaltToLesson(lesson, payload);
+        break;
+      case "wilf":
+        next = addWilfToLesson(lesson, payload);
+        break;
+      case "activities":
+        next = addActivityToLesson(lesson, payload);
+        break;
+      case "resources":
+        next = addResourceToLesson(lesson, payload);
+        break;
+    }
+    updateLesson(activeLessonIndex, next);
+  };
+
+  useEffect(() => {
+    if (draft && activeLessonIndex >= draft.lessons.length) {
+      setActiveLessonIndex(Math.max(0, draft.lessons.length - 1));
+    }
+  }, [draft, activeLessonIndex]);
+
+  if (viewingScheme) {
+    const exportHtml = buildSchemeExportHtml(viewingScheme);
+    const exportFilename = buildSchemeExportFilename(viewingScheme);
+
+    return (
+      <div className="scheme-print-area -mx-6 lg:-mx-10">
+        <StickyActionBar>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Scheme of work
+              </p>
+              <p className="truncate text-sm font-semibold text-slate-900">
+                {schemeDisplayTitle(viewingScheme)}
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <SchemeViewToggle mode={displayMode} onChange={setDisplayMode} />
+              <ExportMenu html={exportHtml} filename={exportFilename} />
+              <Button variant="secondary" onClick={() => startEditScheme(viewingScheme)}>
+                Edit
+              </Button>
+              <Button variant="ghost" onClick={closeViewer}>
+                ← Back
+              </Button>
+            </div>
+          </div>
+        </StickyActionBar>
+
+        <div className="px-6 pt-6 lg:px-10">
+          {displayMode === "screen" ? (
+            <SOWScreenView scheme={viewingScheme} />
+          ) : (
+            <SOWPreviewTable scheme={viewingScheme} />
+          )}
+        </div>
+      </div>
+    );
+  }
+
   if (draft) {
     const previewScheme: SchemeOfWork = {
       ...draft,
@@ -453,76 +590,176 @@ export default function SchemesPage() {
       createdAt: "",
       updatedAt: "",
     };
+    const exportHtml = buildSchemeExportHtml(previewScheme);
+    const exportFilename = buildSchemeExportFilename(previewScheme);
+    const activeLesson = draft.lessons[activeLessonIndex];
 
     return (
-      <div>
-        <PageHeader
-          eyebrow="Planning"
-          title={editingId ? "Edit scheme of work" : "New scheme of work"}
-          description="Pick pathways and a topic, drag cards into lesson rows, then preview your professional scheme table."
-          action={
-            <div className="flex gap-2">
+      <div className="-mx-6 lg:-mx-10">
+        <StickyActionBar>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                {editingId ? "Editing scheme" : "New scheme"}
+              </p>
+              <p className="truncate text-sm font-semibold text-slate-900">
+                {draft.title || "Untitled scheme"}
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <SchemeViewToggle
+                mode={displayMode}
+                onChange={setDisplayMode}
+                screenLabel="Planning"
+                tableLabel="Table preview"
+              />
+              <ExportMenu html={exportHtml} filename={exportFilename} />
               <Button variant="ghost" onClick={closeBuilder}>
                 Cancel
               </Button>
               <Button onClick={handleSave}>Save scheme</Button>
             </div>
-          }
-        />
-
-        <div className="mb-6 flex gap-2">
-          <Button
-            variant={builderView === "build" ? "primary" : "secondary"}
-            onClick={() => setBuilderView("build")}
-          >
-            Planning board
-          </Button>
-          <Button
-            variant={builderView === "preview" ? "primary" : "secondary"}
-            onClick={() => setBuilderView("preview")}
-          >
-            Preview table
-          </Button>
-        </div>
-
-        {builderView === "preview" ? (
-          <SOWPreviewTable scheme={previewScheme} />
-        ) : (
-          <div className="space-y-6">
-            <SOWSchemeSetup
-              draft={draft}
-              topicOptions={topicOptions}
-              topicSkills={topicSkills}
-              suggestedOutcomeCount={outcomeSuggestions.strict.length + outcomeSuggestions.additional.length}
-              exploreAllNote={context.exploreAllEnabled}
-              onPathwaysChange={handlePathwaysChange}
-              onYearGroupChange={handleYearGroupChange}
-              onTopicChange={handleTopicChange}
-              onSkillChange={handleSkillChange}
-              onUpdate={updateDraft}
-              onLessonCountChange={handleLessonCountChange}
-            />
-
-            {advisoryAlignment && <AlignmentScoreCard report={advisoryAlignment} />}
-
-            <SOWPlanningBoard
-              topicName={getTopicName(draft.topicId)}
-              skillName={getSkillName(draft.skillId)}
-              outcomeSuggestions={outcomeSuggestions}
-              selectedPathways={draftPathways}
-              lessons={draft.lessons}
-              alignmentReady={alignmentReady}
-              onLessonsChange={(lessons) => updateDraft({ lessons })}
-            />
-
-            <div className="flex justify-end gap-3 pb-8">
-              <Button variant="secondary" onClick={() => setBuilderView("preview")}>
-                Preview table →
-              </Button>
-              <Button onClick={handleSave}>Save scheme</Button>
-            </div>
           </div>
-        )}
+        </StickyActionBar>
+
+        <div className="space-y-4 px-6 pt-4 lg:px-10">
+          <Card padding={false} className="overflow-hidden">
+            <button
+              type="button"
+              onClick={() => setSetupOpen((v) => !v)}
+              className="flex w-full items-center justify-between px-5 py-3.5 text-left hover:bg-slate-50/80"
+            >
+              <div>
+                <p className="text-sm font-semibold text-slate-900">Scheme setup</p>
+                <p className="text-xs text-slate-500">
+                  {getTopicName(draft.topicId) || "Choose topic"} ·{" "}
+                  {getSkillName(draft.skillId) || "Choose skill"} · {draft.lessons.length} lessons
+                </p>
+              </div>
+              <span className="text-xs text-slate-400">{setupOpen ? "Collapse" : "Expand"}</span>
+            </button>
+            {setupOpen && (
+              <div className="border-t border-slate-100 px-5 py-4">
+                <SOWSchemeSetup
+                  draft={draft}
+                  topicOptions={topicOptions}
+                  topicSkills={topicSkills}
+                  suggestedOutcomeCount={
+                    outcomeSuggestions.strict.length + outcomeSuggestions.additional.length
+                  }
+                  exploreAllNote={context.exploreAllEnabled}
+                  onPathwaysChange={handlePathwaysChange}
+                  onYearGroupChange={handleYearGroupChange}
+                  onTopicChange={handleTopicChange}
+                  onSkillChange={handleSkillChange}
+                  onUpdate={updateDraft}
+                  onLessonCountChange={handleLessonCountChange}
+                />
+              </div>
+            )}
+          </Card>
+
+          {displayMode === "table" ? (
+            <SOWPreviewTable scheme={previewScheme} />
+          ) : (
+            <div className="flex flex-col gap-6 xl:flex-row xl:items-start">
+              <aside className="xl:w-52 xl:shrink-0">
+                <div className="xl:sticky xl:top-[4.5rem]">
+                  {alignmentReady ? (
+                    <SchemeLessonNavigator
+                      lessons={draft.lessons}
+                      activeIndex={activeLessonIndex}
+                      onSelect={setActiveLessonIndex}
+                    />
+                  ) : (
+                    <Card className="text-center text-sm text-slate-500">
+                      Set topic &amp; skill to unlock lesson navigator.
+                    </Card>
+                  )}
+                </div>
+              </aside>
+
+              <main className="min-w-0 flex-1">
+                {alignmentReady && activeLesson ? (
+                  <SchemeLessonEditor
+                    lesson={activeLesson}
+                    onRemoveOutcome={(id) =>
+                      updateLesson(activeLessonIndex, removeOutcomeFromLesson(activeLesson, id))
+                    }
+                    onRemoveWalt={(text) =>
+                      updateLesson(activeLessonIndex, removeWaltFromLesson(activeLesson, text))
+                    }
+                    onEditWalt={(oldText, newText) =>
+                      updateLesson(
+                        activeLessonIndex,
+                        replaceWaltInLesson(activeLesson, oldText, newText)
+                      )
+                    }
+                    onRemoveWilf={(text) =>
+                      updateLesson(activeLessonIndex, removeWilfFromLesson(activeLesson, text))
+                    }
+                    onEditWilf={(oldText, newText) =>
+                      updateLesson(
+                        activeLessonIndex,
+                        replaceWilfInLesson(activeLesson, oldText, newText)
+                      )
+                    }
+                    onRemoveActivity={(label) =>
+                      updateLesson(
+                        activeLessonIndex,
+                        removeActivityFromLesson(activeLesson, label)
+                      )
+                    }
+                    onEditActivity={(oldLabel, newLabel) =>
+                      updateLesson(
+                        activeLessonIndex,
+                        replaceActivityInLesson(activeLesson, oldLabel, newLabel)
+                      )
+                    }
+                    onRemoveResource={(resource) =>
+                      updateLesson(
+                        activeLessonIndex,
+                        removeResourceFromLesson(activeLesson, resource)
+                      )
+                    }
+                    onEditResource={(oldResource, newResource) =>
+                      updateLesson(
+                        activeLessonIndex,
+                        replaceResourceInLesson(activeLesson, oldResource, newResource)
+                      )
+                    }
+                  />
+                ) : (
+                  <Card className="text-center">
+                    <p className="text-sm font-medium text-slate-800">
+                      Choose a topic and skill to start planning lessons
+                    </p>
+                    <p className="mt-1 text-sm text-slate-500">
+                      Expand scheme setup above to configure your scheme focus.
+                    </p>
+                  </Card>
+                )}
+              </main>
+
+              <aside className="xl:w-80 xl:shrink-0">
+                <div className="xl:sticky xl:top-[4.5rem]">
+                  <SchemePlanningAssistant
+                    topicName={getTopicName(draft.topicId)}
+                    skillName={getSkillName(draft.skillId)}
+                    outcomeSuggestions={outcomeSuggestions}
+                    selectedPathways={draftPathways}
+                    lessons={draft.lessons}
+                    selectedLessonIndex={activeLessonIndex}
+                    alignmentReady={alignmentReady}
+                    advisoryAlignment={advisoryAlignment}
+                    coaching={coaching}
+                    onAddCard={handleAddCard}
+                  />
+                </div>
+              </aside>
+            </div>
+          )}
+        </div>
       </div>
     );
   }
@@ -532,7 +769,7 @@ export default function SchemesPage() {
       <PageHeader
         eyebrow="Planning"
         title="Schemes of Work"
-        description="Visual planning boards for term-long schemes — with curriculum-aligned learning outcomes."
+        description="Plan term-long schemes with calm, card-based views — export when you're ready."
         action={<Button onClick={startNewScheme}>New scheme</Button>}
       />
 
@@ -562,12 +799,11 @@ export default function SchemesPage() {
                       <SchemeCard
                         key={scheme.id}
                         scheme={scheme}
-                        expanded={expandedListId === scheme.id}
-                        onToggle={() =>
-                          setExpandedListId(expandedListId === scheme.id ? null : scheme.id)
-                        }
+                        onView={() => openSchemeView(scheme)}
                         onEdit={() => startEditScheme(scheme)}
                         onDelete={() => deleteScheme(scheme.id)}
+                        onExportPdf={() => exportSchemeDocument(scheme, "pdf")}
+                        onExportWord={() => exportSchemeDocument(scheme, "word")}
                       />
                     ))
                   )}
@@ -583,28 +819,28 @@ export default function SchemesPage() {
 
 function SchemeCard({
   scheme,
-  expanded,
-  onToggle,
+  onView,
   onEdit,
   onDelete,
+  onExportPdf,
+  onExportWord,
 }: {
   scheme: SchemeOfWork;
-  expanded: boolean;
-  onToggle: () => void;
+  onView: () => void;
   onEdit: () => void;
   onDelete: () => void;
+  onExportPdf: () => void;
+  onExportWord: () => void;
 }) {
   const topicName = getTopicName(scheme.topicId) || scheme.title;
   const theme = getTopicTheme(topicName);
   const schemePathways = getSchemeSelectedPathways(scheme);
-  const filledLessons = scheme.lessons.filter(
-    (lesson) => lesson.walt || lesson.wilf || lesson.activities.trim()
-  ).length;
+  const filledLessons = scheme.lessons.filter(lessonHasContent).length;
   const coverage = scheme.lessons.length ? filledLessons / scheme.lessons.length : 0;
 
   return (
-    <Card padding={false} className="overflow-hidden">
-      <button type="button" onClick={onToggle} className="w-full p-5 text-left">
+    <Card padding={false} className="overflow-hidden transition-shadow hover:shadow-md">
+      <button type="button" onClick={onView} className="w-full p-5 text-left">
         <div className="flex items-start gap-3">
           <TopicIcon name={topicName} size="sm" />
           <div className="min-w-0 flex-1">
@@ -626,9 +862,6 @@ function SchemeCard({
             </div>
             <div className="mt-3 flex items-center gap-3 text-xs text-slate-500">
               <span>{lessonCountLabel(scheme)}</span>
-              {scheme.plannedLessonCount ? (
-                <span>· {scheme.plannedLessonCount} planned</span>
-              ) : null}
             </div>
             <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-100">
               <div
@@ -640,19 +873,27 @@ function SchemeCard({
         </div>
       </button>
 
-      {expanded && (
-        <div className="border-t border-slate-100 bg-slate-50/40 px-5 py-4">
-          <SOWPreviewTable scheme={scheme} />
-          <div className="mt-4 flex items-center justify-between">
-            <Button variant="secondary" onClick={onEdit}>
-              Edit scheme
-            </Button>
-            <Button variant="ghost" className="text-xs text-rose-600" onClick={onDelete}>
-              Delete
-            </Button>
-          </div>
-        </div>
-      )}
+      <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 bg-slate-50/50 px-4 py-3">
+        <Button variant="secondary" className="h-8 text-xs" onClick={onView}>
+          Open
+        </Button>
+        <Button variant="ghost" className="h-8 text-xs" onClick={onEdit}>
+          Edit
+        </Button>
+        <Button variant="ghost" className="h-8 text-xs" onClick={onExportPdf}>
+          PDF
+        </Button>
+        <Button variant="ghost" className="h-8 text-xs" onClick={onExportWord}>
+          Word
+        </Button>
+        <Button
+          variant="ghost"
+          className="ml-auto h-8 text-xs text-rose-600"
+          onClick={onDelete}
+        >
+          Delete
+        </Button>
+      </div>
     </Card>
   );
 }

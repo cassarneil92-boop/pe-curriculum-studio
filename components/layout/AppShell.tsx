@@ -24,7 +24,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     <div className="flex min-h-screen bg-[#F8FAFC]">
       <Sidebar />
       <main className="flex-1 overflow-y-auto">
-        <div className="mx-auto max-w-6xl px-6 py-10 lg:px-10 lg:py-12">{children}</div>
+        <div className="mx-auto w-full max-w-6xl px-6 py-8 lg:px-10 lg:py-10 xl:max-w-7xl">{children}</div>
       </main>
     </div>
   );

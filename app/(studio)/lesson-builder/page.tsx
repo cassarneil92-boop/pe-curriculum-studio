@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/Button";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { FieldGroup, Input, Select, Textarea } from "@/components/ui/Input";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { StickyActionBar } from "@/components/layout/StickyActionBar";
 import { YearGroupSelect } from "@/components/shared/YearGroupSelect";
 import { useTeacherContext } from "@/hooks/useTeacherContext";
 import type { LessonBuilderFormData } from "@/lib/lesson-builder/types";
@@ -344,19 +345,42 @@ export default function LessonBuilderPage() {
   const multiPathwayNote = appPathways.length > 1 ? appPathways : null;
 
   return (
-    <div>
-      <PageHeader
-        eyebrow="Planning"
-        title={editingId ? "Edit lesson" : "Lesson Builder"}
-        description="A guided builder — work through each section and attach strict curriculum links."
-        action={
-          <Link href="/lessons">
-            <Button variant="secondary">Lesson library</Button>
-          </Link>
-        }
-      />
+    <div className="-mx-6 lg:-mx-10">
+      <StickyActionBar>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+              Lesson builder
+            </p>
+            <p className="truncate text-sm font-semibold text-slate-900">
+              {form.title || (editingId ? "Editing lesson" : "New lesson")}
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Link href="/lessons">
+              <Button variant="ghost" type="button">
+                Library
+              </Button>
+            </Link>
+            <Button
+              type="submit"
+              form="lesson-builder-form"
+              disabled={!form.title || !form.date}
+            >
+              {editingId ? "Save changes" : "Save lesson"}
+            </Button>
+          </div>
+        </div>
+      </StickyActionBar>
 
-      <form onSubmit={handleSubmit}>
+      <div className="px-6 pt-4 lg:px-10">
+        <PageHeader
+          eyebrow="Planning"
+          title={editingId ? "Edit lesson" : "Lesson Builder"}
+          description="Work through each section — your save button stays visible at the top."
+        />
+
+      <form id="lesson-builder-form" onSubmit={handleSubmit}>
         <div className="flex flex-col gap-8 lg:flex-row">
           <nav className="lg:w-56 lg:shrink-0">
             <div className="sticky top-6 space-y-1">
@@ -688,6 +712,7 @@ export default function LessonBuilderPage() {
           </div>
         </div>
       </form>
+      </div>
     </div>
   );
 }

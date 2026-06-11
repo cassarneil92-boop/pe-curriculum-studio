@@ -53,4 +53,17 @@ body {
   .lesson-print-root {
     break-inside: avoid;
   }
+
+  .scheme-print-area {
+    max-width: none !important;
+    padding: 0 !important;
+  }
+
+  .scheme-print-root {
+    break-inside: avoid;
+  }
+
+  .scheme-print-footer {
+    display: block !important;
+  }
 }
