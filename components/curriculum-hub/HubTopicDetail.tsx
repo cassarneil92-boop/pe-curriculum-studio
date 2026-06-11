@@ -19,6 +19,8 @@ import {
   buildCalendarLink,
   buildLessonBuilderLink,
   buildSchemesLink,
+  buildScheduleTopicLink,
+  buildTeachingProgressLink,
   type HubPlanningParams,
 } from "@/lib/curriculum-hub/planning-links";
 import {
@@ -99,17 +101,25 @@ export function HubTopicDetail({
               skillLabel: selectedSkill || undefined,
             })}
           >
-            <Button variant="secondary">Create lesson</Button>
+            <Button variant="secondary">Create lesson from this topic</Button>
           </Link>
           <Link
             href={buildSchemesLink({ ...planning, skillLabel: selectedSkill || undefined })}
           >
-            <Button variant="secondary">Add to scheme</Button>
+            <Button variant="secondary">Add topic to scheme</Button>
           </Link>
           <Link
-            href={buildCalendarLink({ ...planning, skillLabel: selectedSkill || undefined })}
+            href={buildScheduleTopicLink({ ...planning, skillLabel: selectedSkill || undefined })}
           >
-            <Button variant="ghost">Add to calendar</Button>
+            <Button variant="ghost">Schedule topic</Button>
+          </Link>
+          <Link
+            href={buildTeachingProgressLink({
+              ...planning,
+              skillLabel: selectedSkill || undefined,
+            })}
+          >
+            <Button variant="ghost">View teaching progress</Button>
           </Link>
         </div>
       </div>

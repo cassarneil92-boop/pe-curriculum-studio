@@ -26,6 +26,8 @@ interface SchemeHealthCardProps {
   summary: SchemeProgressSummary;
   onView: () => void;
   onEdit: () => void;
+  onSchedule?: () => void;
+  onViewProgress?: () => void;
   onDelete: () => void;
   onExportPdf: () => void;
   onExportWord: () => void;
@@ -36,6 +38,8 @@ export function SchemeHealthCard({
   summary,
   onView,
   onEdit,
+  onSchedule,
+  onViewProgress,
   onDelete,
   onExportPdf,
   onExportWord,
@@ -91,12 +95,22 @@ export function SchemeHealthCard({
       </button>
 
       <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 bg-slate-50/50 px-4 py-3">
-        <Button variant="secondary" className="h-8 text-xs" onClick={onView}>
-          Open
+        {onSchedule && (
+          <Button variant="primary" className="h-8 text-xs" onClick={onSchedule}>
+            Schedule scheme
+          </Button>
+        )}
+        <Button variant="secondary" className="h-8 text-xs" onClick={onEdit}>
+          Continue planning
         </Button>
-        <Button variant="ghost" className="h-8 text-xs" onClick={onEdit}>
-          Edit
+        <Button variant="ghost" className="h-8 text-xs" onClick={onView}>
+          View
         </Button>
+        {onViewProgress && (
+          <Button variant="ghost" className="h-8 text-xs" onClick={onViewProgress}>
+            View progress
+          </Button>
+        )}
         <Button variant="ghost" className="h-8 text-xs" onClick={onExportPdf}>
           PDF
         </Button>

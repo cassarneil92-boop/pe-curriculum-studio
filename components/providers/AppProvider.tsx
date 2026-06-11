@@ -10,9 +10,10 @@ import {
   type ReactNode,
 } from "react";
 import {
-  createPlanningTerm,
-  renamePlanningTermInSchemes,
-} from "@/lib/planning/terms";
+  createAcademicTerm,
+  migrateAcademicCalendarSettings,
+  renameTermInSchemes,
+} from "@/lib/calendar/academic-settings";
 import type {
   AcademicCalendarSettings,
   AppData,
@@ -22,6 +23,7 @@ import type {
   ResourceItem,
   SchemeOfWork,
   TeacherProfile,
+  TimetableSlot,
 } from "@/lib/types";
 import {
   DEFAULT_APP_DATA,
@@ -38,6 +40,9 @@ interface AppContextValue {
   updatePlanningTerm: (id: string, patch: Partial<PlanningTerm>) => void;
   addPlanningTerm: () => void;
   removePlanningTerm: (id: string) => void;
+  addTimetableSlot: (slot: Omit<TimetableSlot, "id">) => TimetableSlot;
+  updateTimetableSlot: (id: string, patch: Partial<TimetableSlot>) => void;
+  deleteTimetableSlot: (id: string) => void;
   completeSetup: () => void;
   addLesson: (lesson: Omit<LessonPlan, "id" | "createdAt" | "updatedAt">) => LessonPlan;
   updateLesson: (id: string, lesson: Partial<LessonPlan>) => void;
@@ -49,10 +54,15 @@ interface AppContextValue {
   updateCalendarEntry: (id: string, entry: Partial<CalendarEntry>) => void;
   deleteCalendarEntry: (id: string) => void;
   addResource: (resource: Omit<ResourceItem, "id" | "createdAt">) => ResourceItem;
+  updateResource: (id: string, patch: Partial<ResourceItem>) => void;
   deleteResource: (id: string) => void;
 }
 
 const AppContext = createContext<AppContextValue | null>(null);
+
+function withMigratedCalendar(data: AppData): AcademicCalendarSettings {
+  return migrateAcademicCalendarSettings(data.academicCalendar, data.planningTerms);
+}
 
 export function AppProvider({ children }: { children: ReactNode }) {
   const [data, setData] = useState<AppData>(DEFAULT_APP_DATA);
@@ -72,35 +82,56 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const updateAcademicCalendar = useCallback((academicCalendar: AcademicCalendarSettings) => {
-    setData((prev) => ({ ...prev, academicCalendar }));
+    setData((prev) => {
+      const oldCalendar = withMigratedCalendar(prev);
+      let schemes = prev.schemes;
+      for (const newTerm of academicCalendar.terms) {
+        const oldTerm = oldCalendar.terms.find((t) => t.id === newTerm.id);
+        if (oldTerm && oldTerm.name !== newTerm.name) {
+          schemes = renameTermInSchemes(schemes, oldTerm.name, newTerm.name);
+        }
+      }
+      return { ...prev, academicCalendar, schemes };
+    });
   }, []);
 
   const updatePlanningTerm = useCallback((id: string, patch: Partial<PlanningTerm>) => {
     setData((prev) => {
-      const terms = prev.planningTerms ?? [];
+      const calendar = withMigratedCalendar(prev);
+      const terms = calendar.terms;
       const existing = terms.find((t) => t.id === id);
       let schemes = prev.schemes;
       if (existing && patch.name && patch.name !== existing.name) {
-        schemes = renamePlanningTermInSchemes(schemes, existing.name, patch.name);
+        schemes = renameTermInSchemes(schemes, existing.name, patch.name);
       }
       return {
         ...prev,
         schemes,
-        planningTerms: terms.map((t) => (t.id === id ? { ...t, ...patch } : t)),
+        academicCalendar: {
+          ...calendar,
+          terms: terms.map((t) => (t.id === id ? { ...t, ...patch } : t)),
+        },
       };
     });
   }, []);
 
   const addPlanningTerm = useCallback(() => {
-    setData((prev) => ({
-      ...prev,
-      planningTerms: [...(prev.planningTerms ?? []), createPlanningTerm(prev.planningTerms ?? [])],
-    }));
+    setData((prev) => {
+      const calendar = withMigratedCalendar(prev);
+      return {
+        ...prev,
+        academicCalendar: {
+          ...calendar,
+          terms: [...calendar.terms, createAcademicTerm(calendar.terms)],
+        },
+      };
+    });
   }, []);
 
   const removePlanningTerm = useCallback((id: string) => {
     setData((prev) => {
-      const terms = prev.planningTerms ?? [];
+      const calendar = withMigratedCalendar(prev);
+      const terms = calendar.terms;
       if (terms.length <= 1) return prev;
       const removing = terms.find((t) => t.id === id);
       const remaining = terms.filter((t) => t.id !== id);
@@ -110,8 +141,35 @@ export function AppProvider({ children }: { children: ReactNode }) {
             s.term === removing.name ? { ...s, term: fallback } : s
           )
         : prev.schemes;
-      return { ...prev, planningTerms: remaining, schemes };
+      return {
+        ...prev,
+        schemes,
+        academicCalendar: { ...calendar, terms: remaining },
+      };
     });
+  }, []);
+
+  const addTimetableSlot = useCallback((slot: Omit<TimetableSlot, "id">) => {
+    const newSlot: TimetableSlot = { ...slot, id: generateId() };
+    setData((prev) => ({
+      ...prev,
+      timetable: [...(prev.timetable ?? []), newSlot],
+    }));
+    return newSlot;
+  }, []);
+
+  const updateTimetableSlot = useCallback((id: string, patch: Partial<TimetableSlot>) => {
+    setData((prev) => ({
+      ...prev,
+      timetable: (prev.timetable ?? []).map((s) => (s.id === id ? { ...s, ...patch } : s)),
+    }));
+  }, []);
+
+  const deleteTimetableSlot = useCallback((id: string) => {
+    setData((prev) => ({
+      ...prev,
+      timetable: (prev.timetable ?? []).filter((s) => s.id !== id),
+    }));
   }, []);
 
   const completeSetup = useCallback(() => {
@@ -184,11 +242,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const addResource = useCallback((resource: Omit<ResourceItem, "id" | "createdAt">) => {
     const newResource: ResourceItem = {
       ...resource,
+      title: resource.title ?? resource.name,
+      name: resource.name || resource.title || "Untitled resource",
       id: generateId(),
       createdAt: new Date().toISOString(),
     };
     setData((prev) => ({ ...prev, resources: [newResource, ...prev.resources] }));
     return newResource;
+  }, []);
+
+  const updateResource = useCallback((id: string, patch: Partial<ResourceItem>) => {
+    setData((prev) => ({
+      ...prev,
+      resources: prev.resources.map((r) => (r.id === id ? { ...r, ...patch } : r)),
+    }));
   }, []);
 
   const deleteResource = useCallback((id: string) => {
@@ -204,6 +271,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       updatePlanningTerm,
       addPlanningTerm,
       removePlanningTerm,
+      addTimetableSlot,
+      updateTimetableSlot,
+      deleteTimetableSlot,
       completeSetup,
       addLesson,
       updateLesson,
@@ -215,6 +285,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       updateCalendarEntry,
       deleteCalendarEntry,
       addResource,
+      updateResource,
       deleteResource,
     }),
     [
@@ -225,6 +296,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       updatePlanningTerm,
       addPlanningTerm,
       removePlanningTerm,
+      addTimetableSlot,
+      updateTimetableSlot,
+      deleteTimetableSlot,
       completeSetup,
       addLesson,
       updateLesson,
@@ -236,6 +310,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       updateCalendarEntry,
       deleteCalendarEntry,
       addResource,
+      updateResource,
       deleteResource,
     ]
   );

@@ -94,15 +94,15 @@ function TermContainer({
             <FieldGroup label="Start date">
               <Input
                 type="date"
-                value={term.start}
-                onChange={(e) => onUpdateTerm(term.id, { start: e.target.value })}
+                value={term.startDate}
+                onChange={(e) => onUpdateTerm(term.id, { startDate: e.target.value })}
               />
             </FieldGroup>
             <FieldGroup label="End date">
               <Input
                 type="date"
-                value={term.end}
-                onChange={(e) => onUpdateTerm(term.id, { end: e.target.value })}
+                value={term.endDate}
+                onChange={(e) => onUpdateTerm(term.id, { endDate: e.target.value })}
               />
             </FieldGroup>
           </div>

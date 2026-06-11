@@ -1,4 +1,10 @@
-import type { CalendarEntry, LessonPlan, PathwayId, SchemeOfWork } from "@/lib/types";
+import type {
+  CalendarEntry,
+  LessonPlan,
+  PathwayId,
+  SchemeOfWork,
+  TimetableSlot,
+} from "@/lib/types";
 import { curriculumPathwayToApp } from "@/lib/lesson-plans/helpers";
 import { getTopicDisplayName } from "@/lib/scheme-builder/curriculum-options";
 import { DEFAULT_DELIVERY_STATUS } from "@/lib/progress/delivery";
@@ -25,16 +31,31 @@ export function decodeCalendarDrag(raw: string): CalendarDragPayload | null {
   }
 }
 
+export function applyTimetableSlotToEntry<T extends Omit<CalendarEntry, "id">>(
+  entry: T,
+  slot: TimetableSlot
+): T {
+  return {
+    ...entry,
+    startTime: slot.startTime,
+    endTime: slot.endTime,
+    classGroup: slot.classGroup || entry.classGroup,
+    yearGroup: slot.yearGroup || entry.yearGroup,
+    pathway: slot.pathway || entry.pathway,
+  };
+}
+
 export function createCalendarEntryFromLesson(
   lesson: LessonPlan,
-  dateIso: string
+  dateIso: string,
+  slot?: TimetableSlot
 ): Omit<CalendarEntry, "id"> {
   const pathway =
     curriculumPathwayToApp(lesson.pathwayId) ??
     lesson.selectedPathways?.[0] ??
     ("general-pe" as PathwayId);
 
-  return {
+  const base: Omit<CalendarEntry, "id"> = {
     title: lesson.title || "Lesson plan",
     level: "daily",
     pathway,
@@ -51,19 +72,22 @@ export function createCalendarEntryFromLesson(
     deliveryStatus: lesson.deliveryStatus ?? DEFAULT_DELIVERY_STATUS,
     reflection: lesson.reflection ?? "",
   };
+
+  return slot ? applyTimetableSlotToEntry(base, slot) : base;
 }
 
 export function createCalendarEntryFromSchemeLesson(
   scheme: SchemeOfWork,
   lessonNumber: number,
-  dateIso: string
+  dateIso: string,
+  slot?: TimetableSlot
 ): Omit<CalendarEntry, "id"> | null {
   const lesson = scheme.lessons.find((l) => l.lessonNumber === lessonNumber);
   if (!lesson) return null;
 
   const pathway = scheme.pathway ?? scheme.selectedPathways?.[0] ?? "general-pe";
 
-  return {
+  const base: Omit<CalendarEntry, "id"> = {
     title: `${scheme.title || "Scheme"} — Lesson ${lessonNumber}`,
     level: "daily",
     pathway,
@@ -81,6 +105,8 @@ export function createCalendarEntryFromSchemeLesson(
     deliveryStatus: lesson.deliveryStatus ?? DEFAULT_DELIVERY_STATUS,
     reflection: lesson.reflection ?? "",
   };
+
+  return slot ? applyTimetableSlotToEntry(base, slot) : base;
 }
 
 export function isUnscheduledEntry(entry: CalendarEntry): boolean {

@@ -1,38 +1,25 @@
-import type {
-  AcademicCalendarSettings,
-  PlanningTerm,
-  SchemeOfWork,
-} from "@/lib/types";
+import {
+  getAcademicTerms,
+  migrateAcademicCalendarSettings,
+} from "@/lib/calendar/academic-settings";
+import type { AcademicCalendarSettings, AcademicTerm, SchemeOfWork } from "@/lib/types";
 import { getTopicName } from "@/lib/scheme-builder/helpers";
 import { buildSchemeProgressSummary } from "@/lib/progress/summary";
 
-const DEFAULT_TERM_NAMES = ["Term 1", "Term 2", "Term 3"] as const;
+/** @deprecated Use AcademicTerm — alias for backward compatibility */
+export type PlanningTerm = AcademicTerm;
 
-export function defaultPlanningTerms(
-  academic?: AcademicCalendarSettings | null
-): PlanningTerm[] {
-  if (academic) {
-    return [
-      { id: "term-1", name: "Term 1", start: academic.term1.start, end: academic.term1.end },
-      { id: "term-2", name: "Term 2", start: academic.term2.start, end: academic.term2.end },
-      { id: "term-3", name: "Term 3", start: academic.term3.start, end: academic.term3.end },
-    ];
-  }
-
-  const year = new Date().getFullYear();
-  return [
-    { id: "term-1", name: "Term 1", start: `${year}-09-01`, end: `${year}-12-20` },
-    { id: "term-2", name: "Term 2", start: `${year + 1}-01-08`, end: `${year + 1}-03-31` },
-    { id: "term-3", name: "Term 3", start: `${year + 1}-04-01`, end: `${year + 1}-06-30` },
-  ];
+export function getPlanningTerms(
+  academicCalendar?: AcademicCalendarSettings | null
+): AcademicTerm[] {
+  return getAcademicTerms(academicCalendar);
 }
 
 export function migratePlanningTerms(
-  terms: PlanningTerm[] | undefined,
+  _legacy?: AcademicTerm[] | null,
   academic?: AcademicCalendarSettings | null
-): PlanningTerm[] {
-  if (terms && terms.length > 0) return terms;
-  return defaultPlanningTerms(academic);
+): AcademicTerm[] {
+  return migrateAcademicCalendarSettings(academic).terms;
 }
 
 export interface TermSchemeSummary {
@@ -44,7 +31,7 @@ export interface TermSchemeSummary {
 }
 
 export interface PlanningTermOverview {
-  term: PlanningTerm;
+  term: AcademicTerm;
   topics: string[];
   schemes: TermSchemeSummary[];
   totalLessonsPlanned: number;
@@ -52,7 +39,7 @@ export interface PlanningTermOverview {
 }
 
 export function buildPlanningTermOverview(
-  term: PlanningTerm,
+  term: AcademicTerm,
   schemes: SchemeOfWork[]
 ): PlanningTermOverview {
   const termSchemes = schemes.filter((s) => s.term === term.name);
@@ -82,28 +69,6 @@ export function buildPlanningTermOverview(
   };
 }
 
-export function createPlanningTerm(terms: PlanningTerm[]): PlanningTerm {
-  const index = terms.length + 1;
-  const last = terms[terms.length - 1];
-  const start = last?.end ?? new Date().toISOString().slice(0, 10);
-  return {
-    id: `term-${Date.now()}-${index}`,
-    name: `Term ${index}`,
-    start,
-    end: start,
-  };
-}
-
-export function renamePlanningTermInSchemes(
-  schemes: SchemeOfWork[],
-  oldName: string,
-  newName: string
-): SchemeOfWork[] {
-  return schemes.map((scheme) =>
-    scheme.term === oldName ? { ...scheme, term: newName } : scheme
-  );
-}
-
-export function fallbackTermName(terms: PlanningTerm[]): string {
-  return terms[0]?.name ?? DEFAULT_TERM_NAMES[0];
+export function fallbackTermName(terms: AcademicTerm[]): string {
+  return terms[0]?.name ?? "Term 1";
 }

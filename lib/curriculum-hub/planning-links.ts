@@ -102,3 +102,28 @@ export function buildCalendarLink(params: HubPlanningParams): string {
   }
   return `/calendar?${qs.toString()}`;
 }
+
+export function buildScheduleTopicLink(params: HubPlanningParams): string {
+  const qs = new URLSearchParams({
+    schedule: "1",
+    yearGroup: params.yearGroupId,
+    topic: resolveCurriculumTopicId(params.topicLabel),
+  });
+  appendPathwayParams(qs, params.appPathways, false);
+  if (params.skillLabel) {
+    qs.set("skill", params.skillLabel);
+  }
+  return `/calendar?${qs.toString()}`;
+}
+
+export function buildTeachingProgressLink(params: HubPlanningParams): string {
+  const qs = new URLSearchParams({
+    yearGroup: params.yearGroupId,
+    topic: resolveCurriculumTopicId(params.topicLabel),
+  });
+  appendPathwayParams(qs, params.appPathways, false);
+  if (params.skillLabel) {
+    qs.set("skill", params.skillLabel);
+  }
+  return `/curriculum-analytics?${qs.toString()}`;
+}

@@ -1,44 +1,89 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useApp } from "@/components/providers/AppProvider";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { FieldGroup, Input, Select, Textarea } from "@/components/ui/Input";
-import { BrandIcon } from "@/components/brand/BrandIcon";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { getPathwayLabel, PATHWAYS, SPORTS } from "@/lib/constants";
+import { getPathwayLabel, PATHWAYS, SPORTS, YEAR_GROUP_OPTIONS } from "@/lib/constants";
 import {
   getResourceCategoryLabel,
   normaliseResourceCategory,
   RESOURCE_CATEGORIES,
 } from "@/lib/resources/categories";
-import type { PathwayId, ResourceItem } from "@/lib/types";
+import { getTopicDisplayName } from "@/lib/scheme-builder/curriculum-options";
+import { getYearGroupLabel } from "@/lib/year-groups";
+import type { PathwayId, ResourceItem, ResourceVisibilityLevel, YearGroup } from "@/lib/types";
 
 export default function ResourcesPage() {
   const { data, addResource, deleteResource } = useApp();
   const fileRef = useRef<HTMLInputElement>(null);
   const [dragOver, setDragOver] = useState(false);
+  const [search, setSearch] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [pathwayFilter, setPathwayFilter] = useState("");
+  const [yearFilter, setYearFilter] = useState("");
+  const [topicFilter, setTopicFilter] = useState("");
   const [form, setForm] = useState({
-    name: "",
-    type: "Document",
-    category: "general",
+    title: "",
+    category: "lesson-cards",
     pathway: "" as PathwayId | "",
-    sport: "",
+    yearGroup: "" as YearGroup | "",
+    topicId: "",
+    skillId: "",
     notes: "",
+    externalLink: "",
+    visibilityLevel: "private" as ResourceVisibilityLevel,
     fileName: "",
     fileSize: 0,
+    type: "Document",
+    sport: "",
   });
-  const [categoryFilter, setCategoryFilter] = useState<string>("all");
+
+  const summary = useMemo(() => {
+    const resources = data.resources;
+    return {
+      total: resources.length,
+      lessonCards: resources.filter((r) => normaliseResourceCategory(r.category) === "lesson-cards")
+        .length,
+      assessments: resources.filter((r) => normaliseResourceCategory(r.category) === "assessments")
+        .length,
+      linkedOutcomes: resources.filter((r) => (r.learningOutcomeIds?.length ?? 0) > 0).length,
+    };
+  }, [data.resources]);
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return data.resources.filter((r) => {
+      const title = (r.title ?? r.name).toLowerCase();
+      if (q && !title.includes(q) && !r.notes.toLowerCase().includes(q)) return false;
+      if (categoryFilter !== "all" && normaliseResourceCategory(r.category) !== categoryFilter)
+        return false;
+      if (pathwayFilter && r.pathway !== pathwayFilter) return false;
+      if (yearFilter && r.yearGroup !== yearFilter) return false;
+      if (topicFilter && r.topicId !== topicFilter && r.sport !== topicFilter) return false;
+      return true;
+    });
+  }, [data.resources, search, categoryFilter, pathwayFilter, yearFilter, topicFilter]);
+
+  const topicOptions = useMemo(() => {
+    const topics = new Set<string>();
+    for (const r of data.resources) {
+      if (r.topicId) topics.add(r.topicId);
+      else if (r.sport) topics.add(r.sport);
+    }
+    return [...topics].sort();
+  }, [data.resources]);
 
   const handleFiles = (files: FileList | null) => {
     if (!files || files.length === 0) return;
     const file = files[0];
     setForm((prev) => ({
       ...prev,
-      name: prev.name || file.name.replace(/\.[^.]+$/, ""),
+      title: prev.title || file.name.replace(/\.[^.]+$/, ""),
       fileName: file.name,
       fileSize: file.size,
       type: file.type.includes("image")
@@ -46,36 +91,44 @@ export default function ResourcesPage() {
         : file.type.includes("pdf")
           ? "PDF"
           : "Document",
+      category:
+        file.type.includes("image") ? "images" : prev.category,
     }));
   };
 
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setDragOver(false);
-    handleFiles(e.dataTransfer.files);
-  };
-
   const handleSave = () => {
-    if (!form.name) return;
+    if (!form.title.trim()) return;
     addResource({
-      name: form.name,
+      name: form.title,
+      title: form.title,
       type: form.type,
       category: normaliseResourceCategory(form.category),
       pathway: form.pathway,
-      sport: form.sport,
+      yearGroup: form.yearGroup || undefined,
+      topicId: form.topicId || undefined,
+      skillId: form.skillId || undefined,
+      sport: form.sport || form.topicId,
       notes: form.notes,
       fileName: form.fileName,
       fileSize: form.fileSize,
+      externalLink: form.externalLink || undefined,
+      visibilityLevel: form.visibilityLevel,
+      learningOutcomeIds: [],
     });
     setForm({
-      name: "",
-      type: "Document",
-      category: "general",
+      title: "",
+      category: "lesson-cards",
       pathway: "",
-      sport: "",
+      yearGroup: "",
+      topicId: "",
+      skillId: "",
       notes: "",
+      externalLink: "",
+      visibilityLevel: "private",
       fileName: "",
       fileSize: 0,
+      type: "Document",
+      sport: "",
     });
     if (fileRef.current) fileRef.current.value = "";
   };
@@ -89,79 +142,83 @@ export default function ResourcesPage() {
   return (
     <div>
       <PageHeader
-        title="Resources"
-        description="Keep your teaching materials in one place. Files are tracked locally in your browser."
+        title="Teaching Resources"
+        description="Your PE teaching library — lesson cards, rubrics, assessments and more."
       />
 
+      <section className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <SummaryCard label="Total resources" value={String(summary.total)} />
+        <SummaryCard label="Lesson cards" value={String(summary.lessonCards)} />
+        <SummaryCard label="Assessments" value={String(summary.assessments)} />
+        <SummaryCard label="Linked to outcomes" value={String(summary.linkedOutcomes)} />
+      </section>
+
       <Card className="mb-6">
-        <CardHeader
-          title="Resource categories"
-          description="Foundation for organising lesson cards, assessments, rubrics, and more."
-        />
-        <div className="flex flex-wrap gap-2">
-          <button
-            type="button"
-            onClick={() => setCategoryFilter("all")}
-            className={`rounded-full px-3 py-1 text-xs font-medium ${
-              categoryFilter === "all"
-                ? "bg-teal-100 text-teal-800"
-                : "bg-slate-100 text-slate-600"
-            }`}
-          >
-            All
-          </button>
-          {RESOURCE_CATEGORIES.map((cat) => (
-            <button
-              key={cat.id}
-              type="button"
-              onClick={() => setCategoryFilter(cat.id)}
-              className={`rounded-full px-3 py-1 text-xs font-medium ${
-                categoryFilter === cat.id
-                  ? "bg-teal-100 text-teal-800"
-                  : "bg-slate-100 text-slate-600"
-              }`}
-            >
-              {cat.label}
-            </button>
-          ))}
+        <CardHeader title="Filters" />
+        <div className="flex flex-wrap gap-3">
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search resources…"
+            className="min-w-[200px] flex-1"
+          />
+          <Select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)}>
+            <option value="all">All categories</option>
+            {RESOURCE_CATEGORIES.map((cat) => (
+              <option key={cat.id} value={cat.id}>
+                {cat.label}
+              </option>
+            ))}
+          </Select>
+          <Select value={pathwayFilter} onChange={(e) => setPathwayFilter(e.target.value)}>
+            <option value="">All pathways</option>
+            {PATHWAYS.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.label}
+              </option>
+            ))}
+          </Select>
+          <Select value={yearFilter} onChange={(e) => setYearFilter(e.target.value)}>
+            <option value="">All year groups</option>
+            {YEAR_GROUP_OPTIONS.map((yg) => (
+              <option key={yg.id} value={yg.id}>
+                {yg.label}
+              </option>
+            ))}
+          </Select>
+          <Select value={topicFilter} onChange={(e) => setTopicFilter(e.target.value)}>
+            <option value="">All topics</option>
+            {topicOptions.map((t) => (
+              <option key={t} value={t}>
+                {getTopicDisplayName(t) || t}
+              </option>
+            ))}
+          </Select>
         </div>
       </Card>
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader
-            title="Upload area"
-            description="Drag and drop or browse — metadata is saved to localStorage."
+            title="Add resource"
+            description="Upload a file or save a link with curriculum information."
           />
-
           <div
             onDragOver={(e) => {
               e.preventDefault();
               setDragOver(true);
             }}
             onDragLeave={() => setDragOver(false)}
-            onDrop={handleDrop}
-            className={`mb-4 flex flex-col items-center justify-center rounded-xl border-2 border-dashed px-6 py-10 transition-colors ${
-              dragOver
-                ? "border-teal-400 bg-teal-50/50"
-                : "border-slate-200 bg-slate-50/30"
+            onDrop={(e) => {
+              e.preventDefault();
+              setDragOver(false);
+              handleFiles(e.dataTransfer.files);
+            }}
+            className={`mb-4 flex flex-col items-center justify-center rounded-xl border-2 border-dashed px-6 py-8 transition-colors ${
+              dragOver ? "border-teal-400 bg-teal-50/50" : "border-slate-200 bg-slate-50/30"
             }`}
           >
-            <svg
-              className="mb-3 h-10 w-10 text-slate-300"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={1}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"
-              />
-            </svg>
-            <p className="text-sm text-slate-600">Drop files here</p>
-            <p className="mt-1 text-xs text-slate-400">or</p>
+            <p className="text-sm text-slate-600">Drop files here or browse</p>
             <Button
               variant="secondary"
               className="mt-3"
@@ -177,18 +234,12 @@ export default function ResourcesPage() {
             />
           </div>
 
-          {form.fileName && (
-            <p className="mb-4 text-xs text-teal-700">
-              Selected: {form.fileName} ({formatSize(form.fileSize)})
-            </p>
-          )}
-
           <div className="space-y-3">
-            <FieldGroup label="Name">
+            <FieldGroup label="Title">
               <Input
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-                placeholder="Resource name"
+                value={form.title}
+                onChange={(e) => setForm({ ...form, title: e.target.value })}
+                placeholder="Resource title"
               />
             </FieldGroup>
             <FieldGroup label="Category">
@@ -204,7 +255,7 @@ export default function ResourcesPage() {
               </Select>
             </FieldGroup>
             <div className="grid gap-3 sm:grid-cols-2">
-              <FieldGroup label="Pathway (optional)">
+              <FieldGroup label="Pathway">
                 <Select
                   value={form.pathway}
                   onChange={(e) =>
@@ -219,10 +270,27 @@ export default function ResourcesPage() {
                   ))}
                 </Select>
               </FieldGroup>
-              <FieldGroup label="Sport (optional)">
+              <FieldGroup label="Year group">
+                <Select
+                  value={form.yearGroup}
+                  onChange={(e) =>
+                    setForm({ ...form, yearGroup: e.target.value as YearGroup | "" })
+                  }
+                >
+                  <option value="">Any</option>
+                  {YEAR_GROUP_OPTIONS.map((yg) => (
+                    <option key={yg.id} value={yg.id}>
+                      {yg.label}
+                    </option>
+                  ))}
+                </Select>
+              </FieldGroup>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <FieldGroup label="Topic">
                 <Select
                   value={form.sport}
-                  onChange={(e) => setForm({ ...form, sport: e.target.value })}
+                  onChange={(e) => setForm({ ...form, sport: e.target.value, topicId: e.target.value })}
                 >
                   <option value="">Any</option>
                   {SPORTS.map((s) => (
@@ -232,7 +300,29 @@ export default function ResourcesPage() {
                   ))}
                 </Select>
               </FieldGroup>
+              <FieldGroup label="Available curriculum">
+                <Select
+                  value={form.visibilityLevel}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      visibilityLevel: e.target.value as ResourceVisibilityLevel,
+                    })
+                  }
+                >
+                  <option value="private">Private</option>
+                  <option value="department">Department</option>
+                  <option value="public-ready">Public-ready</option>
+                </Select>
+              </FieldGroup>
             </div>
+            <FieldGroup label="External link (optional)">
+              <Input
+                value={form.externalLink}
+                onChange={(e) => setForm({ ...form, externalLink: e.target.value })}
+                placeholder="https://"
+              />
+            </FieldGroup>
             <FieldGroup label="Notes">
               <Textarea
                 value={form.notes}
@@ -240,63 +330,102 @@ export default function ResourcesPage() {
                 placeholder="How you use this resource"
               />
             </FieldGroup>
-            <Button onClick={handleSave} disabled={!form.name}>
+            {form.fileName && (
+              <p className="text-xs text-teal-700">
+                File: {form.fileName} ({formatSize(form.fileSize)})
+              </p>
+            )}
+            <Button onClick={handleSave} disabled={!form.title.trim()}>
               Save resource
             </Button>
           </div>
         </Card>
 
         <div>
-          <CardHeader title="Your resources" description={`${data.resources.length} saved`} />
+          <CardHeader title="Your library" description={`${filtered.length} shown`} />
           {data.resources.length === 0 ? (
             <EmptyState
-              title="No resources yet"
-              description="Store lesson cards, worksheets, assessments and resources."
-              icon={<BrandIcon size={48} className="mx-auto" />}
+              title="Build your PE teaching library"
+              description="Upload lesson cards, rubrics, assessment sheets and risk assessments."
+              icon="📚"
             />
+          ) : filtered.length === 0 ? (
+            <Card className="text-center">
+              <p className="text-sm text-slate-500">No resources match your filters.</p>
+            </Card>
           ) : (
-            <ul className="space-y-2">
-              {data.resources
-                .filter(
-                  (r) =>
-                    categoryFilter === "all" ||
-                    normaliseResourceCategory(r.category) === categoryFilter
-                )
-                .map((r: ResourceItem) => (
-                <Card key={r.id} className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="text-sm font-medium text-slate-800">{r.name}</p>
-                    <p className="mt-0.5 text-xs text-slate-500">
-                      {r.type}
-                      {r.fileName ? ` · ${r.fileName}` : ""}
-                      {r.fileSize ? ` · ${formatSize(r.fileSize)}` : ""}
-                    </p>
-                    <div className="mt-2 flex flex-wrap gap-1">
-                      <Badge tone="purple">
-                        {getResourceCategoryLabel(r.category)}
-                      </Badge>
-                      {r.pathway && (
-                        <Badge tone="teal">{getPathwayLabel(r.pathway)}</Badge>
-                      )}
-                      {r.sport && <Badge tone="slate">{r.sport}</Badge>}
-                    </div>
-                    {r.notes && (
-                      <p className="mt-2 text-xs text-slate-500">{r.notes}</p>
-                    )}
-                  </div>
-                  <Button
-                    variant="ghost"
-                    className="text-xs text-red-600"
-                    onClick={() => deleteResource(r.id)}
-                  >
-                    Remove
-                  </Button>
-                </Card>
+            <div className="space-y-3">
+              {filtered.map((r) => (
+                <ResourceCard key={r.id} resource={r} onDelete={() => deleteResource(r.id)} />
               ))}
-            </ul>
+            </div>
           )}
         </div>
       </div>
     </div>
+  );
+}
+
+function SummaryCard({ label, value }: { label: string; value: string }) {
+  return (
+    <Card className="text-center">
+      <p className="text-xs font-medium uppercase tracking-wide text-slate-500">{label}</p>
+      <p className="mt-1 text-2xl font-semibold text-slate-900">{value}</p>
+    </Card>
+  );
+}
+
+function ResourceCard({
+  resource,
+  onDelete,
+}: {
+  resource: ResourceItem;
+  onDelete: () => void;
+}) {
+  const title = resource.title ?? resource.name;
+  const outcomeCount = resource.learningOutcomeIds?.length ?? 0;
+  const topic = resource.topicId
+    ? getTopicDisplayName(resource.topicId)
+    : resource.sport || "General";
+
+  return (
+    <Card className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+      <div className="min-w-0 flex-1">
+        <p className="font-medium text-slate-900">{title}</p>
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          <Badge tone="purple">{getResourceCategoryLabel(resource.category)}</Badge>
+          {resource.yearGroup && (
+            <Badge tone="slate">{getYearGroupLabel(resource.yearGroup)}</Badge>
+          )}
+          <Badge tone="teal">{topic}</Badge>
+          {outcomeCount > 0 && (
+            <Badge tone="blue">{outcomeCount} linked outcome{outcomeCount === 1 ? "" : "s"}</Badge>
+          )}
+        </div>
+        {resource.notes && (
+          <p className="mt-2 line-clamp-2 text-xs text-slate-500">{resource.notes}</p>
+        )}
+      </div>
+      <div className="flex shrink-0 flex-wrap gap-2">
+        {resource.externalLink && (
+          <a
+            href={resource.externalLink}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs font-medium text-teal-700 hover:text-teal-800"
+          >
+            Open link
+          </a>
+        )}
+        {resource.fileName && (
+          <span className="text-xs text-slate-500" title={resource.fileName}>
+            {resource.fileName}
+          </span>
+        )}
+        <Button variant="ghost" className="text-xs text-rose-600" onClick={onDelete}>
+          Delete
+        </Button>
+      </div>
+    </Card>
   );
 }

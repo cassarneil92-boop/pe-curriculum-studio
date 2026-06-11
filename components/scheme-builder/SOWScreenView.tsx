@@ -21,15 +21,27 @@ import { getYearGroupLabel } from "@/lib/year-groups";
 import { BrandLogoHorizontal } from "@/components/brand/BrandLogoHorizontal";
 import { BRAND_FOOTER } from "@/lib/brand/constants";
 import { SchemeLessonDeliveryControls } from "@/components/progress/SchemeLessonDeliveryControls";
-import type { LessonDeliveryStatus, SchemeOfWork, SOWLesson } from "@/lib/types";
+import { PlanningStatusBadge } from "@/components/ui/PlanningStatusBadge";
+import { getSchemeLessonScheduledDate } from "@/lib/calendar/scheduling-lookup";
+import { formatShortDate, parseIso } from "@/lib/calendar/dates";
+import type {
+  CalendarEntry,
+  LessonDeliveryStatus,
+  SchemeOfWork,
+  SOWLesson,
+  TimetableSlot,
+} from "@/lib/types";
 
 interface SOWScreenViewProps {
   scheme: SchemeOfWork;
+  calendar?: CalendarEntry[];
+  timetable?: TimetableSlot[];
   editableDelivery?: boolean;
   onLessonDeliveryChange?: (
     lessonNumber: number,
     status: LessonDeliveryStatus
   ) => void;
+  onScheduleLesson?: (lessonNumber: number) => void;
 }
 
 type LessonFilter = "all" | "with-content" | "empty";
@@ -100,14 +112,18 @@ function LessonScreenCard({
   lesson,
   expanded,
   onToggle,
+  scheduledDate,
   editableDelivery,
   onLessonDeliveryChange,
+  onScheduleLesson,
 }: {
   lesson: SOWLesson;
   expanded: boolean;
   onToggle: () => void;
+  scheduledDate?: string;
   editableDelivery?: boolean;
   onLessonDeliveryChange?: (lessonNumber: number, status: LessonDeliveryStatus) => void;
+  onScheduleLesson?: (lessonNumber: number) => void;
 }) {
   const resolvedOutcomes = resolveSchemeLearningOutcomes(lesson.learningOutcomeIds);
   const wilf = formatWilfLines(lesson.wilf);
@@ -137,6 +153,11 @@ function LessonScreenCard({
           </p>
         </div>
         <div className="flex shrink-0 flex-col items-end gap-2 sm:flex-row sm:items-center">
+          {scheduledDate ? (
+            <PlanningStatusBadge status="scheduled" />
+          ) : (
+            <PlanningStatusBadge status="planned" />
+          )}
           <Badge tone={status.tone}>{status.label}</Badge>
           <Button
             variant="ghost"
@@ -156,6 +177,34 @@ function LessonScreenCard({
             : "scheme-lesson-body hidden space-y-3 p-5 print:block"
         }
       >
+        {scheduledDate && (
+          <p className="text-sm text-slate-600">
+            <span className="font-semibold text-slate-800">Scheduled:</span>{" "}
+            {formatShortDate(parseIso(scheduledDate))}
+          </p>
+        )}
+
+        <div className="no-print flex flex-wrap gap-2">
+          {onScheduleLesson && (
+            <Button
+              variant="secondary"
+              className="text-xs"
+              onClick={() => onScheduleLesson(lesson.lessonNumber)}
+            >
+              Schedule this lesson
+            </Button>
+          )}
+          {editableDelivery && onLessonDeliveryChange && lesson.deliveryStatus !== "delivered" && (
+            <Button
+              variant="ghost"
+              className="text-xs"
+              onClick={() => onLessonDeliveryChange(lesson.lessonNumber, "delivered")}
+            >
+              Mark delivered
+            </Button>
+          )}
+        </div>
+
         {editableDelivery && onLessonDeliveryChange && (
           <SchemeLessonDeliveryControls
             lesson={lesson}
@@ -213,8 +262,10 @@ function LessonScreenCard({
 
 export function SOWScreenView({
   scheme,
+  calendar = [],
   editableDelivery = false,
   onLessonDeliveryChange,
+  onScheduleLesson,
 }: SOWScreenViewProps) {
   const title = schemeDisplayTitle(scheme);
   const topicName = getTopicName(scheme.topicId);
@@ -301,8 +352,14 @@ export function SOWScreenView({
               lesson={lesson}
               expanded={!collapsedIds.has(lesson.id)}
               onToggle={() => toggleLesson(lesson.id)}
+              scheduledDate={getSchemeLessonScheduledDate(
+                calendar,
+                scheme.id,
+                lesson.lessonNumber
+              )}
               editableDelivery={editableDelivery}
               onLessonDeliveryChange={onLessonDeliveryChange}
+              onScheduleLesson={onScheduleLesson}
             />
           ))
         )}

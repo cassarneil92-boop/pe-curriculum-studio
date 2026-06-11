@@ -2,11 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { useApp } from "@/components/providers/AppProvider";
+import { TeacherTimetableEditor } from "@/components/settings/TeacherTimetableEditor";
 import {
+  createAcademicTerm,
   defaultAcademicCalendarSettings,
   migrateAcademicCalendarSettings,
 } from "@/lib/calendar/academic-settings";
-import type { AcademicCalendarSettings, TermDateRange } from "@/lib/types";
+import type { AcademicCalendarSettings, AcademicTerm } from "@/lib/types";
 import { SchoolSetupFields } from "@/components/shared/SchoolSetupFields";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -29,7 +31,7 @@ export default function SettingsPage() {
   const { accessMode, setAccessMode, context } = useTeacherContext();
   const [form, setForm] = useState(data.teacher);
   const [academicForm, setAcademicForm] = useState<AcademicCalendarSettings>(() =>
-    migrateAcademicCalendarSettings(data.academicCalendar)
+    migrateAcademicCalendarSettings(data.academicCalendar, data.planningTerms)
   );
   const [saved, setSaved] = useState(false);
   const previewContext = buildTeacherContext(form, accessMode);
@@ -58,8 +60,10 @@ export default function SettingsPage() {
   };
 
   useEffect(() => {
-    setAcademicForm(migrateAcademicCalendarSettings(data.academicCalendar));
-  }, [data.academicCalendar]);
+    setAcademicForm(
+      migrateAcademicCalendarSettings(data.academicCalendar, data.planningTerms)
+    );
+  }, [data.academicCalendar, data.planningTerms]);
 
   const handleSave = () => {
     updateTeacher(form);
@@ -68,11 +72,25 @@ export default function SettingsPage() {
     setTimeout(() => setSaved(false), 2000);
   };
 
-  const updateTerm = (term: "term1" | "term2" | "term3", patch: Partial<TermDateRange>) => {
+  const updateTerm = (id: string, patch: Partial<AcademicTerm>) => {
     setAcademicForm((prev) => ({
       ...prev,
-      [term]: { ...prev[term], ...patch },
+      terms: prev.terms.map((t) => (t.id === id ? { ...t, ...patch } : t)),
     }));
+  };
+
+  const addTerm = () => {
+    setAcademicForm((prev) => ({
+      ...prev,
+      terms: [...prev.terms, createAcademicTerm(prev.terms)],
+    }));
+  };
+
+  const removeTerm = (id: string) => {
+    setAcademicForm((prev) => {
+      if (prev.terms.length <= 1) return prev;
+      return { ...prev, terms: prev.terms.filter((t) => t.id !== id) };
+    });
   };
 
   const resetAcademicDefaults = () => {
@@ -185,8 +203,8 @@ export default function SettingsPage() {
 
         <Card>
           <CardHeader
-            title="Calendar / Academic Year"
-            description="Set your academic year and term dates for Calendar Term View, dashboard pacing, and Teaching Progress."
+            title="Academic Calendar"
+            description="Single source of truth for term dates — used by Calendar, Schemes, Dashboard and Teaching Progress."
           />
           <div className="space-y-4">
             <div className="grid gap-4 sm:grid-cols-2">
@@ -205,13 +223,32 @@ export default function SettingsPage() {
                 }
               />
             </div>
-            <TermFields label="Term 1" range={academicForm.term1} onChange={(patch) => updateTerm("term1", patch)} />
-            <TermFields label="Term 2" range={academicForm.term2} onChange={(patch) => updateTerm("term2", patch)} />
-            <TermFields label="Term 3" range={academicForm.term3} onChange={(patch) => updateTerm("term3", patch)} />
-            <Button variant="ghost" className="text-xs" onClick={resetAcademicDefaults}>
-              Reset to Malta defaults
-            </Button>
+            {academicForm.terms.map((term) => (
+              <TermEditor
+                key={term.id}
+                term={term}
+                canRemove={academicForm.terms.length > 1}
+                onChange={(patch) => updateTerm(term.id, patch)}
+                onRemove={() => removeTerm(term.id)}
+              />
+            ))}
+            <div className="flex flex-wrap gap-2">
+              <Button variant="secondary" className="text-xs" onClick={addTerm}>
+                Add term
+              </Button>
+              <Button variant="ghost" className="text-xs" onClick={resetAcademicDefaults}>
+                Reset to Malta defaults
+              </Button>
+            </div>
           </div>
+        </Card>
+
+        <Card>
+          <CardHeader
+            title="Teacher Timetable"
+            description="Define your weekly PE slots. Calendar Week View uses these for faster drag-and-drop scheduling."
+          />
+          <TeacherTimetableEditor />
         </Card>
 
         <Card>
@@ -229,7 +266,7 @@ export default function SettingsPage() {
         <Card>
           <CardHeader
             title="Advanced tools"
-            description="Technical curriculum tools for metadata checks and alignment testing."
+            description="Technical curriculum tools for curriculum information checks and alignment testing."
           />
           <div className="space-y-2">
             {ADVANCED_NAV_ITEMS.map((item) => (
@@ -299,21 +336,50 @@ function DateField({
   );
 }
 
-function TermFields({
-  label,
-  range,
+function TermEditor({
+  term,
+  canRemove,
   onChange,
+  onRemove,
 }: {
-  label: string;
-  range: TermDateRange;
-  onChange: (patch: Partial<TermDateRange>) => void;
+  term: AcademicTerm;
+  canRemove: boolean;
+  onChange: (patch: Partial<AcademicTerm>) => void;
+  onRemove: () => void;
 }) {
   return (
     <div className="rounded-lg border border-slate-200 p-3">
-      <p className="mb-2 text-sm font-semibold text-slate-800">{label}</p>
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <label className="block flex-1 text-sm">
+          <span className="mb-1 block font-semibold text-slate-800">Term name</span>
+          <input
+            type="text"
+            value={term.name}
+            onChange={(e) => onChange({ name: e.target.value })}
+            className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+          />
+        </label>
+        {canRemove && (
+          <button
+            type="button"
+            onClick={onRemove}
+            className="mt-5 text-xs text-rose-600 hover:text-rose-700"
+          >
+            Remove
+          </button>
+        )}
+      </div>
       <div className="grid gap-3 sm:grid-cols-2">
-        <DateField label="Start" value={range.start} onChange={(start) => onChange({ start })} />
-        <DateField label="End" value={range.end} onChange={(end) => onChange({ end })} />
+        <DateField
+          label="Start"
+          value={term.startDate}
+          onChange={(startDate) => onChange({ startDate })}
+        />
+        <DateField
+          label="End"
+          value={term.endDate}
+          onChange={(endDate) => onChange({ endDate })}
+        />
       </div>
     </div>
   );

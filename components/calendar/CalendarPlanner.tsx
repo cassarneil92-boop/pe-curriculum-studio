@@ -20,7 +20,7 @@ import {
 } from "@/lib/calendar/helpers";
 import { useDeliverySync } from "@/hooks/useDeliverySync";
 import { startOfMonth, startOfWeek } from "@/lib/calendar/dates";
-import { migratePlanningTerms } from "@/lib/planning/terms";
+import { getPlanningTerms } from "@/lib/planning/terms";
 import type { CalendarEntry } from "@/lib/types";
 
 interface ScheduleSchemePrefill {
@@ -74,8 +74,8 @@ export function CalendarPlanner({
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const planningTerms = useMemo(
-    () => migratePlanningTerms(data.planningTerms, data.academicCalendar),
-    [data.planningTerms, data.academicCalendar]
+    () => getPlanningTerms(data.academicCalendar),
+    [data.academicCalendar]
   );
 
   const selected = data.calendar.find((e) => e.id === selectedId) ?? null;
@@ -104,12 +104,20 @@ export function CalendarPlanner({
     .filter((e) => e.startDate)
     .sort((a, b) => a.startDate.localeCompare(b.startDate));
 
-  const handleDropOnDate = (iso: string, raw: string) => {
+  const handleDropOnDate = (iso: string, raw: string, slot?: import("@/lib/types").TimetableSlot) => {
     const payload = decodeCalendarDrag(raw);
     if (!payload) return;
 
     if (payload.type === "calendar-entry" || payload.type === "custom-entry") {
-      updateCalendarEntry(payload.entryId, { startDate: iso, endDate: iso });
+      const patch: Partial<CalendarEntry> = { startDate: iso, endDate: iso };
+      if (slot) {
+        patch.startTime = slot.startTime;
+        patch.endTime = slot.endTime;
+        patch.classGroup = slot.classGroup;
+        patch.yearGroup = slot.yearGroup;
+        if (slot.pathway) patch.pathway = slot.pathway;
+      }
+      updateCalendarEntry(payload.entryId, patch);
       setSelectedId(payload.entryId);
       return;
     }
@@ -117,7 +125,7 @@ export function CalendarPlanner({
     if (payload.type === "lesson") {
       const lesson = data.lessons.find((l) => l.id === payload.lessonId);
       if (!lesson) return;
-      const entry = addCalendarEntry(createCalendarEntryFromLesson(lesson, iso));
+      const entry = addCalendarEntry(createCalendarEntryFromLesson(lesson, iso, slot));
       setSelectedId(entry.id);
       return;
     }
@@ -128,7 +136,8 @@ export function CalendarPlanner({
       const draft = createCalendarEntryFromSchemeLesson(
         scheme,
         payload.lessonNumber,
-        iso
+        iso,
+        slot
       );
       if (!draft) return;
       const entry = addCalendarEntry(draft);
@@ -174,6 +183,7 @@ export function CalendarPlanner({
             <CalendarWeekView
               weekStart={weekStart}
               entries={data.calendar}
+              timetable={data.timetable}
               selectedId={selectedId}
               onSelect={setSelectedId}
               onWeekChange={setWeekStart}

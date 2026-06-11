@@ -1,7 +1,11 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { ScheduleLessonModal } from "@/components/calendar/ScheduleLessonModal";
+import { ScheduleSchemeModal } from "@/components/calendar/ScheduleSchemeModal";
+import { createCalendarEntryFromSchemeLesson } from "@/lib/calendar/helpers";
+import { findCalendarEntryForSchemeLesson } from "@/lib/calendar/scheduling-lookup";
 import { SchemeLessonEditor } from "@/components/scheme-builder/SchemeLessonEditor";
 import { SchemeLessonNavigator } from "@/components/scheme-builder/SchemeLessonNavigator";
 import { SchemePlanningAssistant } from "@/components/scheme-builder/SchemePlanningAssistant";
@@ -28,7 +32,7 @@ import { buildSchemeExportHtml } from "@/lib/export";
 import { parseHubPathwaysFromQuery } from "@/lib/curriculum-hub/planning-links";
 import { BrandLogoHorizontal } from "@/components/brand/BrandLogoHorizontal";
 import { SchemeHealthCard } from "@/components/progress/SchemeHealthCard";
-import { migratePlanningTerms } from "@/lib/planning/terms";
+import { getPlanningTerms } from "@/lib/planning/terms";
 import {
   buildSchemeProgressSummary,
   buildSchemesDashboardSummary,
@@ -80,7 +84,7 @@ import {
 import { getYearGroupLabel } from "@/lib/year-groups";
 import { analyseSchemeCoaching } from "@/src/lib/intelligence/coach/scheme-coach";
 import { buildSchemeAdvisoryAlignment } from "@/src/lib/intelligence/advisory/scheme-alignment";
-import type { PathwayId, SchemeOfWork, SOWLesson, YearGroup } from "@/lib/types";
+import type { CalendarEntry, PathwayId, SchemeOfWork, SOWLesson, TimetableSlot, YearGroup } from "@/lib/types";
 
 type SchemeDraft = Omit<SchemeOfWork, "id" | "createdAt" | "updatedAt">;
 
@@ -125,9 +129,11 @@ function getVisibleOutcomeIds(
 }
 
 export default function SchemesPage() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const hubPrefillApplied = useRef(false);
-  const { data, addScheme, updateScheme, deleteScheme } = useApp();
+  const { data, addScheme, updateScheme, deleteScheme, addCalendarEntry, updateCalendarEntry } =
+    useApp();
   const { setSchemeLessonDelivery } = useDeliverySync();
   const { context } = useTeacherContext();
 
@@ -137,6 +143,11 @@ export default function SchemesPage() {
   const [displayMode, setDisplayMode] = useState<SchemeDisplayMode>("screen");
   const [activeLessonIndex, setActiveLessonIndex] = useState(0);
   const [setupOpen, setSetupOpen] = useState(true);
+  const [scheduleSchemeId, setScheduleSchemeId] = useState<string | null>(null);
+  const [scheduleLessonTarget, setScheduleLessonTarget] = useState<{
+    schemeId: string;
+    lessonNumber: number;
+  } | null>(null);
 
   const draftPathways = useMemo(
     () => (draft ? resolveSchemeAppPathways(draft.selectedPathways, draft.pathway) : []),
@@ -186,9 +197,35 @@ export default function SchemesPage() {
   }, [draft, alignmentReady, context, editingId]);
 
   const planningTerms = useMemo(
-    () => migratePlanningTerms(data.planningTerms, data.academicCalendar),
-    [data.planningTerms, data.academicCalendar]
+    () => getPlanningTerms(data.academicCalendar),
+    [data.academicCalendar]
   );
+
+  const handleScheduleScheme = (entries: Omit<CalendarEntry, "id">[]) => {
+    for (const entry of entries) {
+      addCalendarEntry(entry);
+    }
+  };
+
+  const handleScheduleLesson = (
+    scheme: SchemeOfWork,
+    lessonNumber: number,
+    result: { date: string; slot?: TimetableSlot; startTime?: string; endTime?: string }
+  ) => {
+    const existing = findCalendarEntryForSchemeLesson(data.calendar, scheme.id, lessonNumber);
+    let draft = createCalendarEntryFromSchemeLesson(scheme, lessonNumber, result.date, result.slot);
+    if (!draft) return;
+
+    if (!result.slot && result.startTime) {
+      draft = { ...draft, startTime: result.startTime, endTime: result.endTime };
+    }
+
+    if (existing) {
+      updateCalendarEntry(existing.id, draft);
+    } else {
+      addCalendarEntry(draft);
+    }
+  };
 
   const schemesByTerm = useMemo(() => {
     const map = new Map<string, SchemeOfWork[]>();
@@ -601,9 +638,17 @@ export default function SchemesPage() {
           {displayMode === "screen" ? (
             <SOWScreenView
               scheme={liveViewingScheme}
+              calendar={data.calendar}
+              timetable={data.timetable}
               editableDelivery
               onLessonDeliveryChange={(lessonNumber, status) =>
                 setSchemeLessonDelivery(liveViewingScheme, lessonNumber, status)
+              }
+              onScheduleLesson={(lessonNumber) =>
+                setScheduleLessonTarget({
+                  schemeId: liveViewingScheme.id,
+                  lessonNumber,
+                })
               }
             />
           ) : (
@@ -822,8 +867,35 @@ export default function SchemesPage() {
     );
   }
 
+  const scheduleLessonScheme = scheduleLessonTarget
+    ? data.schemes.find((s) => s.id === scheduleLessonTarget.schemeId)
+    : null;
+
   return (
     <div>
+      {scheduleSchemeId && (
+        <ScheduleSchemeModal
+          schemes={data.schemes.filter((s) => s.id === scheduleSchemeId)}
+          initialSchemeId={scheduleSchemeId}
+          onClose={() => setScheduleSchemeId(null)}
+          onSchedule={handleScheduleScheme}
+        />
+      )}
+      {scheduleLessonTarget && scheduleLessonScheme && (
+        <ScheduleLessonModal
+          title={`${schemeDisplayTitle(scheduleLessonScheme)} — Lesson ${scheduleLessonTarget.lessonNumber}`}
+          timetable={data.timetable ?? []}
+          onClose={() => setScheduleLessonTarget(null)}
+          onSchedule={(result) => {
+            handleScheduleLesson(
+              scheduleLessonScheme,
+              scheduleLessonTarget.lessonNumber,
+              result
+            );
+            setScheduleLessonTarget(null);
+          }}
+        />
+      )}
       <div className="mb-4">
         <BrandLogoHorizontal height={28} className="opacity-90" />
       </div>
@@ -881,6 +953,8 @@ export default function SchemesPage() {
                           summary={buildSchemeProgressSummary(scheme)}
                           onView={() => openSchemeView(scheme)}
                           onEdit={() => startEditScheme(scheme)}
+                          onSchedule={() => setScheduleSchemeId(scheme.id)}
+                          onViewProgress={() => router.push("/curriculum-analytics")}
                           onDelete={() => deleteScheme(scheme.id)}
                           onExportPdf={() => exportSchemeDocument(scheme, "pdf")}
                           onExportWord={() => exportSchemeDocument(scheme, "word")}

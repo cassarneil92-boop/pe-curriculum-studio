@@ -37,22 +37,50 @@ export interface TermDateRange {
   end: string;
 }
 
-/** Teacher-configurable academic year and term dates for calendar pacing. */
+/** Unified academic term — single source of truth for planning and calendar. */
+export interface AcademicTerm {
+  id: string;
+  name: string;
+  startDate: string;
+  endDate: string;
+  order: number;
+}
+
+/** @deprecated Use AcademicTerm */
+export type PlanningTerm = AcademicTerm;
+
+/** Teacher-configurable academic year and terms. */
 export interface AcademicCalendarSettings {
   academicYearStart: string;
   academicYearEnd: string;
-  term1: TermDateRange;
-  term2: TermDateRange;
-  term3: TermDateRange;
+  terms: AcademicTerm[];
+  /** @deprecated Migrated to terms[] */
+  term1?: TermDateRange;
+  term2?: TermDateRange;
+  term3?: TermDateRange;
 }
 
-/** Editable planning term container (framework for schemes, not calendar scheduling). */
-export interface PlanningTerm {
+export type Weekday =
+  | "monday"
+  | "tuesday"
+  | "wednesday"
+  | "thursday"
+  | "friday";
+
+/** Weekly timetable slot for Calendar Week View. */
+export interface TimetableSlot {
   id: string;
-  name: string;
-  start: string;
-  end: string;
+  day: Weekday;
+  startTime: string;
+  endTime: string;
+  classGroup: string;
+  yearGroup: YearGroup;
+  pathway?: PathwayId;
+  location?: string;
+  notes?: string;
 }
+
+export type ResourceVisibilityLevel = "private" | "department" | "public-ready";
 
 export interface TeacherProfile {
   educationalSetting: EducationalSetting | "";
@@ -241,27 +269,30 @@ export interface SchemeOfWork {
 
 export interface ResourceItem {
   id: string;
+  /** Display title */
+  title?: string;
+  /** @deprecated Use title — kept for migration */
   name: string;
   type: string;
+  category?: string;
   pathway: PathwayId | "";
+  yearGroup?: YearGroup | "";
+  topicId?: string;
+  skillId?: string;
   sport: string;
   notes: string;
   fileName: string;
   fileSize: number;
-  createdAt: string;
-  /** Phase 4 resource warehouse extensions (all optional). */
-  fileType?: ResourceFileType;
-  yearGroup?: string;
-  topicId?: string;
-  skillId?: string;
+  externalLink?: string;
   learningOutcomeIds?: string[];
+  visibilityLevel?: ResourceVisibilityLevel;
+  createdAt: string;
+  fileType?: ResourceFileType;
   pedagogicalModels?: PedagogicalModelId[];
   keywords?: string[];
   visibility?: ResourceVisibility;
   scope?: CollaborationScope;
   storageUri?: string;
-  /** Resource warehouse category (foundation for future filtering). */
-  category?: string;
 }
 
 export interface AppData {
@@ -271,8 +302,9 @@ export interface AppData {
   calendar: CalendarEntry[];
   resources: ResourceItem[];
   academicCalendar?: AcademicCalendarSettings;
-  /** Editable term planning containers. */
-  planningTerms?: PlanningTerm[];
+  /** @deprecated Migrated into academicCalendar.terms */
+  planningTerms?: AcademicTerm[];
+  timetable?: TimetableSlot[];
   setupComplete: boolean;
 }
 

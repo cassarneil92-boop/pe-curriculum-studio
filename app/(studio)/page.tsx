@@ -19,12 +19,17 @@ import { getLessonTopicName } from "@/lib/lesson-plans/helpers";
 import { migrateAcademicCalendarSettings } from "@/lib/calendar/academic-settings";
 import { buildTermUnitBlocks, currentUnitBlock, upcomingUnitBlock } from "@/lib/calendar/pacing";
 import { formatShortDate, startOfWeek, termRangeFromSettings, toIso, addDays } from "@/lib/calendar/dates";
+import {
+  buildDashboardAttention,
+  buildDashboardCurrentUnit,
+  buildDashboardWeekStats,
+} from "@/lib/dashboard/insights";
+import { ProgressBar } from "@/components/ui/ProgressBar";
 import { lessonsStillToTeach } from "@/lib/progress/delivery";
 import { collectRemainingOutcomeIds, collectTaughtOutcomeIds } from "@/lib/progress/coverage";
 import { getPlanningOutcomes } from "@/src/lib/curriculum/planning";
 import { resolveSchoolDisplayName } from "@/src/lib/schools";
 import { IMPORTED_LEARNING_OUTCOMES } from "@/src/lib/curriculum/coverage";
-
 function todayIso(): string {
   return new Date().toISOString().slice(0, 10);
 }
@@ -61,15 +66,20 @@ export default function DashboardPage() {
   const currentUnit = currentUnitBlock(termBlocks, today);
   const upcomingUnit = upcomingUnitBlock(termBlocks, today);
 
-  const weekLessons = useMemo(
-    () =>
-      calendar.filter(
-        (e) => e.startDate && e.startDate >= weekStart && e.startDate <= weekEnd
-      ),
+  const weekStats = useMemo(
+    () => buildDashboardWeekStats(calendar, weekStart, weekEnd),
     [calendar, weekStart, weekEnd]
   );
 
-  const deliveredThisWeek = weekLessons.filter((e) => e.deliveryStatus === "delivered").length;
+  const dashboardUnit = useMemo(
+    () => buildDashboardCurrentUnit(schemes, calendar, today),
+    [schemes, calendar, today]
+  );
+
+  const attentionItems = useMemo(
+    () => buildDashboardAttention(lessons, schemes, calendar),
+    [lessons, schemes, calendar]
+  );
 
   const outcomesRemaining = useMemo(() => {
     const taught = collectTaughtOutcomeIds(lessons, schemes, calendar);
@@ -138,30 +148,93 @@ export default function DashboardPage() {
         </p>
       </header>
 
+      <section className="grid gap-4 lg:grid-cols-3">
+        <Card>
+          <CardHeader title="Today / This week" />
+          <div className="grid grid-cols-2 gap-3 text-sm">
+            <DashboardStatInline label="Scheduled" value={String(weekStats.scheduled)} />
+            <DashboardStatInline label="Delivered" value={String(weekStats.delivered)} />
+            <DashboardStatInline label="Skipped / moved" value={String(weekStats.skipped + weekStats.moved)} />
+            <DashboardStatInline label="Reflections pending" value={String(weekStats.reflectionsPending)} />
+          </div>
+        </Card>
+
+        <Card>
+          <CardHeader title="Current unit" />
+          {dashboardUnit ? (
+            <div className="space-y-3">
+              <p className="text-lg font-semibold text-slate-900">{dashboardUnit.title}</p>
+              <ProgressBar
+                value={
+                  dashboardUnit.totalLessons > 0
+                    ? Math.round(
+                        (dashboardUnit.deliveredLessons / dashboardUnit.totalLessons) * 100
+                      )
+                    : 0
+                }
+                label="Lessons delivered"
+              />
+              <p className="text-sm text-slate-600">
+                {dashboardUnit.deliveredLessons} / {dashboardUnit.totalLessons} lessons delivered
+              </p>
+              <p className="text-sm text-slate-600">
+                Outcomes taught: {dashboardUnit.taughtOutcomes} / {dashboardUnit.plannedOutcomes}
+              </p>
+            </div>
+          ) : (
+            <p className="text-sm text-slate-500">
+              No active unit yet.{" "}
+              <Link href="/schemes" className="font-medium text-teal-700">
+                Schedule a scheme
+              </Link>{" "}
+              to see progress here.
+            </p>
+          )}
+        </Card>
+
+        <Card>
+          <CardHeader
+            title="What needs attention"
+            action={
+              <Link href="/curriculum-analytics" className="text-xs font-medium text-teal-700">
+                Teaching Progress
+              </Link>
+            }
+          />
+          {attentionItems.length === 0 ? (
+            <p className="text-sm text-slate-500">You&apos;re on track — nothing urgent right now.</p>
+          ) : (
+            <ul className="space-y-2">
+              {attentionItems.map((item) => (
+                <li key={item.id} className="rounded-lg bg-amber-50/60 px-3 py-2 text-sm text-slate-700">
+                  {item.message}
+                </li>
+              ))}
+            </ul>
+          )}
+        </Card>
+      </section>
+
       <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <DashboardStat
-          label="Current unit"
-          value={currentUnit?.title ?? "Not scheduled"}
-          hint={
-            currentUnit
-              ? `${currentUnit.deliveredLessons}/${currentUnit.totalLessons} delivered`
-              : "Schedule a scheme in Calendar"
-          }
-        />
-        <DashboardStat
-          label="Lessons this week"
-          value={String(weekLessons.length)}
-          hint="Scheduled on your calendar"
-        />
-        <DashboardStat
-          label="Delivered this week"
-          value={String(deliveredThisWeek)}
-          hint="Marked as taught"
-        />
         <DashboardStat
           label="Lessons still to teach"
           value={String(schemeLessonsRemaining)}
           hint="Across your schemes of work"
+        />
+        <DashboardStat
+          label="Outcomes remaining"
+          value={String(outcomesRemaining)}
+          hint="In your teaching context"
+        />
+        <DashboardStat
+          label="Calendar entries"
+          value={String(calendar.length)}
+          hint="Scheduled and unscheduled"
+        />
+        <DashboardStat
+          label="Resources saved"
+          value={String(data.resources.length)}
+          hint="In your teaching library"
         />
       </section>
 
@@ -257,46 +330,46 @@ export default function DashboardPage() {
         <h2 className="mb-4 text-lg font-semibold text-slate-900">Quick actions</h2>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <QuickActionCard
-            href="/calendar"
-            title="Calendar"
-            description="Plan your term and track delivered lessons."
-            accent="green"
-            icon={<span>📅</span>}
-          />
-          <QuickActionCard
-            href="/curriculum"
-            title="Curriculum Hub"
-            description="Browse topics and learning outcomes for your pathways."
-            accent="teal"
-            icon={<span>📚</span>}
-          />
-          <QuickActionCard
             href="/lesson-builder"
-            title="Lesson Builder"
-            description="Build a lesson with strict curriculum alignment."
+            title="Build lesson"
+            description="Create a curriculum-aligned lesson plan."
             accent="blue"
             icon={<span>✏️</span>}
           />
           <QuickActionCard
             href="/schemes"
-            title="Schemes of Work"
-            description="Plan term units with linked learning outcomes."
+            title="Create scheme"
+            description="Plan a term-long unit with linked outcomes."
             accent="purple"
             icon={<span>📋</span>}
           />
           <QuickActionCard
+            href="/calendar"
+            title="Schedule week"
+            description="Drag lessons onto your weekly timetable."
+            accent="green"
+            icon={<span>📅</span>}
+          />
+          <QuickActionCard
             href="/curriculum-analytics"
             title="Teaching Progress"
-            description="Planned vs taught coverage across your context."
+            description="Planned vs taught coverage and warnings."
             accent="amber"
             icon={<span>📊</span>}
           />
           <QuickActionCard
             href="/resources"
-            title="Resources"
-            description="Keep equipment lists and files close at hand."
-            accent="amber"
+            title="Add resource"
+            description="Grow your PE teaching library."
+            accent="teal"
             icon={<span>📁</span>}
+          />
+          <QuickActionCard
+            href="/curriculum"
+            title="Curriculum Hub"
+            description="Browse topics and start planning from outcomes."
+            accent="teal"
+            icon={<span>📚</span>}
           />
         </div>
       </section>
@@ -347,5 +420,14 @@ function DashboardStat({
       <p className="mt-1 text-xl font-semibold text-slate-900">{value}</p>
       <p className="mt-1 text-xs text-slate-500">{hint}</p>
     </Card>
+  );
+}
+
+function DashboardStatInline({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <p className="text-xs text-slate-500">{label}</p>
+      <p className="text-lg font-semibold text-slate-900">{value}</p>
+    </div>
   );
 }

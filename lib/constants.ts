@@ -126,7 +126,7 @@ export const NAV_ITEMS = [
   { href: "/curriculum", label: "Curriculum Hub", icon: "curriculum" },
   { href: "/curriculum-analytics", label: "Teaching Progress", icon: "analytics" },
   { href: "/curriculum-assistant", label: "Curriculum Assistant", icon: "assistant" },
-  { href: "/resources", label: "Resources", icon: "resources" },
+  { href: "/resources", label: "Teaching Resources", icon: "resources" },
   { href: "/settings", label: "Settings", icon: "settings" },
 ] as const;
 
@@ -150,8 +150,8 @@ export const NAV_SECTIONS = [
   {
     title: "Tools",
     items: [
-      { href: "/resources", label: "Resources", icon: "resources" },
-      { href: "/curriculum-assistant", label: "Curriculum Assistant", icon: "assistant" },
+      { href: "/resources", label: "Teaching Resources", icon: "resources" },
+      { href: "/curriculum-assistant", label: "Planning Assistant", icon: "assistant" },
     ],
   },
   {
@@ -164,7 +164,7 @@ export const NAV_SECTIONS = [
 export const ADVANCED_NAV_ITEMS = [
   { href: "/curriculum-tester", label: "Curriculum Tester", icon: "tester" },
   { href: "/curriculum-coverage", label: "Curriculum Coverage", icon: "coverage" },
-  { href: "/curriculum-visibility-audit", label: "Visibility Audit", icon: "audit" },
+  { href: "/curriculum-visibility-audit", label: "Available Curriculum Check", icon: "audit" },
 ] as const;
 
 export function getPathwayLabel(id: PathwayId): string {
