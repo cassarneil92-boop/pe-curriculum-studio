@@ -10,6 +10,9 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { FieldGroup, Input, Select, Textarea } from "@/components/ui/Input";
+import { LessonActivityEditor } from "@/components/lesson-builder/LessonActivityEditor";
+import { LessonEndingBuilder } from "@/components/lesson-builder/LessonEndingBuilder";
+import { LessonQualityChecklist } from "@/components/lesson-builder/LessonQualityChecklist";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { StickyActionBar } from "@/components/layout/StickyActionBar";
 import { YearGroupSelect } from "@/components/shared/YearGroupSelect";
@@ -30,6 +33,11 @@ import { lessonPlanToFormData } from "@/lib/lesson-plans/migrate";
 import {
   primaryCurriculumPathwayFromApp,
 } from "@/lib/lesson-plans/helpers";
+import {
+  createEmptyActivity,
+  renumberActivities,
+  syncLessonLegacyFields,
+} from "@/lib/lesson-plans/pe-template";
 import { getDefaultHubPathways } from "@/lib/curriculum-hub/pathway-defaults";
 import { getPathwayLabel, DEFAULT_YEAR_GROUP_ID } from "@/lib/constants";
 import {
@@ -42,10 +50,11 @@ import type { PathwayId } from "@/lib/types";
 const SECTIONS = [
   { id: "info", label: "Lesson Info", number: 1 },
   { id: "focus", label: "Curriculum Focus", number: 2 },
-  { id: "outcomes", label: "Learning Outcomes", number: 3 },
-  { id: "activities", label: "Activities", number: 4 },
-  { id: "assessment", label: "Assessment", number: 5 },
-  { id: "reflection", label: "Reflection", number: 6 },
+  { id: "outcomes", label: "Curriculum Reference", number: 3 },
+  { id: "design", label: "Learning Design", number: 4 },
+  { id: "activities", label: "PE Activities", number: 5 },
+  { id: "ending", label: "Lesson Ending", number: 6 },
+  { id: "review", label: "Quality Review", number: 7 },
 ] as const;
 
 type SectionId = (typeof SECTIONS)[number]["id"];
@@ -60,6 +69,7 @@ const emptyForm = (): LessonBuilderFormData => ({
   topicId: "",
   skillId: "",
   learningIntention: "",
+  walt: "",
   successCriteria: "",
   equipment: "",
   safetyConsiderations: "",
@@ -69,6 +79,8 @@ const emptyForm = (): LessonBuilderFormData => ({
   reflectionNotes: "",
   selectedLearningOutcomeIds: [],
   selectedPathways: [],
+  structuredActivities: [],
+  lessonEndings: [],
 });
 
 export default function LessonBuilderPage() {
@@ -327,17 +339,26 @@ export default function LessonBuilderPage() {
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    const payload = { ...form, ...syncLessonLegacyFields(form) };
+
     if (editingId) {
-      updateLesson(editingId, form);
+      updateLesson(editingId, payload);
       router.push("/lessons");
       return;
     }
 
-    addLesson(form);
+    addLesson(payload);
     setForm(emptyForm());
     setActiveSection("info");
     router.push("/lessons");
   }
+
+  const updateActivities = (structuredActivities: typeof form.structuredActivities) => {
+    setForm((prev) => ({
+      ...prev,
+      structuredActivities: renumberActivities(structuredActivities ?? []),
+    }));
+  };
 
   const alignmentReady = Boolean(
     appPathways.length > 0 && form.topicId && form.skillId
@@ -356,7 +377,8 @@ export default function LessonBuilderPage() {
               {form.title || (editingId ? "Editing lesson" : "New lesson")}
             </p>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <LessonQualityChecklist lesson={form} compact />
             <Link href="/lessons">
               <Button variant="ghost" type="button">
                 Library
@@ -383,7 +405,8 @@ export default function LessonBuilderPage() {
       <form id="lesson-builder-form" onSubmit={handleSubmit}>
         <div className="flex flex-col gap-8 lg:flex-row">
           <nav className="lg:w-56 lg:shrink-0">
-            <div className="sticky top-6 space-y-1">
+            <div className="sticky top-[4.5rem] space-y-4">
+              <div className="space-y-1">
               {SECTIONS.map((section) => {
                 const active = activeSection === section.id;
                 return (
@@ -408,6 +431,8 @@ export default function LessonBuilderPage() {
                   </button>
                 );
               })}
+              </div>
+              <LessonQualityChecklist lesson={form} />
             </div>
           </nav>
 
@@ -574,8 +599,8 @@ export default function LessonBuilderPage() {
             {activeSection === "outcomes" && (
               <Card>
                 <CardHeader
-                  title="Learning Outcomes"
-                  description="Strict curriculum suggestions based on your pathway, topic, and skill."
+                  title="Curriculum Reference"
+                  description="Official learning outcome codes and descriptions for this lesson focus."
                 />
                 {!alignmentReady ? (
                   <p className="text-sm text-slate-500">
@@ -605,56 +630,46 @@ export default function LessonBuilderPage() {
                   <Button type="button" variant="ghost" onClick={() => setActiveSection("focus")}>
                     ← Back
                   </Button>
-                  <Button type="button" variant="secondary" onClick={() => setActiveSection("activities")}>
-                    Next: Activities →
+                  <Button type="button" variant="secondary" onClick={() => setActiveSection("design")}>
+                    Next: Learning Design →
                   </Button>
                 </div>
               </Card>
             )}
 
-            {activeSection === "activities" && (
+            {activeSection === "design" && (
               <Card>
-                <CardHeader title="Activities" description="Equipment, safety, differentiation, and lesson flow." />
+                <CardHeader
+                  title="Learning Design"
+                  description="Learning intentions, WALT, and success criteria — the backbone of your PE lesson."
+                />
                 <div className="grid gap-4">
-                  <FieldGroup label="Learning intention">
+                  <FieldGroup label="Learning intentions">
                     <Textarea
                       value={form.learningIntention}
                       onChange={(e) => updateForm("learningIntention", e.target.value)}
-                      placeholder="What will students learn?"
+                      placeholder="What will students learn in this lesson?"
                     />
                   </FieldGroup>
-                  <FieldGroup label="Success criteria">
+                  <FieldGroup label="WALT — We Are Learning To…">
+                    <Textarea
+                      value={form.walt}
+                      onChange={(e) => updateForm("walt", e.target.value)}
+                      placeholder="e.g. We are learning to pass accurately under pressure"
+                    />
+                  </FieldGroup>
+                  <FieldGroup label="Success criteria / WILF">
                     <Textarea
                       value={form.successCriteria}
                       onChange={(e) => updateForm("successCriteria", e.target.value)}
-                      placeholder="How will you know they have learned it?"
+                      placeholder="How will you know students have achieved the learning?"
                     />
                   </FieldGroup>
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <FieldGroup label="Equipment">
-                      <Textarea
-                        value={form.equipment}
-                        onChange={(e) => updateForm("equipment", e.target.value)}
-                      />
-                    </FieldGroup>
-                    <FieldGroup label="Safety considerations">
-                      <Textarea
-                        value={form.safetyConsiderations}
-                        onChange={(e) => updateForm("safetyConsiderations", e.target.value)}
-                      />
-                    </FieldGroup>
-                  </div>
-                  <FieldGroup label="Differentiation">
+                  <FieldGroup label="Safety considerations">
                     <Textarea
-                      value={form.differentiation}
-                      onChange={(e) => updateForm("differentiation", e.target.value)}
-                    />
-                  </FieldGroup>
-                  <FieldGroup label="Activities / lesson flow">
-                    <Textarea
-                      value={form.activities}
-                      onChange={(e) => updateForm("activities", e.target.value)}
-                      placeholder="Warm-up, main activities, cool-down…"
+                      value={form.safetyConsiderations}
+                      onChange={(e) => updateForm("safetyConsiderations", e.target.value)}
+                      placeholder="Key safety points for this session"
                     />
                   </FieldGroup>
                 </div>
@@ -662,52 +677,103 @@ export default function LessonBuilderPage() {
                   <Button type="button" variant="ghost" onClick={() => setActiveSection("outcomes")}>
                     ← Back
                   </Button>
-                  <Button type="button" variant="secondary" onClick={() => setActiveSection("assessment")}>
-                    Next: Assessment →
+                  <Button type="button" variant="secondary" onClick={() => setActiveSection("activities")}>
+                    Next: PE Activities →
                   </Button>
                 </div>
               </Card>
             )}
 
-            {activeSection === "assessment" && (
-              <Card>
-                <CardHeader title="Assessment" description="How you will check learning during and after the lesson." />
-                <FieldGroup label="Assessment notes">
-                  <Textarea
-                    value={form.assessmentNotes}
-                    onChange={(e) => updateForm("assessmentNotes", e.target.value)}
-                    placeholder="Observation, questioning, peer assessment…"
+            {activeSection === "activities" && (
+              <div className="space-y-4">
+                <Card>
+                  <CardHeader
+                    title="PE Activities"
+                    description="Structured activity blocks with progressions, differentiation, and teaching cues."
                   />
-                </FieldGroup>
-                <div className="mt-6 flex justify-between">
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={() =>
+                      updateActivities([
+                        ...(form.structuredActivities ?? []),
+                        createEmptyActivity((form.structuredActivities ?? []).length + 1),
+                      ])
+                    }
+                  >
+                    + Add activity
+                  </Button>
+                </Card>
+
+                {(form.structuredActivities ?? []).map((activity, index, list) => (
+                  <LessonActivityEditor
+                    key={activity.id}
+                    activity={activity}
+                    onChange={(next) =>
+                      updateActivities(list.map((item, i) => (i === index ? next : item)))
+                    }
+                    onRemove={() => updateActivities(list.filter((_, i) => i !== index))}
+                    onMoveUp={
+                      index > 0
+                        ? () => {
+                            const next = [...list];
+                            [next[index - 1], next[index]] = [next[index], next[index - 1]];
+                            updateActivities(next);
+                          }
+                        : undefined
+                    }
+                    onMoveDown={
+                      index < list.length - 1
+                        ? () => {
+                            const next = [...list];
+                            [next[index], next[index + 1]] = [next[index + 1], next[index]];
+                            updateActivities(next);
+                          }
+                        : undefined
+                    }
+                  />
+                ))}
+
+                <div className="flex justify-between">
+                  <Button type="button" variant="ghost" onClick={() => setActiveSection("design")}>
+                    ← Back
+                  </Button>
+                  <Button type="button" variant="secondary" onClick={() => setActiveSection("ending")}>
+                    Next: Lesson Ending →
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {activeSection === "ending" && (
+              <div className="space-y-4">
+                <LessonEndingBuilder
+                  endings={form.lessonEndings ?? []}
+                  onChange={(lessonEndings) => updateForm("lessonEndings", lessonEndings)}
+                />
+                <div className="flex justify-between">
                   <Button type="button" variant="ghost" onClick={() => setActiveSection("activities")}>
                     ← Back
                   </Button>
-                  <Button type="button" variant="secondary" onClick={() => setActiveSection("reflection")}>
-                    Next: Reflection →
+                  <Button type="button" variant="secondary" onClick={() => setActiveSection("review")}>
+                    Next: Quality Review →
                   </Button>
                 </div>
-              </Card>
+              </div>
             )}
 
-            {activeSection === "reflection" && (
-              <Card>
-                <CardHeader title="Reflection" description="Notes for after the lesson — what worked, what to adjust." />
-                <FieldGroup label="Reflection notes">
-                  <Textarea
-                    value={form.reflectionNotes}
-                    onChange={(e) => updateForm("reflectionNotes", e.target.value)}
-                  />
-                </FieldGroup>
-                <div className="mt-6 flex justify-between">
-                  <Button type="button" variant="ghost" onClick={() => setActiveSection("assessment")}>
+            {activeSection === "review" && (
+              <div className="space-y-4">
+                <LessonQualityChecklist lesson={form} />
+                <div className="flex justify-between">
+                  <Button type="button" variant="ghost" onClick={() => setActiveSection("ending")}>
                     ← Back
                   </Button>
                   <Button type="submit" disabled={!form.title || !form.date}>
                     {editingId ? "Update lesson" : "Save to library"}
                   </Button>
                 </div>
-              </Card>
+              </div>
             )}
           </div>
         </div>

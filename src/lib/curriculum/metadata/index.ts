@@ -13,6 +13,7 @@ export {
 } from "./enhance";
 export {
   getUnifiedCurriculumOutcomes,
+  resolveLearningOutcomeById,
   resetUnifiedCurriculumOutcomesCache,
 } from "./unified-outcomes";
 export {

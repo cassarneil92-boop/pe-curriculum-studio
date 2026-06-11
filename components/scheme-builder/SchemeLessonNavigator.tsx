@@ -1,6 +1,9 @@
 "use client";
 
-import { lessonHasContent, lessonPreviewTitle } from "@/lib/scheme-builder/helpers";
+import {
+  getLessonCompletionStatus,
+  lessonPreviewTitle,
+} from "@/lib/scheme-builder/helpers";
 import type { SOWLesson } from "@/lib/types";
 
 interface SchemeLessonNavigatorProps {
@@ -21,8 +24,22 @@ export function SchemeLessonNavigator({
       </p>
       {lessons.map((lesson, index) => {
         const active = index === activeIndex;
-        const complete = lessonHasContent(lesson);
+        const status = getLessonCompletionStatus(lesson);
         const preview = lessonPreviewTitle(lesson);
+        const statusLabel =
+          status === "complete" ? "Complete" : status === "partial" ? "Partial" : "Empty";
+        const statusColor =
+          status === "complete"
+            ? "text-emerald-600"
+            : status === "partial"
+              ? "text-amber-600"
+              : "text-slate-400";
+        const dotColor =
+          status === "complete"
+            ? "bg-emerald-500"
+            : status === "partial"
+              ? "bg-amber-400"
+              : "bg-slate-300";
 
         return (
           <button
@@ -45,16 +62,10 @@ export function SchemeLessonNavigator({
             <span className="min-w-0 flex-1">
               <span className="block truncate">{preview}</span>
               <span
-                className={`mt-0.5 inline-flex items-center gap-1 text-[10px] font-medium uppercase tracking-wide ${
-                  complete ? "text-emerald-600" : "text-slate-400"
-                }`}
+                className={`mt-0.5 inline-flex items-center gap-1 text-[10px] font-medium uppercase tracking-wide ${statusColor}`}
               >
-                <span
-                  className={`inline-block h-1.5 w-1.5 rounded-full ${
-                    complete ? "bg-emerald-500" : "bg-slate-300"
-                  }`}
-                />
-                {complete ? "Has content" : "Empty"}
+                <span className={`inline-block h-1.5 w-1.5 rounded-full ${dotColor}`} />
+                {statusLabel}
               </span>
             </span>
           </button>

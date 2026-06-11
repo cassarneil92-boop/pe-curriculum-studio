@@ -2,11 +2,11 @@ import type { ExportFormat, LessonPlan, SchemeOfWork } from "./types";
 import { buildLessonPreviewHtml } from "./lesson-plans/export";
 import { getPathwayLabel } from "./constants";
 import {
-  formatLearningOutcomesForCell,
   formatWilfLines,
   getSchemeSelectedPathways,
   getSkillName,
   getTopicName,
+  resolveSchemeLearningOutcomes,
   schemeDisplayTitle,
 } from "./scheme-builder/helpers";
 import { getYearGroupLabel } from "./year-groups";
@@ -38,7 +38,12 @@ export function buildSchemeExportHtml(scheme: SchemeOfWork): string {
   const title = schemeDisplayTitle(scheme);
   const lessonsHtml = scheme.lessons
     .map((lesson) => {
-      const outcomes = formatLearningOutcomesForCell(lesson.learningOutcomeIds);
+      const outcomes = resolveSchemeLearningOutcomes(lesson.learningOutcomeIds)
+        .map(
+          (outcome) =>
+            `<p><strong>${outcome.code}</strong> – ${outcome.description}</p>`
+        )
+        .join("");
       const wilf = formatWilfLines(lesson.wilf)
         .map((line, index) => `<li>${index + 1}. ${line}</li>`)
         .join("");
@@ -48,7 +53,7 @@ export function buildSchemeExportHtml(scheme: SchemeOfWork): string {
       <tr>
         <td>${lesson.lessonNumber}</td>
         <td>
-          ${outcomes ? `<div>${outcomes.split("\n").map((line) => `<p>${line}</p>`).join("")}</div>` : ""}
+          ${outcomes ? `<div>${outcomes}</div>` : ""}
           ${lesson.walt ? `<p><strong>WALT</strong><br />${lesson.walt}</p>` : ""}
         </td>
         <td>${wilf ? `<ol>${wilf}</ol>` : "—"}</td>

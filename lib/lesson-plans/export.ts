@@ -1,14 +1,7 @@
-import {
-  buildLessonExportFilename,
-  formatLessonDate,
-  getLessonOutcomes,
-  getLessonPathwayLabel,
-  getLessonSkillName,
-  getLessonTopicName,
-} from "./helpers";
+import { buildLessonExportFilename } from "./helpers";
+import { buildLessonSectionsForExport } from "./preview-html";
 import { exportDocument } from "@/lib/export";
 import type { ExportFormat, LessonPlan } from "@/lib/types";
-import { getYearGroupLabel } from "@/lib/year-groups";
 
 function escapeHtml(value: string): string {
   return value
@@ -23,22 +16,8 @@ function sectionHtml(title: string, body: string): string {
   return `<div class="section"><h2>${escapeHtml(title)}</h2><div class="body">${body}</div></div>`;
 }
 
-function textBlock(value: string): string {
-  if (!value.trim()) return "<p><em>—</em></p>";
-  return `<p>${escapeHtml(value).replace(/\n/g, "<br />")}</p>`;
-}
-
 export function buildLessonPreviewHtml(lesson: LessonPlan): string {
-  const outcomes = getLessonOutcomes(lesson);
-  const outcomesHtml =
-    outcomes.length > 0
-      ? `<ul>${outcomes
-          .map(
-            (o) =>
-              `<li><strong>${escapeHtml(o!.code)}</strong> — ${escapeHtml(o!.description)}</li>`
-          )
-          .join("")}</ul>`
-      : "<p><em>No learning outcomes linked.</em></p>";
+  const sections = buildLessonSectionsForExport(lesson);
 
   return `<!DOCTYPE html>
 <html lang="en" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word">
@@ -63,24 +42,22 @@ export function buildLessonPreviewHtml(lesson: LessonPlan): string {
   </style>
 </head>
 <body>
-  <h1>${escapeHtml(lesson.title)}</h1>
+  <h1>${escapeHtml(sections.meta.title)}</h1>
   <p class="meta">
-    ${escapeHtml(getLessonPathwayLabel(lesson))} · ${escapeHtml(getYearGroupLabel(lesson.yearGroup))}
-    ${lesson.classGroup ? ` · ${escapeHtml(lesson.classGroup)}` : ""}
+    ${escapeHtml(sections.meta.pathway)} · ${escapeHtml(sections.meta.yearGroup)}
+    ${sections.meta.classGroup ? ` · ${escapeHtml(sections.meta.classGroup)}` : ""}
     <br />
-    Date: ${escapeHtml(formatLessonDate(lesson.date))} · Duration: ${lesson.duration} minutes
+    Date: ${escapeHtml(sections.meta.date)} · Duration: ${sections.meta.duration} minutes
     <br />
-    Topic: ${escapeHtml(getLessonTopicName(lesson))} · Skill: ${escapeHtml(getLessonSkillName(lesson))}
+    Topic: ${escapeHtml(sections.meta.topic)} · Skill: ${escapeHtml(sections.meta.skill)}
   </p>
-  ${sectionHtml("Learning Outcomes", outcomesHtml)}
-  ${sectionHtml("Learning Intention / WALT", textBlock(lesson.learningIntention))}
-  ${sectionHtml("Success Criteria / WILF", textBlock(lesson.successCriteria))}
-  ${sectionHtml("Activities / Lesson Flow", textBlock(lesson.activities))}
-  ${sectionHtml("Assessment", textBlock(lesson.assessmentNotes))}
-  ${sectionHtml("Resources Needed", textBlock(lesson.equipment))}
-  ${sectionHtml("Safety Considerations", textBlock(lesson.safetyConsiderations))}
-  ${sectionHtml("Differentiation", textBlock(lesson.differentiation))}
-  ${lesson.reflectionNotes.trim() ? sectionHtml("Reflection", textBlock(lesson.reflectionNotes)) : ""}
+  ${sectionHtml("Curriculum Reference — Learning Outcomes", sections.outcomesHtml)}
+  ${sectionHtml("Learning Intentions", sections.learningIntention)}
+  ${sectionHtml("WALT", sections.walt)}
+  ${sectionHtml("Success Criteria / WILF", sections.successCriteria)}
+  ${sectionHtml("PE Activities", sections.activities)}
+  ${sectionHtml("Safety Considerations", sections.safety)}
+  ${sections.endings ? sectionHtml("Lesson Ending", sections.endings) : ""}
   <p class="footer">PE Curriculum Studio © Neil Cassar</p>
 </body>
 </html>`;

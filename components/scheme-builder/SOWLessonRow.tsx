@@ -6,7 +6,8 @@ import {
   waltLines,
   wilfLines,
 } from "@/lib/scheme-builder/lesson-actions";
-import { formatLearningOutcomesForCell } from "@/lib/scheme-builder/helpers";
+import { SchemeLearningOutcomeCard } from "@/components/scheme-builder/SchemeLearningOutcomeCard";
+import { resolveSchemeLearningOutcomes } from "@/lib/scheme-builder/helpers";
 import type { SOWLesson } from "@/lib/types";
 
 interface SOWLessonRowProps {
@@ -152,11 +153,7 @@ export function SOWLessonRow({
   onRemoveResource,
   onEditResource,
 }: SOWLessonRowProps) {
-  const outcomeEntries = lesson.learningOutcomeIds.map((id) => {
-    const line = formatLearningOutcomesForCell([id]);
-    const code = line.split(" ")[0] ?? id;
-    return { id, code };
-  });
+  const resolvedOutcomes = resolveSchemeLearningOutcomes(lesson.learningOutcomeIds);
 
   return (
     <div
@@ -184,12 +181,11 @@ export function SOWLessonRow({
 
       <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
         <Zone title="Outcomes & WALT" emptyLabel="Add LOs or WALT cards">
-          {outcomeEntries.map((entry) => (
-            <RemovableChip
-              key={entry.id}
-              label={entry.code}
-              tone="teal"
-              onRemove={() => onRemoveOutcome(entry.id)}
+          {resolvedOutcomes.map((outcome) => (
+            <SchemeLearningOutcomeCard
+              key={outcome.id}
+              outcome={outcome}
+              onRemove={() => onRemoveOutcome(outcome.id)}
             />
           ))}
           {waltLines(lesson.walt).map((line) => (

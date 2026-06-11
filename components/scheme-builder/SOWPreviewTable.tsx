@@ -1,8 +1,9 @@
 "use client";
 
+import { SchemeLearningOutcomeCard } from "@/components/scheme-builder/SchemeLearningOutcomeCard";
 import {
-  formatLearningOutcomesForCell,
   formatWilfLines,
+  resolveSchemeLearningOutcomes,
   getSchemeSelectedPathways,
   getSkillName,
   getTopicName,
@@ -109,7 +110,7 @@ export function SOWPreviewTable({ scheme }: SOWPreviewTableProps) {
               </tr>
             ) : (
               scheme.lessons.map((lesson) => {
-                const outcomesText = formatLearningOutcomesForCell(lesson.learningOutcomeIds);
+                const resolvedOutcomes = resolveSchemeLearningOutcomes(lesson.learningOutcomeIds);
                 const wilfLines = formatWilfLines(lesson.wilf);
 
                 return (
@@ -118,10 +119,10 @@ export function SOWPreviewTable({ scheme }: SOWPreviewTableProps) {
                       {lesson.lessonNumber}
                     </td>
                     <td className="border border-slate-200 px-4 py-4">
-                      {outcomesText && (
-                        <div className="mb-3 space-y-1 text-sm text-slate-700">
-                          {outcomesText.split("\n").map((line, index) => (
-                            <p key={index}>{line}</p>
+                      {resolvedOutcomes.length > 0 && (
+                        <div className="mb-3 space-y-2">
+                          {resolvedOutcomes.map((outcome) => (
+                            <SchemeLearningOutcomeCard key={outcome.id} outcome={outcome} />
                           ))}
                         </div>
                       )}
@@ -133,7 +134,7 @@ export function SOWPreviewTable({ scheme }: SOWPreviewTableProps) {
                           <p className="mt-1 text-sm text-slate-800">{lesson.walt}</p>
                         </div>
                       )}
-                      {!outcomesText && !lesson.walt && (
+                      {resolvedOutcomes.length === 0 && !lesson.walt && (
                         <span className="text-sm text-slate-400">—</span>
                       )}
                     </td>

@@ -3,9 +3,10 @@
 import { useState } from "react";
 import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
+import { SchemeLearningOutcomeCard } from "@/components/scheme-builder/SchemeLearningOutcomeCard";
 import {
-  formatLearningOutcomesForCell,
   formatWilfLines,
+  resolveSchemeLearningOutcomes,
   getSchemeSelectedPathways,
   getSkillName,
   getTopicName,
@@ -82,7 +83,7 @@ export function SOWScreenView({ scheme }: SOWScreenViewProps) {
 
       <div className="space-y-4">
         {scheme.lessons.map((lesson) => {
-          const outcomesText = formatLearningOutcomesForCell(lesson.learningOutcomeIds);
+          const resolvedOutcomes = resolveSchemeLearningOutcomes(lesson.learningOutcomeIds);
           const wilf = formatWilfLines(lesson.wilf);
           const hasContent = lessonHasContent(lesson);
 
@@ -109,10 +110,10 @@ export function SOWScreenView({ scheme }: SOWScreenViewProps) {
 
               <div className="space-y-3 p-5">
                 <LessonSection title="Learning Outcomes" tone="teal">
-                  {outcomesText ? (
+                  {resolvedOutcomes.length > 0 ? (
                     <div className="space-y-2">
-                      {outcomesText.split("\n").map((line, i) => (
-                        <p key={i}>{line}</p>
+                      {resolvedOutcomes.map((outcome) => (
+                        <SchemeLearningOutcomeCard key={outcome.id} outcome={outcome} />
                       ))}
                     </div>
                   ) : (
@@ -121,7 +122,7 @@ export function SOWScreenView({ scheme }: SOWScreenViewProps) {
                 </LessonSection>
 
                 {lesson.walt.trim() && (
-                  <LessonSection title="WALT" tone="blue">
+                  <LessonSection title="Learning Intentions / WALT" tone="blue">
                     <p className="whitespace-pre-wrap">{lesson.walt}</p>
                   </LessonSection>
                 )}

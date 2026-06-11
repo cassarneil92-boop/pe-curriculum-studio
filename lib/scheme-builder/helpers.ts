@@ -4,9 +4,11 @@ import {
   getTopicDisplayName,
   resolveSchemeAppPathways,
 } from "./curriculum-options";
-import { getLearningOutcomeById } from "@/src/lib/curriculum/registry";
+import { resolveLearningOutcomeById } from "@/src/lib/curriculum/metadata";
+import type { LearningOutcome } from "@/src/lib/curriculum/types";
 import type { PathwayId, SOWLesson, SchemeOfWork } from "@/lib/types";
 import { generateId } from "@/lib/storage";
+import { getYearGroupLabel } from "@/lib/year-groups";
 import { ACTIVITY_TEMPLATE } from "./constants";
 
 export function createEmptyLesson(lessonNumber: number): SOWLesson {
@@ -54,16 +56,21 @@ export function formatWilfLines(wilf: string): string[] {
     .map((line) => line.replace(/^[-•*]\s*/, "").replace(/^\d+\.\s*/, ""));
 }
 
+export function formatLearningOutcomeLine(outcome: LearningOutcome): string {
+  return `${outcome.code} – ${outcome.description}`;
+}
+
+export function resolveSchemeLearningOutcomes(ids: string[]): LearningOutcome[] {
+  return ids
+    .map((id) => resolveLearningOutcomeById(id))
+    .filter((outcome): outcome is LearningOutcome => Boolean(outcome));
+}
+
 export function formatLearningOutcomesForCell(ids: string[]): string {
   if (ids.length === 0) return "";
 
-  return ids
-    .map((id) => {
-      const outcome = getLearningOutcomeById(id);
-      if (!outcome) return "";
-      return `${outcome.code} ${outcome.description}`;
-    })
-    .filter(Boolean)
+  return resolveSchemeLearningOutcomes(ids)
+    .map(formatLearningOutcomeLine)
     .join("\n");
 }
 
@@ -85,13 +92,25 @@ export function suggestedSchemeTitle(
 }
 
 export function lessonHasContent(lesson: SOWLesson): boolean {
-  return Boolean(
-    lesson.walt.trim() ||
-      lesson.wilf.trim() ||
-      (lesson.activities.trim() && lesson.activities.trim() !== ACTIVITY_TEMPLATE.trim()) ||
-      lesson.learningOutcomeIds.length > 0 ||
-      lesson.resources.length > 0
-  );
+  return getLessonCompletionStatus(lesson) !== "empty";
+}
+
+export type LessonCompletionStatus = "empty" | "partial" | "complete";
+
+export function getLessonCompletionStatus(lesson: SOWLesson): LessonCompletionStatus {
+  const signals = [
+    lesson.learningOutcomeIds.length > 0,
+    Boolean(lesson.walt.trim()),
+    Boolean(lesson.wilf.trim()),
+    Boolean(
+      lesson.activities.trim() && lesson.activities.trim() !== ACTIVITY_TEMPLATE.trim()
+    ),
+    lesson.resources.length > 0,
+  ];
+  const filled = signals.filter(Boolean).length;
+  if (filled === 0) return "empty";
+  if (filled >= 4) return "complete";
+  return "partial";
 }
 
 export function lessonCountLabel(scheme: SchemeOfWork): string {
@@ -116,8 +135,10 @@ export function getTopicName(topicId: string): string {
 export function buildSchemeExportFilename(
   scheme: Pick<SchemeOfWork, "title" | "topicId" | "term" | "yearGroup">
 ): string {
-  const title = schemeDisplayTitle(scheme);
-  const base = title.replace(/\s+/g, "-");
+  const year = getYearGroupLabel(scheme.yearGroup).replace(/\s+/g, "-");
+  const topic = (getTopicName(scheme.topicId) || "Scheme").replace(/\s+/g, "-");
+  const term = scheme.term.replace(/\s+/g, "-");
+  const base = `${year}-${topic}-${term}-Scheme-of-Work`;
   return base.replace(/[^a-zA-Z0-9-]/g, "").replace(/-+/g, "-") || "scheme-of-work";
 }
 
@@ -127,7 +148,7 @@ export function lessonPreviewTitle(lesson: SOWLesson): string {
     return first.length > 48 ? `${first.slice(0, 48)}…` : first;
   }
   if (lesson.learningOutcomeIds.length > 0) {
-    const outcome = getLearningOutcomeById(lesson.learningOutcomeIds[0]);
+    const outcome = resolveLearningOutcomeById(lesson.learningOutcomeIds[0]);
     if (outcome) return outcome.code;
   }
   return `Lesson ${lesson.lessonNumber}`;

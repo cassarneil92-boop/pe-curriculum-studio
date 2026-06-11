@@ -1,3 +1,4 @@
+import { generateId } from "@/lib/storage";
 import { getPathwayLabel, PATHWAYS } from "@/lib/constants";
 import { appPathwayToCurriculum } from "@/lib/scheme-builder/pathway-map";
 import type { LessonPlan, PathwayId } from "@/lib/types";
@@ -101,6 +102,14 @@ export function duplicateLessonData(
     ...rest,
     title: `${lesson.title} (copy)`,
     date: "",
+    structuredActivities: (lesson.structuredActivities ?? []).map((activity) => ({
+      ...activity,
+      id: generateId(),
+    })),
+    lessonEndings: (lesson.lessonEndings ?? []).map((ending) => ({
+      ...ending,
+      id: generateId(),
+    })),
   };
 }
 

@@ -9,7 +9,7 @@ import {
   getLessonSkillName,
   getLessonTopicName,
 } from "@/lib/lesson-plans/helpers";
-import type { LessonPlan } from "@/lib/types";
+import type { LessonActivity, LessonPlan } from "@/lib/types";
 import { getYearGroupLabel } from "@/lib/year-groups";
 
 interface LessonPreviewProps {
@@ -43,9 +43,79 @@ function TextBlock({ value }: { value: string }) {
   );
 }
 
+function ActivityPreview({ activity }: { activity: LessonActivity }) {
+  return (
+    <div className="rounded-xl border border-amber-100 bg-amber-50/30 p-4">
+      <p className="font-semibold text-slate-900">
+        Activity {activity.number}
+        {activity.name ? ` – ${activity.name}` : ""}
+      </p>
+      <dl className="mt-3 space-y-1 text-sm">
+        {activity.students && (
+          <>
+            <dt className="font-medium text-slate-600">Students</dt>
+            <dd>{activity.students}</dd>
+          </>
+        )}
+        {activity.time && (
+          <>
+            <dt className="mt-2 font-medium text-slate-600">Time</dt>
+            <dd>{activity.time}</dd>
+          </>
+        )}
+        {activity.spaceEquipment && (
+          <>
+            <dt className="mt-2 font-medium text-slate-600">Space &amp; equipment</dt>
+            <dd>{activity.spaceEquipment}</dd>
+          </>
+        )}
+        {activity.taskDescription && (
+          <>
+            <dt className="mt-2 font-medium text-slate-600">Task</dt>
+            <dd className="whitespace-pre-wrap">{activity.taskDescription}</dd>
+          </>
+        )}
+      </dl>
+      {activity.progressions.length > 0 && (
+        <div className="mt-3">
+          <p className="text-xs font-semibold uppercase text-slate-500">Progressions</p>
+          <ul className="mt-1 list-disc pl-4">
+            {activity.progressions.map((p) => (
+              <li key={p}>{p}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {(activity.differentiationEasier || activity.differentiationHarder) && (
+        <div className="mt-3">
+          <p className="text-xs font-semibold uppercase text-slate-500">Differentiation</p>
+          <ul className="mt-1 list-disc pl-4">
+            {activity.differentiationEasier && <li>Easier: {activity.differentiationEasier}</li>}
+            {activity.differentiationHarder && <li>Harder: {activity.differentiationHarder}</li>}
+          </ul>
+        </div>
+      )}
+      {activity.teachingCues.length > 0 && (
+        <div className="mt-3">
+          <p className="text-xs font-semibold uppercase text-slate-500">Teaching cues</p>
+          <ul className="mt-1 flex flex-wrap gap-1.5">
+            {activity.teachingCues.map((cue) => (
+              <Badge key={cue} tone="teal">
+                {cue}
+              </Badge>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function LessonPreview({ lesson, showFooter = true }: LessonPreviewProps) {
   const outcomes = getLessonOutcomes(lesson);
   const pathwayLabels = getLessonSelectedPathwayLabels(lesson);
+  const activities = lesson.structuredActivities ?? [];
+  const endings = [...(lesson.lessonEndings ?? [])].sort((a, b) => a.order - b.order);
 
   return (
     <article className="lesson-print-root space-y-4">
@@ -68,7 +138,7 @@ export function LessonPreview({ lesson, showFooter = true }: LessonPreviewProps)
         </div>
       </header>
 
-      <PreviewSection title="Learning Outcomes">
+      <PreviewSection title="Curriculum Reference">
         {outcomes.length === 0 ? (
           <p className="text-slate-400">No learning outcomes linked.</p>
         ) : (
@@ -83,37 +153,60 @@ export function LessonPreview({ lesson, showFooter = true }: LessonPreviewProps)
         )}
       </PreviewSection>
 
-      <PreviewSection title="Learning Intention / WALT">
+      <PreviewSection title="Learning Intentions">
         <TextBlock value={lesson.learningIntention} />
+      </PreviewSection>
+
+      <PreviewSection title="WALT">
+        <TextBlock value={lesson.walt} />
       </PreviewSection>
 
       <PreviewSection title="Success Criteria / WILF">
         <TextBlock value={lesson.successCriteria} />
       </PreviewSection>
 
-      <PreviewSection title="Activities / Lesson Flow">
-        <TextBlock value={lesson.activities} />
+      <PreviewSection title="PE Activities">
+        {activities.length > 0 ? (
+          <div className="space-y-3">
+            {activities.map((activity) => (
+              <ActivityPreview key={activity.id} activity={activity} />
+            ))}
+          </div>
+        ) : (
+          <TextBlock value={lesson.activities} />
+        )}
       </PreviewSection>
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <PreviewSection title="Assessment">
-          <TextBlock value={lesson.assessmentNotes} />
-        </PreviewSection>
-        <PreviewSection title="Resources Needed">
-          <TextBlock value={lesson.equipment} />
-        </PreviewSection>
+      {lesson.safetyConsiderations.trim() && (
         <PreviewSection title="Safety Considerations">
           <TextBlock value={lesson.safetyConsiderations} />
         </PreviewSection>
-        <PreviewSection title="Differentiation">
-          <TextBlock value={lesson.differentiation} />
-        </PreviewSection>
-      </div>
+      )}
 
-      {lesson.reflectionNotes.trim() && (
-        <PreviewSection title="Reflection">
-          <TextBlock value={lesson.reflectionNotes} />
+      {endings.length > 0 ? (
+        <PreviewSection title="Lesson Ending">
+          <div className="space-y-3">
+            {endings.map((ending) => (
+              <div key={ending.id} className="rounded-lg bg-slate-50 px-3 py-2">
+                <p className="font-medium text-slate-900">{ending.title}</p>
+                <TextBlock value={ending.content} />
+              </div>
+            ))}
+          </div>
         </PreviewSection>
+      ) : (
+        <>
+          {lesson.assessmentNotes.trim() && (
+            <PreviewSection title="Assessment">
+              <TextBlock value={lesson.assessmentNotes} />
+            </PreviewSection>
+          )}
+          {lesson.reflectionNotes.trim() && (
+            <PreviewSection title="Reflection">
+              <TextBlock value={lesson.reflectionNotes} />
+            </PreviewSection>
+          )}
+        </>
       )}
 
       {showFooter && (

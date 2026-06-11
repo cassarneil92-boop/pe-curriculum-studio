@@ -6,7 +6,8 @@ import {
   waltLines,
   wilfLines,
 } from "@/lib/scheme-builder/lesson-actions";
-import { formatLearningOutcomesForCell } from "@/lib/scheme-builder/helpers";
+import { SchemeLearningOutcomeCard } from "@/components/scheme-builder/SchemeLearningOutcomeCard";
+import { resolveSchemeLearningOutcomes } from "@/lib/scheme-builder/helpers";
 import type { SOWLesson } from "@/lib/types";
 
 interface SchemeLessonEditorProps {
@@ -26,11 +27,13 @@ function Section({
   title,
   hint,
   empty,
+  layout = "chips",
   children,
 }: {
   title: string;
   hint: string;
   empty: boolean;
+  layout?: "chips" | "stack";
   children: React.ReactNode;
 }) {
   const [collapsed, setCollapsed] = useState(false);
@@ -55,7 +58,13 @@ function Section({
               Use the planning assistant on the right to add cards to this lesson.
             </p>
           ) : (
-            <div className="flex flex-wrap gap-2">{children}</div>
+            <div
+              className={
+                layout === "stack" ? "flex flex-col gap-3" : "flex flex-wrap gap-2"
+              }
+            >
+              {children}
+            </div>
           )}
         </div>
       )}
@@ -157,12 +166,7 @@ export function SchemeLessonEditor({
   onRemoveResource,
   onEditResource,
 }: SchemeLessonEditorProps) {
-  const outcomeEntries = lesson.learningOutcomeIds.map((id) => {
-    const line = formatLearningOutcomesForCell([id]);
-    const code = line.split(" ")[0] ?? id;
-    const desc = line.slice(code.length).trim();
-    return { id, code, desc };
-  });
+  const resolvedOutcomes = resolveSchemeLearningOutcomes(lesson.learningOutcomeIds);
 
   return (
     <div className="space-y-4">
@@ -180,19 +184,15 @@ export function SchemeLessonEditor({
       <Section
         title="Learning Outcomes"
         hint="Curriculum outcomes linked to this lesson"
-        empty={outcomeEntries.length === 0}
+        empty={resolvedOutcomes.length === 0}
+        layout="stack"
       >
-        {outcomeEntries.map((entry) => (
-          <div key={entry.id} className="w-full">
-            <RemovableChip
-              label={entry.code}
-              tone="teal"
-              onRemove={() => onRemoveOutcome(entry.id)}
-            />
-            {entry.desc && (
-              <p className="mt-1 w-full text-xs leading-relaxed text-slate-600">{entry.desc}</p>
-            )}
-          </div>
+        {resolvedOutcomes.map((outcome) => (
+          <SchemeLearningOutcomeCard
+            key={outcome.id}
+            outcome={outcome}
+            onRemove={() => onRemoveOutcome(outcome.id)}
+          />
         ))}
       </Section>
 

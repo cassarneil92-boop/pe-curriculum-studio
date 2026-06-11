@@ -58,6 +58,38 @@ export interface CalendarEntry {
   loIds: string[];
 }
 
+export type LessonEndingType =
+  | "cool-down"
+  | "reflection"
+  | "quick-questioning"
+  | "assessment"
+  | "closing-link"
+  | "custom";
+
+/** PE-specific structured activity block. */
+export interface LessonActivity {
+  id: string;
+  number: number;
+  name: string;
+  students: string;
+  time: string;
+  spaceEquipment: string;
+  taskDescription: string;
+  progressions: string[];
+  differentiationEasier: string;
+  differentiationHarder: string;
+  teachingCues: string[];
+}
+
+/** Flexible lesson ending — teacher adds, removes, reorders freely. */
+export interface LessonEndingComponent {
+  id: string;
+  type: LessonEndingType;
+  title: string;
+  content: string;
+  order: number;
+}
+
 export interface LessonPlan {
   id: string;
   title: string;
@@ -71,15 +103,28 @@ export interface LessonPlan {
   skillId: string;
   /** App pathway ids when opened from Curriculum Hub multi-select. */
   selectedPathways?: PathwayId[];
+  /** Learning intentions (what students will learn). */
   learningIntention: string;
+  /** WALT — We Are Learning To… */
+  walt: string;
+  /** Success criteria / WILF. */
   successCriteria: string;
+  /** @deprecated Legacy free-text — synced from structured activities when present. */
   equipment: string;
   safetyConsiderations: string;
+  /** @deprecated Legacy free-text differentiation summary. */
   differentiation: string;
+  /** @deprecated Legacy free-text — synced from structured activities when present. */
   activities: string;
+  /** @deprecated Use lessonEndings — kept for migrated lessons. */
   assessmentNotes: string;
+  /** @deprecated Use lessonEndings — kept for migrated lessons. */
   reflectionNotes: string;
   selectedLearningOutcomeIds: string[];
+  /** PE-specific structured activities (preferred). */
+  structuredActivities?: LessonActivity[];
+  /** Flexible lesson ending components. */
+  lessonEndings?: LessonEndingComponent[];
   /** Pedagogical models tagged on this lesson (SE, TGfU, etc.). */
   pedagogicalModels?: PedagogicalModelId[];
   /** Collaboration scope — prepared for future multi-user sync. */

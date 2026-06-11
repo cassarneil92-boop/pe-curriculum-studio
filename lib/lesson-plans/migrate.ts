@@ -1,8 +1,9 @@
 import { appPathwayToCurriculum } from "@/lib/scheme-builder/pathway-map";
 import { migrateYearGroupValue } from "@/lib/year-groups";
-import type { LessonPlan, PathwayId } from "@/lib/types";
+import type { LessonActivity, LessonPlan, PathwayId } from "@/lib/types";
 import { generateId } from "@/lib/storage";
 import { SKILLS, TOPICS } from "@/src/lib/curriculum";
+import { createEmptyActivity } from "./pe-template";
 
 const BUILDER_STORAGE_KEY = "pe-curriculum-studio-lesson-builder";
 
@@ -14,6 +15,9 @@ type LegacyLessonPlan = Partial<LessonPlan> & {
   assessment?: string;
   resources?: string;
   loIds?: string[];
+  walt?: string;
+  structuredActivities?: LessonActivity[];
+  lessonEndings?: LessonPlan["lessonEndings"];
 };
 
 function resolveTopicIdFromSport(sport: string): string {
@@ -42,6 +46,11 @@ function migrateLegacyLesson(lesson: LegacyLessonPlan): LessonPlan {
     resolveSkillIdFromName(lesson.skills?.[0] ?? "") ??
     "";
 
+  const learningIntention = lesson.learningIntention ?? lesson.objectives ?? "";
+  const legacyActivities = lesson.activities ?? "";
+  const structuredActivities = migrateStructuredActivities(lesson, legacyActivities);
+  const walt = lesson.walt ?? "";
+
   return {
     id: lesson.id ?? generateId(),
     title: lesson.title ?? "Untitled lesson",
@@ -53,19 +62,47 @@ function migrateLegacyLesson(lesson: LegacyLessonPlan): LessonPlan {
     topicId,
     skillId,
     selectedPathways: lesson.selectedPathways ?? (lesson.pathway ? [lesson.pathway] : []),
-    learningIntention: lesson.learningIntention ?? lesson.objectives ?? "",
+    learningIntention,
+    walt,
     successCriteria: lesson.successCriteria ?? "",
     equipment: lesson.equipment ?? lesson.resources ?? "",
     safetyConsiderations: lesson.safetyConsiderations ?? "",
     differentiation: lesson.differentiation ?? "",
-    activities: lesson.activities ?? "",
+    activities: legacyActivities,
     assessmentNotes: lesson.assessmentNotes ?? lesson.assessment ?? "",
     reflectionNotes: lesson.reflectionNotes ?? "",
     selectedLearningOutcomeIds:
       lesson.selectedLearningOutcomeIds ?? lesson.loIds ?? [],
+    structuredActivities,
+    lessonEndings: lesson.lessonEndings ?? [],
     createdAt: lesson.createdAt ?? now,
     updatedAt: lesson.updatedAt ?? now,
   };
+}
+
+function migrateStructuredActivities(
+  lesson: LegacyLessonPlan,
+  legacyActivities: string
+): LessonActivity[] {
+  if (lesson.structuredActivities && lesson.structuredActivities.length > 0) {
+    return lesson.structuredActivities.map((activity, index) => ({
+      ...createEmptyActivity(index + 1),
+      ...activity,
+      id: activity.id ?? generateId(),
+      number: activity.number ?? index + 1,
+      progressions: activity.progressions ?? [],
+      teachingCues: activity.teachingCues ?? [],
+    }));
+  }
+
+  if (!legacyActivities.trim()) return [];
+
+  const migrated = createEmptyActivity(1);
+  migrated.name = "Main activity";
+  migrated.taskDescription = legacyActivities;
+  migrated.spaceEquipment = lesson.equipment ?? lesson.resources ?? "";
+  migrated.differentiationEasier = lesson.differentiation ?? "";
+  return [migrated];
 }
 
 function loadBuilderStoragePlans(): LessonPlan[] {
