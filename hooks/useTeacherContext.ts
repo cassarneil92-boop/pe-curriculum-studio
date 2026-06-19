@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useApp } from "@/components/providers/AppProvider";
+import { useTeacherProfile } from "@/components/providers/AppProvider";
 import {
   buildTeacherContext,
   loadCurriculumAccessMode,
@@ -16,7 +16,7 @@ export function useTeacherContext(): {
   setAccessMode: (mode: CurriculumAccessMode) => void;
   refresh: () => void;
 } {
-  const { data } = useApp();
+  const teacher = useTeacherProfile();
   const [accessMode, setAccessModeState] = useState<CurriculumAccessMode>("intelligent");
 
   const refresh = useCallback(() => {
@@ -41,8 +41,8 @@ export function useTeacherContext(): {
   }, []);
 
   const context = useMemo(
-    () => buildTeacherContext(data.teacher, accessMode),
-    [data.teacher, accessMode]
+    () => buildTeacherContext(teacher, accessMode),
+    [teacher, accessMode]
   );
 
   return { context, accessMode, setAccessMode, refresh };

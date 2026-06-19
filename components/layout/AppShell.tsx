@@ -3,10 +3,10 @@
 import type { ReactNode } from "react";
 import { Sidebar } from "./Sidebar";
 import { SetupWizard } from "@/components/shared/SetupWizard";
-import { useApp } from "@/components/providers/AppProvider";
+import { useAppData } from "@/components/providers/AppProvider";
 
 export function AppShell({ children }: { children: ReactNode }) {
-  const { data, hydrated } = useApp();
+  const { data, hydrated } = useAppData();
 
   if (!hydrated) {
     return (

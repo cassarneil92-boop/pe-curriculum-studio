@@ -6,6 +6,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -31,10 +32,20 @@ import {
   loadAppData,
   saveAppData,
 } from "@/lib/storage";
+import { warnNavIssue } from "@/lib/navigation";
 
-interface AppContextValue {
+export interface DeliveryBatchUpdate {
+  lessonUpdates?: Array<{ id: string; patch: Partial<LessonPlan> }>;
+  schemeUpdates?: Array<{ id: string; patch: Partial<SchemeOfWork> }>;
+  calendarUpdates?: Array<{ id: string; patch: Partial<CalendarEntry> }>;
+}
+
+interface AppDataContextValue {
   data: AppData;
   hydrated: boolean;
+}
+
+interface AppActionsContextValue {
   updateTeacher: (teacher: TeacherProfile) => void;
   updateAcademicCalendar: (settings: AcademicCalendarSettings) => void;
   updatePlanningTerm: (id: string, patch: Partial<PlanningTerm>) => void;
@@ -56,25 +67,61 @@ interface AppContextValue {
   addResource: (resource: Omit<ResourceItem, "id" | "createdAt">) => ResourceItem;
   updateResource: (id: string, patch: Partial<ResourceItem>) => void;
   deleteResource: (id: string) => void;
+  batchApplyDeliveryUpdates: (updates: DeliveryBatchUpdate) => void;
 }
 
-const AppContext = createContext<AppContextValue | null>(null);
+export interface AppContextValue extends AppDataContextValue, AppActionsContextValue {}
+
+const AppDataContext = createContext<AppDataContextValue | null>(null);
+const AppActionsContext = createContext<AppActionsContextValue | null>(null);
+const TeacherProfileContext = createContext<TeacherProfile>(DEFAULT_APP_DATA.teacher);
+
+const PERSIST_DEBOUNCE_MS = 400;
 
 function withMigratedCalendar(data: AppData): AcademicCalendarSettings {
   return migrateAcademicCalendarSettings(data.academicCalendar, data.planningTerms);
 }
 
+function schedulePersist(data: AppData, cancelRef: { current: (() => void) | null }): void {
+  cancelRef.current?.();
+
+  const persist = () => {
+    try {
+      saveAppData(data);
+    } catch (error) {
+      warnNavIssue("Failed to persist app data after navigation", { error });
+    }
+  };
+
+  if (typeof window.requestIdleCallback === "function") {
+    const idleId = window.requestIdleCallback(persist, { timeout: 2000 });
+    cancelRef.current = () => window.cancelIdleCallback(idleId);
+    return;
+  }
+
+  const timerId = window.setTimeout(persist, PERSIST_DEBOUNCE_MS);
+  cancelRef.current = () => window.clearTimeout(timerId);
+}
+
 export function AppProvider({ children }: { children: ReactNode }) {
   const [data, setData] = useState<AppData>(DEFAULT_APP_DATA);
   const [hydrated, setHydrated] = useState(false);
+  const persistCancelRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
-    setData(loadAppData());
+    const loaded = loadAppData();
+    setData(loaded);
     setHydrated(true);
+    warnNavIssue("App data hydrated", {
+      setupComplete: loaded.setupComplete,
+      lessonCount: loaded.lessons.length,
+    });
   }, []);
 
   useEffect(() => {
-    if (hydrated) saveAppData(data);
+    if (!hydrated) return;
+    schedulePersist(data, persistCancelRef);
+    return () => persistCancelRef.current?.();
   }, [data, hydrated]);
 
   const updateTeacher = useCallback((teacher: TeacherProfile) => {
@@ -262,10 +309,48 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setData((prev) => ({ ...prev, resources: prev.resources.filter((r) => r.id !== id) }));
   }, []);
 
-  const value = useMemo(
+  const batchApplyDeliveryUpdates = useCallback((updates: DeliveryBatchUpdate) => {
+    setData((prev) => {
+      const now = new Date().toISOString();
+      let lessons = prev.lessons;
+      let schemes = prev.schemes;
+      let calendar = prev.calendar;
+
+      if (updates.lessonUpdates?.length) {
+        const patchById = new Map(updates.lessonUpdates.map((u) => [u.id, u.patch]));
+        lessons = prev.lessons.map((lesson) => {
+          const patch = patchById.get(lesson.id);
+          return patch ? { ...lesson, ...patch, updatedAt: now } : lesson;
+        });
+      }
+
+      if (updates.schemeUpdates?.length) {
+        const patchById = new Map(updates.schemeUpdates.map((u) => [u.id, u.patch]));
+        schemes = prev.schemes.map((scheme) => {
+          const patch = patchById.get(scheme.id);
+          return patch ? { ...scheme, ...patch, updatedAt: now } : scheme;
+        });
+      }
+
+      if (updates.calendarUpdates?.length) {
+        const patchById = new Map(updates.calendarUpdates.map((u) => [u.id, u.patch]));
+        calendar = prev.calendar.map((entry) => {
+          const patch = patchById.get(entry.id);
+          return patch ? { ...entry, ...patch } : entry;
+        });
+      }
+
+      return { ...prev, lessons, schemes, calendar };
+    });
+  }, []);
+
+  const dataValue = useMemo(
+    () => ({ data, hydrated }),
+    [data, hydrated]
+  );
+
+  const actionsValue = useMemo(
     () => ({
-      data,
-      hydrated,
       updateTeacher,
       updateAcademicCalendar,
       updatePlanningTerm,
@@ -287,10 +372,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       addResource,
       updateResource,
       deleteResource,
+      batchApplyDeliveryUpdates,
     }),
     [
-      data,
-      hydrated,
       updateTeacher,
       updateAcademicCalendar,
       updatePlanningTerm,
@@ -312,14 +396,43 @@ export function AppProvider({ children }: { children: ReactNode }) {
       addResource,
       updateResource,
       deleteResource,
+      batchApplyDeliveryUpdates,
     ]
   );
 
-  return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
+  return (
+    <AppDataContext.Provider value={dataValue}>
+      <AppActionsContext.Provider value={actionsValue}>
+        <TeacherProfileContext.Provider value={data.teacher}>
+          {children}
+        </TeacherProfileContext.Provider>
+      </AppActionsContext.Provider>
+    </AppDataContext.Provider>
+  );
 }
 
-export function useApp(): AppContextValue {
-  const ctx = useContext(AppContext);
-  if (!ctx) throw new Error("useApp must be used within AppProvider");
+export function useAppData(): AppDataContextValue {
+  const ctx = useContext(AppDataContext);
+  if (!ctx) throw new Error("useAppData must be used within AppProvider");
   return ctx;
+}
+
+export function useAppActions(): AppActionsContextValue {
+  const ctx = useContext(AppActionsContext);
+  if (!ctx) throw new Error("useAppActions must be used within AppProvider");
+  return ctx;
+}
+
+export function useTeacherProfile(): TeacherProfile {
+  return useContext(TeacherProfileContext);
+}
+
+/** Full app context — prefer useAppData / useAppActions when only one slice is needed. */
+export function useApp(): AppContextValue {
+  const { data, hydrated } = useAppData();
+  const actions = useAppActions();
+  return useMemo(
+    () => ({ data, hydrated, ...actions }),
+    [data, hydrated, actions]
+  );
 }

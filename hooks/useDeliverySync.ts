@@ -3,7 +3,6 @@
 import { useCallback } from "react";
 import { useApp } from "@/components/providers/AppProvider";
 import {
-  applyDeliverySyncResult,
   syncFromCalendarEntry,
   syncFromLessonPlan,
   syncFromSchemeLesson,
@@ -16,26 +15,30 @@ import type {
 } from "@/lib/types";
 
 export function useDeliverySync() {
-  const { data, updateLesson, updateScheme, updateCalendarEntry } = useApp();
+  const { data, batchApplyDeliveryUpdates } = useApp();
 
   const apply = useCallback(
-    (result: ReturnType<typeof syncFromCalendarEntry>) => {
-      applyDeliverySyncResult(result, {
-        updateLesson,
-        updateScheme,
-        updateCalendarEntry,
+    (
+      result: ReturnType<typeof syncFromCalendarEntry>,
+      extraCalendarUpdates?: Array<{ id: string; patch: Partial<CalendarEntry> }>
+    ) => {
+      batchApplyDeliveryUpdates({
+        lessonUpdates: result.lessonUpdates,
+        schemeUpdates: result.schemeUpdates,
+        calendarUpdates: extraCalendarUpdates
+          ? [...result.calendarUpdates, ...extraCalendarUpdates]
+          : result.calendarUpdates,
       });
     },
-    [updateLesson, updateScheme, updateCalendarEntry]
+    [batchApplyDeliveryUpdates]
   );
 
   const setCalendarDelivery = useCallback(
     (entry: CalendarEntry, status: LessonDeliveryStatus) => {
       const result = syncFromCalendarEntry(entry, status, data.lessons, data.schemes);
-      apply(result);
-      updateCalendarEntry(entry.id, { deliveryStatus: status });
+      apply(result, [{ id: entry.id, patch: { deliveryStatus: status } }]);
     },
-    [apply, data.lessons, data.schemes, updateCalendarEntry]
+    [apply, data.lessons, data.schemes]
   );
 
   const setLessonDelivery = useCallback(

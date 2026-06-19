@@ -109,14 +109,24 @@ export function loadAppData(): AppData {
     if (!raw) return DEFAULT_APP_DATA;
     const parsed = JSON.parse(raw) as AppData;
     return migrateAppData(parsed);
-  } catch {
+  } catch (error) {
+    if (typeof console !== "undefined") {
+      console.warn("[Storage] Failed to load app data, using defaults:", error);
+    }
     return DEFAULT_APP_DATA;
   }
 }
 
 export function saveAppData(data: AppData): void {
   if (typeof window === "undefined") return;
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  } catch (error) {
+    if (typeof console !== "undefined") {
+      console.warn("[Storage] Failed to persist app data:", error);
+    }
+    throw error;
+  }
 }
 
 export function generateId(): string {
