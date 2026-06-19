@@ -11,8 +11,10 @@ import { Button } from "@/components/ui/Button";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { FieldGroup, Input, Select, Textarea } from "@/components/ui/Input";
 import { LessonActivityEditor } from "@/components/lesson-builder/LessonActivityEditor";
+import { LessonBuilderProgress } from "@/components/lesson-builder/LessonBuilderProgress";
 import { LessonEndingBuilder } from "@/components/lesson-builder/LessonEndingBuilder";
 import { LessonQualityChecklist } from "@/components/lesson-builder/LessonQualityChecklist";
+import { useToast } from "@/components/providers/ToastProvider";
 import { BrandLogoHorizontal } from "@/components/brand/BrandLogoHorizontal";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { StickyActionBar } from "@/components/layout/StickyActionBar";
@@ -46,6 +48,12 @@ import {
   pickYearGroupForPathwayFilter,
   pickYearGroupForPathwaysFilter,
 } from "@/lib/teacher-context";
+import {
+  clearLessonDraft,
+  computeLessonBuilderCompletion,
+  loadLessonDraft,
+  saveLessonDraft,
+} from "@/lib/lesson-builder/draft";
 import type { PathwayId } from "@/lib/types";
 
 const SECTIONS = [
@@ -53,7 +61,7 @@ const SECTIONS = [
   { id: "focus", label: "Curriculum Focus", number: 2 },
   { id: "outcomes", label: "Curriculum Reference", number: 3 },
   { id: "design", label: "Learning Design", number: 4 },
-  { id: "activities", label: "PE Activities", number: 5 },
+  { id: "activities", label: "Activities", number: 5 },
   { id: "ending", label: "Lesson Ending", number: 6 },
   { id: "review", label: "Quality Review", number: 7 },
 ] as const;
@@ -91,11 +99,14 @@ export default function LessonBuilderPage() {
   const editLoaded = useRef(false);
   const defaultsApplied = useRef(false);
   const { data, addLesson, updateLesson } = useApp();
+  const { toast } = useToast();
   const { context } = useTeacherContext();
   const [form, setForm] = useState<LessonBuilderFormData>(emptyForm);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [activeSection, setActiveSection] = useState<SectionId>("info");
   const [removedOutcomeIds, setRemovedOutcomeIds] = useState<string[]>([]);
+  const [draftSavedAt, setDraftSavedAt] = useState<string | null>(null);
+  const draftApplied = useRef(false);
 
   const appPathways = useMemo(() => resolveLessonAppPathways(form), [form.selectedPathways, form.pathwayId]);
 
@@ -113,6 +124,44 @@ export default function LessonBuilderPage() {
     () => getLessonOutcomeSuggestions(form, context),
     [form, context]
   );
+
+  const completion = useMemo(() => computeLessonBuilderCompletion(form), [form]);
+
+  useEffect(() => {
+    if (draftApplied.current || editLoaded.current || searchParams?.get("edit")) return;
+    const draft = loadLessonDraft();
+    if (!draft || draft.editingId) return;
+    if (draft.form.title || draft.form.topicId || draft.form.walt) {
+      setForm(draft.form);
+      setActiveSection(draft.activeSection as SectionId);
+      setDraftSavedAt(draft.savedAt);
+      draftApplied.current = true;
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
+    if (editingId) return;
+    const hasContent = Boolean(form.title?.trim() || form.topicId || form.walt?.trim());
+    if (!hasContent) return;
+
+    const timer = window.setTimeout(() => {
+      saveLessonDraft({ form, editingId, activeSection });
+      setDraftSavedAt(new Date().toISOString());
+    }, 2000);
+
+    return () => window.clearTimeout(timer);
+  }, [form, editingId, activeSection]);
+
+  useEffect(() => {
+    const onBeforeUnload = (event: BeforeUnloadEvent) => {
+      if (!form.title?.trim() && !form.topicId) return;
+      saveLessonDraft({ form, editingId, activeSection });
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => window.removeEventListener("beforeunload", onBeforeUnload);
+  }, [form, editingId, activeSection]);
 
   useEffect(() => {
     if (editLoaded.current || !searchParams) return;
@@ -344,14 +393,24 @@ export default function LessonBuilderPage() {
 
     if (editingId) {
       updateLesson(editingId, payload);
+      clearLessonDraft();
+      toast("Lesson saved");
       router.push("/lessons");
       return;
     }
 
     addLesson(payload);
+    clearLessonDraft();
+    toast("Lesson saved");
     setForm(emptyForm());
     setActiveSection("info");
     router.push("/lessons");
+  }
+
+  function handleSaveDraft() {
+    saveLessonDraft({ form, editingId, activeSection });
+    setDraftSavedAt(new Date().toISOString());
+    toast("Draft saved — continue later anytime");
   }
 
   const updateActivities = (structuredActivities: typeof form.structuredActivities) => {
@@ -379,12 +438,20 @@ export default function LessonBuilderPage() {
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
+            {draftSavedAt && !editingId && (
+              <span className="hidden text-xs text-slate-500 sm:inline">
+                Draft saved locally
+              </span>
+            )}
             <LessonQualityChecklist lesson={form} compact />
             <Link href="/lessons">
               <Button variant="ghost" type="button">
                 Library
               </Button>
             </Link>
+            <Button type="button" variant="secondary" onClick={handleSaveDraft}>
+              Save draft
+            </Button>
             <Button
               type="submit"
               form="lesson-builder-form"
@@ -410,33 +477,16 @@ export default function LessonBuilderPage() {
         <div className="flex flex-col gap-8 lg:flex-row">
           <nav className="lg:w-56 lg:shrink-0">
             <div className="sticky top-[4.5rem] space-y-4">
-              <div className="space-y-1">
-              {SECTIONS.map((section) => {
-                const active = activeSection === section.id;
-                return (
-                  <button
-                    key={section.id}
-                    type="button"
-                    onClick={() => setActiveSection(section.id)}
-                    className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm transition-colors ${
-                      active
-                        ? "bg-teal-50 font-medium text-teal-800 ring-1 ring-teal-100"
-                        : "text-slate-600 hover:bg-slate-100/80"
-                    }`}
-                  >
-                    <span
-                      className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-xs font-semibold ${
-                        active ? "bg-teal-600 text-white" : "bg-slate-100 text-slate-500"
-                      }`}
-                    >
-                      {section.number}
-                    </span>
-                    {section.label}
-                  </button>
-                );
-              })}
+              <LessonBuilderProgress
+                sections={SECTIONS}
+                form={form}
+                activeSection={activeSection}
+                onSectionSelect={(id) => setActiveSection(id as SectionId)}
+                completionPercent={completion.percent}
+              />
+              <div className="hidden lg:block">
+                <LessonQualityChecklist lesson={form} />
               </div>
-              <LessonQualityChecklist lesson={form} />
             </div>
           </nav>
 

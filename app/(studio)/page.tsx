@@ -3,29 +3,43 @@
 import Link from "next/link";
 import { useMemo } from "react";
 import { BrandLogoHorizontal } from "@/components/brand/BrandLogoHorizontal";
-import { useApp } from "@/components/providers/AppProvider";
 import { QuickActionCard } from "@/components/design/QuickActionCard";
+import { useApp } from "@/components/providers/AppProvider";
 import { Card, CardHeader } from "@/components/ui/Card";
+import { CircularProgress } from "@/components/ui/CircularProgress";
 import { ProgressBar } from "@/components/ui/ProgressBar";
+import { StatCard } from "@/components/ui/StatCard";
+import { Button } from "@/components/ui/Button";
 import { useTeacherContext } from "@/hooks/useTeacherContext";
 import { formatShortDate, parseIso, startOfWeek, toIso, addDays } from "@/lib/calendar/dates";
 import {
   buildDashboardAttention,
   buildDashboardCurrentScheme,
   buildDashboardWeekStats,
+  buildQuickContinue,
+  buildSchemesNeedingAttention,
+  buildTeachingSnapshot,
+  buildTodaysLessons,
   buildUpcomingLessons,
+  countUnplannedOutcomeWarnings,
 } from "@/lib/dashboard/insights";
-import { getTeacherGreetingName, getTimeGreeting } from "@/lib/design/greeting";
+import {
+  buildTeacherPersonalisation,
+  formatTodayLessonSummary,
+  formatWeeklyLessonSummary,
+} from "@/lib/design/personalisation";
+import { getCoverageScore } from "@/lib/progress/coverage-score";
+
 function todayIso(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
 export default function DashboardPage() {
   const { data } = useApp();
-  const { teacher, calendar, schemes } = data;
+  const { teacher, calendar, schemes, lessons } = data;
   const { context } = useTeacherContext();
   const today = todayIso();
-  const greetingName = getTeacherGreetingName(teacher);
+  const personal = buildTeacherPersonalisation(teacher, context.roleLabel);
 
   const weekStart = toIso(startOfWeek(new Date()));
   const weekEnd = toIso(addDays(startOfWeek(new Date()), 6));
@@ -35,7 +49,12 @@ export default function DashboardPage() {
     [calendar, weekStart, weekEnd]
   );
 
-  const weekRemaining = Math.max(0, weekStats.scheduled - weekStats.delivered);
+  const teachingSnapshot = useMemo(
+    () => buildTeachingSnapshot({ lessons, schemes, calendar }),
+    [lessons, schemes, calendar]
+  );
+
+  const todaysLessons = useMemo(() => buildTodaysLessons(calendar, today), [calendar, today]);
 
   const currentScheme = useMemo(
     () => buildDashboardCurrentScheme(schemes, calendar, today),
@@ -43,14 +62,28 @@ export default function DashboardPage() {
   );
 
   const upcomingLessons = useMemo(
-    () => buildUpcomingLessons(calendar, today, 5),
+    () => buildUpcomingLessons(calendar, today, 4),
     [calendar, today]
   );
 
-  const attentionItems = useMemo(
-    () => buildDashboardAttention(data.lessons, schemes, calendar).slice(0, 3),
-    [data.lessons, schemes, calendar]
+  const quickContinue = useMemo(
+    () => buildQuickContinue({ lessons, schemes, resources: data.resources }),
+    [lessons, schemes, data.resources]
   );
+
+  const schemeAttention = useMemo(() => buildSchemesNeedingAttention(schemes), [schemes]);
+
+  const unplannedCount = useMemo(
+    () => countUnplannedOutcomeWarnings(lessons, schemes, calendar),
+    [lessons, schemes, calendar]
+  );
+
+  const attentionItems = useMemo(
+    () => buildDashboardAttention(lessons, schemes, calendar).slice(0, 3),
+    [lessons, schemes, calendar]
+  );
+
+  const coverageScore = getCoverageScore(teachingSnapshot.curriculumCoverage);
 
   return (
     <div className="space-y-8">
@@ -58,17 +91,143 @@ export default function DashboardPage() {
         <BrandLogoHorizontal height={32} />
       </div>
 
-      <header>
+      <header className="space-y-3">
         <p className="text-base font-medium text-teal-700">
-          {getTimeGreeting()}, {greetingName} 👋
+          {personal.greeting}, {personal.name} 👋
         </p>
-        <h1 className="mt-1 text-2xl font-semibold tracking-tight text-slate-900">
-          What do you teach next?
-        </h1>
-        <p className="mt-1 text-sm text-slate-500">
-          Your week at a glance — plan, deliver, and track progress.
-        </p>
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">
+              Your teaching workspace
+            </h1>
+            <p className="mt-1.5 text-sm leading-relaxed text-slate-500">
+              {formatWeeklyLessonSummary(weekStats.scheduled)}
+            </p>
+          </div>
+          {(personal.pathwayLine || personal.schoolLine) && (
+            <div className="rounded-2xl border border-teal-100 bg-teal-50/40 px-4 py-3 text-right">
+              {personal.pathwayLine && (
+                <p className="text-sm font-semibold text-teal-900">{personal.pathwayLine}</p>
+              )}
+              {personal.schoolLine && (
+                <p className="text-xs text-teal-700/80">{personal.schoolLine}</p>
+              )}
+            </div>
+          )}
+        </div>
       </header>
+
+      <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <StatCard label="Lessons planned" value={teachingSnapshot.lessonsPlanned} tone="teal" />
+        <StatCard label="Lessons delivered" value={teachingSnapshot.lessonsDelivered} tone="green" />
+        <StatCard label="Schemes active" value={teachingSnapshot.schemesActive} tone="blue" />
+        <StatCard
+          label="Curriculum coverage"
+          value={`${teachingSnapshot.curriculumCoverage}%`}
+          tone="amber"
+          hint={coverageScore.label}
+        />
+      </section>
+
+      <section className="grid gap-4 lg:grid-cols-3">
+        <Card className="lg:col-span-2">
+          <CardHeader
+            title="Today's focus"
+            description={formatTodayLessonSummary(todaysLessons.length)}
+            action={
+              <Link href="/calendar" className="text-xs font-medium text-teal-700 hover:text-teal-800">
+                Open calendar
+              </Link>
+            }
+          />
+          <div className="space-y-4">
+            {todaysLessons.length > 0 ? (
+              <ul className="space-y-2">
+                {todaysLessons.map((lesson) => (
+                  <li
+                    key={lesson.id}
+                    className="flex items-center justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50/60 px-4 py-3"
+                  >
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium text-slate-800">{lesson.title}</p>
+                      <p className="text-xs text-slate-500">
+                        {lesson.time}
+                        {lesson.classGroup ? ` · ${lesson.classGroup}` : ""}
+                      </p>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-sm text-slate-500">
+                Plan today&apos;s sessions in Calendar to see them here.
+              </p>
+            )}
+
+            {(schemeAttention.length > 0 || unplannedCount > 0) && (
+              <div className="rounded-xl border border-amber-100 bg-amber-50/50 px-4 py-3">
+                <p className="text-xs font-semibold uppercase tracking-wide text-amber-800">
+                  Needs attention
+                </p>
+                <ul className="mt-2 space-y-1.5">
+                  {schemeAttention.map((item) => (
+                    <li key={item.schemeId} className="text-sm text-amber-900/90">
+                      <span className="font-medium">{item.title}</span> — {item.message}
+                    </li>
+                  ))}
+                  {unplannedCount > 0 && (
+                    <li className="text-sm text-amber-900/90">
+                      {unplannedCount} curriculum {unplannedCount === 1 ? "area" : "areas"} not yet
+                      planned
+                    </li>
+                  )}
+                </ul>
+              </div>
+            )}
+          </div>
+        </Card>
+
+        <Card>
+          <CardHeader title="Curriculum coverage" />
+          <div className="flex flex-col items-center gap-4 py-2">
+            <CircularProgress
+              value={teachingSnapshot.curriculumCoverage}
+              variant={coverageScore.barVariant}
+              size={96}
+            />
+            <ProgressBar
+              value={teachingSnapshot.curriculumCoverage}
+              max={100}
+              label="Overall progress"
+              variant={coverageScore.barVariant}
+              className="w-full"
+            />
+            <Link href="/curriculum-analytics" className="text-xs font-medium text-teal-700">
+              View teaching progress →
+            </Link>
+          </div>
+        </Card>
+      </section>
+
+      {quickContinue && (
+        <Card className="border-teal-100/80 bg-gradient-to-br from-teal-50/40 to-white">
+          <CardHeader
+            title="Quick continue"
+            description="Pick up where you left off"
+          />
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-teal-700/70">
+                Most recently edited · {quickContinue.subtitle}
+              </p>
+              <p className="mt-1 text-lg font-semibold text-slate-900">{quickContinue.title}</p>
+            </div>
+            <Link href={quickContinue.href}>
+              <Button>Continue editing</Button>
+            </Link>
+          </div>
+        </Card>
+      )}
 
       <section className="grid gap-4 lg:grid-cols-3">
         <Card>
@@ -90,7 +249,9 @@ export default function DashboardPage() {
               <p className="text-xs text-slate-500">Delivered</p>
             </div>
             <div>
-              <p className="text-lg font-semibold text-amber-700">{weekRemaining}</p>
+              <p className="text-lg font-semibold text-amber-700">
+                {Math.max(0, weekStats.scheduled - weekStats.delivered)}
+              </p>
               <p className="text-xs text-slate-500">Remaining</p>
             </div>
           </div>
@@ -129,16 +290,15 @@ export default function DashboardPage() {
             <p className="text-sm text-slate-500">
               No active scheme.{" "}
               <Link href="/schemes" className="font-medium text-teal-700">
-                Create one
-              </Link>{" "}
-              and schedule lessons on your calendar.
+                Start planning
+              </Link>
             </p>
           )}
         </Card>
 
         <Card>
           <CardHeader
-            title="Upcoming lessons"
+            title="Upcoming"
             action={
               <Link href="/calendar" className="text-xs font-medium text-teal-700">
                 View all
@@ -146,7 +306,7 @@ export default function DashboardPage() {
             }
           />
           {upcomingLessons.length === 0 ? (
-            <p className="text-sm text-slate-500">Nothing scheduled ahead. Plan your week in Calendar.</p>
+            <p className="text-sm text-slate-500">Nothing scheduled ahead.</p>
           ) : (
             <ul className="space-y-2">
               {upcomingLessons.map((lesson) => (
@@ -158,7 +318,6 @@ export default function DashboardPage() {
                   <p className="text-xs text-slate-500">
                     {formatShortDate(parseIso(lesson.date))}
                     {lesson.time !== "All day" ? ` · ${lesson.time}` : ""}
-                    {lesson.classGroup ? ` · ${lesson.classGroup}` : ""}
                   </p>
                 </li>
               ))}
@@ -170,7 +329,7 @@ export default function DashboardPage() {
       {attentionItems.length > 0 && (
         <Card className="border-amber-100 bg-amber-50/30">
           <CardHeader
-            title="Needs attention"
+            title="Teaching reminders"
             action={
               <Link href="/curriculum-analytics" className="text-xs font-medium text-teal-700">
                 Teaching Progress
@@ -197,28 +356,28 @@ export default function DashboardPage() {
             title="Schedule week"
             description="Week view planning"
             accent="green"
-            icon={<span>📅</span>}
+            icon={<span aria-hidden>📅</span>}
           />
           <QuickActionCard
             href="/lesson-builder"
             title="Build lesson"
             description="Curriculum-aligned plan"
             accent="blue"
-            icon={<span>✏️</span>}
+            icon={<span aria-hidden>✏️</span>}
           />
           <QuickActionCard
             href="/schemes"
             title="Schemes"
             description="Term-long units"
             accent="purple"
-            icon={<span>📋</span>}
+            icon={<span aria-hidden>📋</span>}
           />
           <QuickActionCard
             href="/curriculum-analytics"
             title="Progress"
             description="Coverage & warnings"
             accent="amber"
-            icon={<span>📊</span>}
+            icon={<span aria-hidden>📊</span>}
           />
         </div>
       </section>

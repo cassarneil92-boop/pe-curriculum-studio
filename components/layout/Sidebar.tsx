@@ -47,12 +47,14 @@ const SidebarNavLink = memo(function SidebarNavLink({
   icon,
   pathname,
   onNavigate,
-}: SidebarNavLinkProps) {
+  onAfterNavigate,
+}: SidebarNavLinkProps & { onAfterNavigate?: () => void }) {
   const active = isNavItemActive(pathname, href);
 
   const handleClick = useCallback(() => {
     onNavigate(href);
-  }, [href, onNavigate]);
+    onAfterNavigate?.();
+  }, [href, onNavigate, onAfterNavigate]);
 
   return (
     <Link
@@ -94,12 +96,20 @@ const SidebarProfile = memo(function SidebarProfile() {
   );
 });
 
-export function Sidebar() {
+export function Sidebar({
+  mobileOpen = false,
+  onMobileClose,
+}: {
+  mobileOpen?: boolean;
+  onMobileClose?: () => void;
+}) {
   const pathname = usePathname();
   const router = useRouter();
   const [, forceNavSync] = useState(0);
   const pendingNavRef = useRef<string | null>(null);
   const retryTimerRef = useRef<number | null>(null);
+
+  const closeMobile = useCallback(() => onMobileClose?.(), [onMobileClose]);
 
   const clearNavRetry = useCallback(() => {
     if (retryTimerRef.current !== null) {
@@ -165,12 +175,33 @@ export function Sidebar() {
     return () => window.removeEventListener("popstate", onPopState);
   }, []);
 
+  useEffect(() => {
+    closeMobile();
+  }, [pathname, closeMobile]);
+
   return (
-    <aside className="app-sidebar no-print flex w-64 shrink-0 flex-col bg-[#0F766E] text-white">
+    <>
+      {mobileOpen && (
+        <button
+          type="button"
+          className="fixed inset-0 z-40 bg-slate-900/40 backdrop-blur-[1px] lg:hidden"
+          aria-label="Close navigation menu"
+          onClick={closeMobile}
+        />
+      )}
+
+      <aside
+        className={`app-sidebar no-print fixed inset-y-0 left-0 z-50 flex w-64 shrink-0 flex-col bg-[#0F766E] text-white transition-transform duration-300 lg:static lg:z-auto lg:translate-x-0 ${
+          mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+        }`}
+      >
       <Link
         href="/"
         prefetch
-        onClick={() => handleNavigate("/")}
+        onClick={() => {
+          handleNavigate("/");
+          closeMobile();
+        }}
         className="border-b border-white/10 px-4 py-4 transition-colors hover:bg-white/5"
       >
         <div className="flex items-center gap-2.5">
@@ -201,6 +232,7 @@ export function Sidebar() {
             icon="home"
             pathname={pathname}
             onNavigate={handleNavigate}
+            onAfterNavigate={closeMobile}
           />
         </div>
 
@@ -218,6 +250,7 @@ export function Sidebar() {
                   icon={item.icon}
                   pathname={pathname}
                   onNavigate={handleNavigate}
+                  onAfterNavigate={closeMobile}
                 />
               ))}
             </div>
@@ -231,5 +264,6 @@ export function Sidebar() {
         <p className="text-[10px] text-teal-100/50">{BRAND_FOOTER}</p>
       </div>
     </aside>
+    </>
   );
 }

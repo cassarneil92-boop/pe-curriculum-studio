@@ -6,6 +6,9 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { ResourcesEmptyIllustration } from "@/components/ui/EmptyIllustrations";
+import { StatCard } from "@/components/ui/StatCard";
+import { useToast } from "@/components/providers/ToastProvider";
 import { FieldGroup, Input, Select, Textarea } from "@/components/ui/Input";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { getPathwayLabel, PATHWAYS, SPORTS, YEAR_GROUP_OPTIONS } from "@/lib/constants";
@@ -18,6 +21,7 @@ import { getYearGroupLabel } from "@/lib/year-groups";
 import type { PathwayId, ResourceItem, ResourceVisibilityLevel, YearGroup } from "@/lib/types";
 
 export default function ResourcesPage() {
+  const { toast } = useToast();
   const { data, addResource, deleteResource } = useApp();
   const fileRef = useRef<HTMLInputElement>(null);
   const [dragOver, setDragOver] = useState(false);
@@ -121,6 +125,7 @@ export default function ResourcesPage() {
       sport: "",
     });
     if (fileRef.current) fileRef.current.value = "";
+    toast("Resource uploaded");
   };
 
   const formatSize = (bytes: number) => {
@@ -137,10 +142,10 @@ export default function ResourcesPage() {
       />
 
       <section className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <SummaryCard label="Total resources" value={String(summary.total)} />
-        <SummaryCard label="Lesson cards" value={String(summary.lessonCards)} />
-        <SummaryCard label="Assessments" value={String(summary.assessments)} />
-        <SummaryCard label="Linked to outcomes" value={String(summary.linkedOutcomes)} />
+        <StatCard label="Total resources" value={String(summary.total)} />
+        <StatCard label="Lesson cards" value={String(summary.lessonCards)} tone="teal" />
+        <StatCard label="Assessments" value={String(summary.assessments)} tone="blue" />
+        <StatCard label="Linked to outcomes" value={String(summary.linkedOutcomes)} tone="green" />
       </section>
 
       <Card className="mb-6">
@@ -335,33 +340,38 @@ export default function ResourcesPage() {
           <CardHeader title="Your library" description={`${filtered.length} shown`} />
           {data.resources.length === 0 ? (
             <EmptyState
-              title="Build your PE teaching library"
-              description="Upload lesson cards, rubrics, assessment sheets and risk assessments."
-              icon="📚"
+              title="Build your teaching library"
+              description="Upload lesson cards, assessment sheets and curriculum resources."
+              icon={<ResourcesEmptyIllustration />}
+              action={
+                <Button type="button" onClick={() => fileRef.current?.click()}>
+                  Upload resource
+                </Button>
+              }
             />
           ) : filtered.length === 0 ? (
-            <Card className="text-center">
-              <p className="text-sm text-slate-500">No resources match your filters.</p>
-            </Card>
+            <EmptyState
+              variant="compact"
+              title="No matching resources"
+              description="Try adjusting your filters or search terms."
+            />
           ) : (
             <div className="space-y-3">
               {filtered.map((r) => (
-                <ResourceCard key={r.id} resource={r} onDelete={() => deleteResource(r.id)} />
+                <ResourceCard
+                  key={r.id}
+                  resource={r}
+                  onDelete={() => {
+                    deleteResource(r.id);
+                    toast("Resource removed");
+                  }}
+                />
               ))}
             </div>
           )}
         </div>
       </div>
     </div>
-  );
-}
-
-function SummaryCard({ label, value }: { label: string; value: string }) {
-  return (
-    <Card className="text-center">
-      <p className="text-xs font-medium uppercase tracking-wide text-slate-500">{label}</p>
-      <p className="mt-1 text-2xl font-semibold text-slate-900">{value}</p>
-    </Card>
   );
 }
 

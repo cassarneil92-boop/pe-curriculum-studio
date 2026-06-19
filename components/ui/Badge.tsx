@@ -2,6 +2,8 @@ import type { ReactNode } from "react";
 
 type Tone = "teal" | "slate" | "amber" | "blue" | "green" | "purple" | "rose";
 
+export type BadgeTone = Tone;
+
 const tones: Record<Tone, string> = {
   teal: "bg-teal-50 text-teal-800 ring-teal-600/15",
   slate: "bg-slate-100 text-slate-600 ring-slate-500/10",
@@ -15,13 +17,15 @@ const tones: Record<Tone, string> = {
 export function Badge({
   children,
   tone = "slate",
+  className = "",
 }: {
   children: ReactNode;
   tone?: Tone;
+  className?: string;
 }) {
   return (
     <span
-      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset ${tones[tone]}`}
+      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset ${tones[tone]} ${className}`}
     >
       {children}
     </span>

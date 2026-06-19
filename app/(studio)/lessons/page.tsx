@@ -9,8 +9,9 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { LessonsEmptyIllustration } from "@/components/ui/EmptyIllustrations";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { BrandLogoHorizontal } from "@/components/brand/BrandLogoHorizontal";
+import { useToast } from "@/components/providers/ToastProvider";
 import { LessonDeliveryControls } from "@/components/progress/DeliveryControls";
 import { LessonLibraryStatusBadge } from "@/components/progress/LessonLibraryStatusBadge";
 import { useApp } from "@/components/providers/AppProvider";
@@ -32,6 +33,7 @@ type LibraryView = "grid" | "preview";
 
 export default function LessonsPage() {
   const router = useRouter();
+  const { toast } = useToast();
   const { data, addLesson, deleteLesson } = useApp();
   const { setLessonDelivery } = useDeliverySync();
   const [view, setView] = useState<LibraryView>("grid");
@@ -63,10 +65,12 @@ export default function LessonsPage() {
 
   const handleDuplicate = (lesson: LessonPlan) => {
     addLesson(duplicateLessonData(lesson));
+    toast("Lesson duplicated");
   };
 
   const handleDelete = (id: string) => {
     deleteLesson(id);
+    toast("Lesson removed");
     if (selectedId === id) {
       setSelectedId(null);
       setView("grid");
@@ -128,12 +132,12 @@ export default function LessonsPage() {
 
       {sortedLessons.length === 0 ? (
         <EmptyState
-          title="No saved lessons yet"
-          description="Build a lesson in Lesson Builder and save it — it will appear here instantly."
-          icon={<BrandLogoHorizontal height={32} className="mx-auto" />}
+          title="No lesson plans yet"
+          description="Create your first curriculum-aligned lesson plan."
+          icon={<LessonsEmptyIllustration />}
           action={
             <Link href="/lesson-builder">
-              <Button>Open Lesson Builder</Button>
+              <Button>Build lesson</Button>
             </Link>
           }
         />

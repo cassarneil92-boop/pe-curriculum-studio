@@ -22,6 +22,8 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { SchemesEmptyIllustration } from "@/components/ui/EmptyIllustrations";
+import { StatCard } from "@/components/ui/StatCard";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { useTeacherContext } from "@/hooks/useTeacherContext";
 import { getDefaultHubPathways } from "@/lib/curriculum-hub/pathway-defaults";
@@ -908,27 +910,30 @@ export default function SchemesPage() {
 
       {data.schemes.length === 0 ? (
         <EmptyState
-          title="Create your first Scheme of Work"
-          description="Build a term-long progression linked to the right learning outcomes."
-          icon="📋"
+          title="No schemes created"
+          description="Start planning your first term with a calm, curriculum-aligned scheme of work."
+          icon={<SchemesEmptyIllustration />}
           action={<Button onClick={startNewScheme}>New scheme</Button>}
         />
       ) : (
         <>
           <section className="mb-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-            <SchemeStatCard label="Total Schemes" value={String(dashboardSummary.totalSchemes)} />
-            <SchemeStatCard label="Total Lessons" value={String(dashboardSummary.totalLessons)} />
-            <SchemeStatCard
+            <StatCard label="Total Schemes" value={String(dashboardSummary.totalSchemes)} />
+            <StatCard label="Total Lessons" value={String(dashboardSummary.totalLessons)} />
+            <StatCard
               label="Lessons Delivered"
               value={String(dashboardSummary.lessonsDelivered)}
+              tone="green"
             />
-            <SchemeStatCard
+            <StatCard
               label="Outcomes Covered"
               value={String(dashboardSummary.outcomesCovered)}
+              tone="teal"
             />
-            <SchemeStatCard
+            <StatCard
               label="Average Coverage"
               value={`${dashboardSummary.averageCoveragePercent}%`}
+              tone="amber"
             />
           </section>
 
@@ -942,9 +947,16 @@ export default function SchemesPage() {
                   </h2>
                   <div className="space-y-3">
                     {schemes.length === 0 ? (
-                      <div className="rounded-2xl border border-dashed border-slate-200 px-4 py-8 text-center text-sm text-slate-400">
-                        No schemes yet
-                      </div>
+                      <EmptyState
+                        variant="compact"
+                        title="No schemes in this term"
+                        description="Create a scheme for this planning term."
+                        action={
+                          <Button variant="secondary" onClick={startNewScheme}>
+                            New scheme
+                          </Button>
+                        }
+                      />
                     ) : (
                       schemes.map((scheme) => (
                         <SchemeHealthCard
@@ -969,14 +981,5 @@ export default function SchemesPage() {
         </>
       )}
     </div>
-  );
-}
-
-function SchemeStatCard({ label, value }: { label: string; value: string }) {
-  return (
-    <Card className="text-center">
-      <p className="text-xs font-medium uppercase tracking-wide text-slate-500">{label}</p>
-      <p className="mt-1 text-2xl font-semibold text-slate-900">{value}</p>
-    </Card>
   );
 }

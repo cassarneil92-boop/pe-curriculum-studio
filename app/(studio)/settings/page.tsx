@@ -14,18 +14,19 @@ import {
 import { Button } from "@/components/ui/Button";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { useToast } from "@/components/providers/ToastProvider";
 import { useTeacherContext } from "@/hooks/useTeacherContext";
 import { buildTeacherContext } from "@/lib/teacher-context";
 import type { AcademicCalendarSettings } from "@/lib/types";
 
 export default function SettingsPage() {
+  const { toast } = useToast();
   const { data, updateTeacher, updateAcademicCalendar } = useApp();
   const { accessMode, setAccessMode, context } = useTeacherContext();
   const [form, setForm] = useState(data.teacher);
   const [academicForm, setAcademicForm] = useState<AcademicCalendarSettings>(() =>
     migrateAcademicCalendarSettings(data.academicCalendar, data.planningTerms)
   );
-  const [saved, setSaved] = useState(false);
   const previewContext = buildTeacherContext(form, accessMode);
 
   useEffect(() => {
@@ -37,8 +38,7 @@ export default function SettingsPage() {
   const handleSave = () => {
     updateTeacher(form);
     updateAcademicCalendar(academicForm);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+    toast("Settings saved");
   };
 
   return (
@@ -87,7 +87,6 @@ export default function SettingsPage() {
 
       <div className="mt-8 flex items-center gap-3 border-t border-slate-200 pt-6">
         <Button onClick={handleSave}>Save settings</Button>
-        {saved && <span className="text-sm text-teal-600">Saved</span>}
       </div>
     </div>
   );
