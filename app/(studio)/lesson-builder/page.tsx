@@ -68,6 +68,10 @@ const SECTIONS = [
 
 type SectionId = (typeof SECTIONS)[number]["id"];
 
+function sameIdList(a: string[], b: string[]): boolean {
+  return a.length === b.length && a.every((id, index) => id === b[index]);
+}
+
 const emptyForm = (): LessonBuilderFormData => ({
   title: "",
   date: "",
@@ -122,7 +126,16 @@ export default function LessonBuilderPage() {
 
   const outcomeSuggestions = useMemo(
     () => getLessonOutcomeSuggestions(form, context),
-    [form, context]
+    [appPathways, form.yearGroup, form.topicId, form.skillId, context]
+  );
+
+  /** Stable key — avoids re-running prune when `allSuggestedIds` is a new Set with same contents. */
+  const validSuggestedOutcomeIdKey = useMemo(
+    () =>
+      outcomeSuggestions.allSuggestedIds.size === 0
+        ? ""
+        : [...outcomeSuggestions.allSuggestedIds].sort().join("\0"),
+    [outcomeSuggestions]
   );
 
   const completion = useMemo(() => computeLessonBuilderCompletion(form), [form]);
@@ -279,25 +292,30 @@ export default function LessonBuilderPage() {
     if (topic || skill) setActiveSection("focus");
   }, [searchParams, context]);
 
-  function applyOutcomeSelectionPrune(validIds: Set<string>) {
-    setForm((prev) => {
-      const { kept, removed } = pruneSelectedOutcomeIds(
-        prev.selectedLearningOutcomeIds,
-        validIds
-      );
-      setRemovedOutcomeIds(removed);
-      return { ...prev, selectedLearningOutcomeIds: kept };
-    });
-  }
-
   useEffect(() => {
     if (!form.topicId || !form.skillId) {
-      setRemovedOutcomeIds([]);
+      setRemovedOutcomeIds((prev) => (prev.length === 0 ? prev : []));
       return;
     }
-    applyOutcomeSelectionPrune(outcomeSuggestions.allSuggestedIds);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [outcomeSuggestions.allSuggestedIds, form.topicId, form.skillId, form.pathwayId]);
+
+    const validIds = outcomeSuggestions.allSuggestedIds;
+    const { kept, removed } = pruneSelectedOutcomeIds(
+      form.selectedLearningOutcomeIds,
+      validIds
+    );
+
+    if (sameIdList(kept, form.selectedLearningOutcomeIds)) {
+      return;
+    }
+
+    setRemovedOutcomeIds((prev) => (sameIdList(prev, removed) ? prev : removed));
+    setForm((prev) => {
+      if (sameIdList(kept, prev.selectedLearningOutcomeIds)) {
+        return prev;
+      }
+      return { ...prev, selectedLearningOutcomeIds: kept };
+    });
+  }, [validSuggestedOutcomeIdKey, form.topicId, form.skillId, form.selectedLearningOutcomeIds, outcomeSuggestions]);
 
   function updateForm<K extends keyof LessonBuilderFormData>(
     key: K,
