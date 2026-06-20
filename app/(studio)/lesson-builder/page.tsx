@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/Button";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { FieldGroup, Input, Select, Textarea } from "@/components/ui/Input";
 import { LessonActivityEditor } from "@/components/lesson-builder/LessonActivityEditor";
+import { LearningDesignAssistant } from "@/components/lesson-builder/LearningDesignAssistant";
 import { LessonBuilderProgress } from "@/components/lesson-builder/LessonBuilderProgress";
 import { LessonEndingBuilder } from "@/components/lesson-builder/LessonEndingBuilder";
 import { LessonQualityChecklist } from "@/components/lesson-builder/LessonQualityChecklist";
@@ -25,6 +26,7 @@ import {
   getLessonOutcomeSuggestions,
   getLessonSkillOptions,
   getLessonTopicOptions,
+  getSkillDisplayName,
   getTopicDisplayName,
   isLessonSkillValid,
   isLessonTopicValid,
@@ -42,7 +44,7 @@ import {
   syncLessonLegacyFields,
 } from "@/lib/lesson-plans/pe-template";
 import { getDefaultHubPathways } from "@/lib/curriculum-hub/pathway-defaults";
-import { getPathwayLabel, DEFAULT_YEAR_GROUP_ID } from "@/lib/constants";
+import { getPathwayLabel, getYearGroupLabel, DEFAULT_YEAR_GROUP_ID } from "@/lib/constants";
 import {
   isAppPathwayVisible,
   pickYearGroupForPathwayFilter,
@@ -322,6 +324,21 @@ export default function LessonBuilderPage() {
     value: LessonBuilderFormData[K]
   ) {
     setForm((prev) => ({ ...prev, [key]: value }));
+  }
+
+  function updateDesignFields(
+    patch: Partial<
+      Pick<
+        LessonBuilderFormData,
+        | "learningIntention"
+        | "walt"
+        | "successCriteria"
+        | "safetyConsiderations"
+        | "assessmentNotes"
+      >
+    >
+  ) {
+    setForm((prev) => ({ ...prev, ...patch }));
   }
 
   function handlePathwaysChange(selectedPathways: PathwayId[]) {
@@ -710,50 +727,80 @@ export default function LessonBuilderPage() {
             )}
 
             {activeSection === "design" && (
-              <Card>
-                <CardHeader
-                  title="Learning Design"
-                  description="Learning intentions, WALT, and success criteria — the backbone of your PE lesson."
-                />
-                <div className="grid gap-4">
-                  <FieldGroup label="Learning intentions">
-                    <Textarea
-                      value={form.learningIntention}
-                      onChange={(e) => updateForm("learningIntention", e.target.value)}
-                      placeholder="What will students learn in this lesson?"
+              <div className="flex flex-col gap-6 xl:flex-row xl:items-start">
+                <Card className="min-w-0 flex-1">
+                  <CardHeader
+                    title="Learning Design"
+                    description="Learning intentions, WALT, and success criteria — the backbone of your PE lesson. Type freely or insert suggestions from the assistant."
+                  />
+                  <div className="grid gap-4">
+                    <FieldGroup label="Learning intentions">
+                      <Textarea
+                        value={form.learningIntention}
+                        onChange={(e) => updateForm("learningIntention", e.target.value)}
+                        placeholder="What will students learn in this lesson?"
+                      />
+                    </FieldGroup>
+                    <FieldGroup label="WALT — We Are Learning To…">
+                      <Textarea
+                        value={form.walt}
+                        onChange={(e) => updateForm("walt", e.target.value)}
+                        placeholder="e.g. We are learning to pass accurately under pressure"
+                      />
+                    </FieldGroup>
+                    <FieldGroup label="Success criteria / WILF">
+                      <Textarea
+                        value={form.successCriteria}
+                        onChange={(e) => updateForm("successCriteria", e.target.value)}
+                        placeholder="How will you know students have achieved the learning?"
+                      />
+                    </FieldGroup>
+                    <FieldGroup label="Safety considerations">
+                      <Textarea
+                        value={form.safetyConsiderations}
+                        onChange={(e) => updateForm("safetyConsiderations", e.target.value)}
+                        placeholder="Key safety points for this session"
+                      />
+                    </FieldGroup>
+                    <FieldGroup label="Possible assessment checks">
+                      <Textarea
+                        value={form.assessmentNotes}
+                        onChange={(e) => updateForm("assessmentNotes", e.target.value)}
+                        placeholder="What will you observe or check during the lesson?"
+                      />
+                    </FieldGroup>
+                  </div>
+                  <div className="mt-6 flex justify-between">
+                    <Button type="button" variant="ghost" onClick={() => setActiveSection("outcomes")}>
+                      ← Back
+                    </Button>
+                    <Button type="button" variant="secondary" onClick={() => setActiveSection("activities")}>
+                      Next: PE Activities →
+                    </Button>
+                  </div>
+                </Card>
+                <aside className="w-full xl:w-[22rem] xl:shrink-0">
+                  <div className="xl:sticky xl:top-[4.5rem]">
+                    <LearningDesignAssistant
+                      selectedOutcomeIds={form.selectedLearningOutcomeIds}
+                      topicId={form.topicId}
+                      skillId={form.skillId}
+                      topicName={form.topicId ? getTopicDisplayName(form.topicId) : ""}
+                      skillName={form.skillId ? getSkillDisplayName(form.skillId) : ""}
+                      yearGroupLabel={getYearGroupLabel(form.yearGroup)}
+                      appPathways={appPathways}
+                      fieldValues={{
+                        learningIntention: form.learningIntention,
+                        walt: form.walt,
+                        successCriteria: form.successCriteria,
+                        safetyConsiderations: form.safetyConsiderations,
+                        assessmentNotes: form.assessmentNotes,
+                      }}
+                      onFieldsChange={updateDesignFields}
                     />
-                  </FieldGroup>
-                  <FieldGroup label="WALT — We Are Learning To…">
-                    <Textarea
-                      value={form.walt}
-                      onChange={(e) => updateForm("walt", e.target.value)}
-                      placeholder="e.g. We are learning to pass accurately under pressure"
-                    />
-                  </FieldGroup>
-                  <FieldGroup label="Success criteria / WILF">
-                    <Textarea
-                      value={form.successCriteria}
-                      onChange={(e) => updateForm("successCriteria", e.target.value)}
-                      placeholder="How will you know students have achieved the learning?"
-                    />
-                  </FieldGroup>
-                  <FieldGroup label="Safety considerations">
-                    <Textarea
-                      value={form.safetyConsiderations}
-                      onChange={(e) => updateForm("safetyConsiderations", e.target.value)}
-                      placeholder="Key safety points for this session"
-                    />
-                  </FieldGroup>
-                </div>
-                <div className="mt-6 flex justify-between">
-                  <Button type="button" variant="ghost" onClick={() => setActiveSection("outcomes")}>
-                    ← Back
-                  </Button>
-                  <Button type="button" variant="secondary" onClick={() => setActiveSection("activities")}>
-                    Next: PE Activities →
-                  </Button>
-                </div>
-              </Card>
+                  </div>
+                </aside>
+              </div>
             )}
 
             {activeSection === "activities" && (
