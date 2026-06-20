@@ -5,13 +5,11 @@ import Image from "next/image";
 import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useTeacherProfile } from "@/components/providers/AppProvider";
-import { useTeacherContext } from "@/hooks/useTeacherContext";
 import { BRAND_FOOTER, BRAND_PATHS } from "@/lib/brand/constants";
 import { NAV_SECTIONS } from "@/lib/constants";
-import { getPathwayLabel } from "@/lib/constants";
-import { getTeacherGreetingName } from "@/lib/design/greeting";
+import { getSidebarProfileName } from "@/lib/design/greeting";
 import { isNavItemActive, warnNavIssue } from "@/lib/navigation";
-import { resolveSchoolDisplayName } from "@/src/lib/schools";
+import { getCollegeById, resolveSchoolDisplayName } from "@/src/lib/schools";
 import { NavIcon, type IconName } from "./NavIcon";
 
 /** Heavy routes — disable prefetch to avoid main-thread contention during navigation. */
@@ -72,25 +70,32 @@ const SidebarNavLink = memo(function SidebarNavLink({
 
 const SidebarProfile = memo(function SidebarProfile() {
   const teacher = useTeacherProfile();
-  const { context } = useTeacherContext();
+  const displayName = getSidebarProfileName(teacher);
+  const role = teacher.role?.trim() ?? "";
+  const collegeName = teacher.college ? getCollegeById(teacher.college)?.name ?? "" : "";
   const schoolName = resolveSchoolDisplayName(teacher.school, teacher.manualSchoolName);
-  const displayName = getTeacherGreetingName(teacher);
 
   return (
-    <div className="border-t border-white/10 px-4 py-4">
-      <div className="rounded-2xl bg-white/10 px-4 py-3 backdrop-blur-sm">
-        <p className="truncate text-sm font-medium text-white">{displayName}</p>
-        <p className="mt-0.5 truncate text-xs text-teal-100/80">
-          {teacher.role?.trim() || context.roleLabel}
+    <div className="mt-3 px-1">
+      <div className="rounded-xl bg-teal-800/35 px-3 py-2.5 ring-1 ring-white/10">
+        <p className="truncate text-[13px] font-semibold leading-snug text-white" title={displayName}>
+          {displayName}
         </p>
-        {schoolName && (
-          <p className="mt-1 truncate text-xs text-teal-50/70">{schoolName}</p>
-        )}
-        {teacher.pathways[0] && (
-          <p className="mt-1 truncate text-xs text-teal-50/60">
-            {getPathwayLabel(teacher.pathways[0])}
+        {role ? (
+          <p className="mt-0.5 truncate text-[11px] leading-snug text-teal-100/85" title={role}>
+            {role}
           </p>
-        )}
+        ) : null}
+        {collegeName ? (
+          <p className="mt-1 truncate text-[11px] leading-snug text-teal-50/75" title={collegeName}>
+            {collegeName}
+          </p>
+        ) : null}
+        {schoolName ? (
+          <p className="mt-0.5 truncate text-[11px] leading-snug text-teal-50/70" title={schoolName}>
+            {schoolName}
+          </p>
+        ) : null}
       </div>
     </div>
   );
@@ -256,12 +261,12 @@ export function Sidebar({
             </div>
           </div>
         ))}
+
+        <SidebarProfile />
       </nav>
 
-      <SidebarProfile />
-
-      <div className="border-t border-white/10 px-6 py-3">
-        <p className="text-[10px] text-teal-100/50">{BRAND_FOOTER}</p>
+      <div className="shrink-0 border-t border-white/10 px-6 py-2.5">
+        <p className="text-[10px] leading-snug text-teal-100/45">{BRAND_FOOTER}</p>
       </div>
     </aside>
     </>

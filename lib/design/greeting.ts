@@ -19,18 +19,15 @@ export function getTeacherGreetingName(teacher: Pick<TeacherProfile, "preferredD
   return "Teacher";
 }
 
-/** @deprecated Use getTeacherGreetingName */
-export function getTeacherDisplayName(
-  schoolName: string,
-  manualName?: string
+/** Sidebar profile — full preferred name or full teacher name. */
+export function getSidebarProfileName(
+  teacher: Pick<TeacherProfile, "preferredDisplayName" | "name">
 ): string {
-  if (manualName?.trim()) {
-    const first = manualName.trim().split(/\s+/)[0];
-    if (first) return first;
+  if (teacher.preferredDisplayName?.trim()) {
+    return teacher.preferredDisplayName.trim();
   }
-  if (schoolName?.trim()) {
-    const first = schoolName.trim().split(/\s+/)[0];
-    if (first && first.length > 2) return first;
+  if (teacher.name?.trim()) {
+    return teacher.name.trim();
   }
   return "Teacher";
 }
