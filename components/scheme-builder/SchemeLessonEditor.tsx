@@ -15,6 +15,7 @@ import {
 } from "@/lib/progress/delivery";
 import { resolveSchemeLearningOutcomes } from "@/lib/scheme-builder/helpers";
 import { FieldGroup, Select } from "@/components/ui/Input";
+import { Button } from "@/components/ui/Button";
 import type { SchemeSkillOption } from "@/lib/scheme-builder/curriculum-options";
 import type { LessonDeliveryStatus, SOWLesson } from "@/lib/types";
 
@@ -34,6 +35,7 @@ interface SchemeLessonEditorProps {
   onEditActivity: (oldLabel: string, newLabel: string) => void;
   onRemoveResource: (resource: string) => void;
   onEditResource: (oldResource: string, newResource: string) => void;
+  onOpenInLessonBuilder?: () => void;
 }
 
 function Section({
@@ -183,6 +185,7 @@ export function SchemeLessonEditor({
   onEditActivity,
   onRemoveResource,
   onEditResource,
+  onOpenInLessonBuilder,
 }: SchemeLessonEditorProps) {
   const resolvedOutcomes = resolveSchemeLearningOutcomes(lesson.learningOutcomeIds);
   const usingDefaultSkill = !lesson.skillId?.trim() && Boolean(schemeDefaultSkillId);
@@ -190,14 +193,23 @@ export function SchemeLessonEditor({
   return (
     <div className="space-y-4">
       <div className="rounded-2xl border border-teal-100 bg-gradient-to-br from-teal-50/80 to-white px-5 py-4">
-        <p className="text-xs font-semibold uppercase tracking-wide text-teal-700">
-          Editing lesson {lesson.lessonNumber}
-        </p>
-        <p className="mt-1 text-lg font-semibold text-slate-900">
-          {lesson.walt.trim()
-            ? lesson.walt.split("\n")[0]
-            : `Lesson ${lesson.lessonNumber}`}
-        </p>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-teal-700">
+              Editing lesson {lesson.lessonNumber}
+            </p>
+            <p className="mt-1 text-lg font-semibold text-slate-900">
+              {lesson.walt.trim()
+                ? lesson.walt.split("\n")[0]
+                : `Lesson ${lesson.lessonNumber}`}
+            </p>
+          </div>
+          {onOpenInLessonBuilder && (
+            <Button type="button" variant="secondary" className="text-xs" onClick={onOpenInLessonBuilder}>
+              Open in Lesson Builder
+            </Button>
+          )}
+        </div>
       </div>
 
       {onSkillChange && (

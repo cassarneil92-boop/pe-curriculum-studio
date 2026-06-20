@@ -3,11 +3,11 @@ import type { YearGroupId } from "@/lib/year-groups";
 import { getYearGroupLabel } from "@/lib/year-groups";
 import { PATHWAYS } from "@/lib/constants";
 import { buildSchemesLink } from "@/lib/curriculum-hub/planning-links";
-import {
-  buildWaltIdeas,
-  SOW_ACTIVITY_CARDS,
-  SOW_WILF_CARDS,
-} from "@/lib/scheme-builder/constants";
+import { buildIntelligentPlanningSequence } from "@/lib/assistant/sport-progressions";
+import { buildWaltIdeas, SOW_WILF_CARDS } from "@/lib/scheme-builder/constants";
+import { detectPedagogyQuery, handlePedagogyQuery } from "@/lib/education/pedagogy-queries";
+import { recommendPedagogies } from "@/lib/education/recommendations";
+import type { KnowledgeSource, PedagogyRecommendation } from "@/lib/education/types";
 import { suggestedSchemeTitle } from "@/lib/scheme-builder/helpers";
 import type { TeacherContextSnapshot } from "@/lib/teacher-context";
 import {
@@ -45,6 +45,8 @@ export interface PlanningSequenceStep {
   focus: string;
   activity: string;
   waltExample?: string;
+  lessonType?: import("@/lib/assistant/lesson-structure-templates").LessonTemplateType;
+  sportPhase?: string;
 }
 
 export interface AssistantAction {
@@ -80,6 +82,8 @@ export interface AssistantResponse {
   relatedTopics?: string[];
   relatedPathways?: string[];
   relatedYearGroups?: string[];
+  pedagogySources?: KnowledgeSource[];
+  pedagogyRecommendations?: PedagogyRecommendation[];
 }
 
 export interface AssistantQueryContext {
@@ -92,16 +96,19 @@ export interface AssistantQueryContext {
 
 const DEFAULT_LESSON_COUNT = 6;
 
-const SEQUENCE_FOCUS = [
-  "Introduction & baseline skills",
-  "Core skill development",
-  "Applying skills in modified context",
-  "Tactical decision making",
-  "Performance under pressure",
-  "Assessment & consolidation",
-  "Extension & enrichment",
-  "Review & reflection",
-];
+function buildPlanningSequence(
+  lessonCount: number,
+  topicId: string,
+  topicLabel: string,
+  skillLabel: string
+): PlanningSequenceStep[] {
+  return buildIntelligentPlanningSequence({
+    lessonCount,
+    topicId,
+    topicLabel,
+    skillLabel,
+  });
+}
 
 function resolveAppPathways(
   parsed: ParsedAssistantQuery,
@@ -170,21 +177,6 @@ function toMatches(outcomes: LearningOutcome[], limit = 8): CurriculumMatch[] {
   }));
 }
 
-function buildPlanningSequence(
-  lessonCount: number,
-  topicLabel: string,
-  skillLabel: string
-): PlanningSequenceStep[] {
-  const walts = buildWaltIdeas(topicLabel, skillLabel);
-  const activities = [...SOW_ACTIVITY_CARDS];
-
-  return Array.from({ length: lessonCount }, (_, i) => ({
-    lessonNumber: i + 1,
-    focus: SEQUENCE_FOCUS[i] ?? `Lesson ${i + 1} focus`,
-    activity: activities[i % activities.length] ?? "Main activity",
-    waltExample: walts[i % walts.length],
-  }));
-}
 
 function findClosestTopics(
   query: string,
@@ -290,6 +282,27 @@ export function buildAssistantResponse(
   const { teacherContext, lessons, schemes, calendar, activeScheme } = context;
   const yearGroup = resolveYearGroup(parsed, teacherContext);
   const appPathways = resolveAppPathways(parsed, teacherContext, yearGroup);
+
+  if (detectPedagogyQuery(parsed.raw)) {
+    const pedagogyResult = handlePedagogyQuery(parsed.raw, {
+      topicId: parsed.topicId ?? undefined,
+      skillId: parsed.skillHint ?? undefined,
+      yearGroupId: yearGroup,
+    });
+    if (pedagogyResult) {
+      return {
+        answer: pedagogyResult.answer,
+        detectedContext: {
+          intent: "Pedagogy guidance",
+          confidence: parsed.confidence,
+        },
+        relatedOutcomeCodes: [],
+        relatedTopicIds: parsed.topicId ? [parsed.topicId] : [],
+        suggestions: pedagogyResult.suggestions,
+        pedagogySources: pedagogyResult.sources,
+      };
+    }
+  }
 
   if (parsed.outcomeCode) {
     const codeResponse = respondToOutcomeCode(parsed.outcomeCode);
@@ -405,12 +418,13 @@ export function buildAssistantResponse(
   const successCriteria = [...SOW_WILF_CARDS].slice(0, 4);
   const planningSequence = buildPlanningSequence(
     lessonCount,
+    topicId,
     topicLabel,
     skillLabel
   );
   const schemeTitle = suggestedSchemeTitle(topicId, getYearGroupLabel(yearGroup), "Term 1");
   const outcomeIds = (ranked.length > 0 ? ranked : outcomes)
-    .slice(0, Math.max(lessonCount, 8))
+    .slice(0, Math.max(lessonCount * 2, 12))
     .map((o) => o.id);
 
   const schemeDraftSource: AssistantSchemeDraftSource = {
@@ -421,6 +435,13 @@ export function buildAssistantResponse(
     term: "Term 1",
     outcomeIds,
   };
+
+  const pedagogyRecommendations = recommendPedagogies({
+    topicId,
+    skillId: primarySkill,
+    yearGroupId: yearGroup,
+    limit: 3,
+  });
 
   const schemeHref = buildSchemesLink({
     appPathways,
@@ -439,6 +460,7 @@ export function buildAssistantResponse(
       suggestedTitle: schemeTitle || `${topicLabel} — Term 1`,
       suggestedLessonCount: lessonCount,
       schemeDraftSource,
+      pedagogyRecommendations,
       relatedOutcomeCodes: matches.map((m) => m.code),
       relatedTopicIds: [topicId],
       suggestions: [
@@ -463,6 +485,7 @@ export function buildAssistantResponse(
       suggestedTitle: schemeTitle || `${topicLabel} — Term 1`,
       suggestedLessonCount: lessonCount,
       schemeDraftSource,
+      pedagogyRecommendations,
       relatedOutcomeCodes: matches.map((m) => m.code),
       relatedTopicIds: [topicId],
       suggestions: [

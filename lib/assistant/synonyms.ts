@@ -166,4 +166,7 @@ export const SUGGESTED_PROMPT_CHIPS = [
   "Suggest activities for invasion games",
   "Show gaps in my current scheme",
   "What have I not taught yet?",
+  "Explain TGfU",
+  "Compare TGfU and Whole Part Whole",
+  "Best pedagogical approach for Year 7 Volleyball?",
 ] as const;

@@ -11,6 +11,14 @@ import { Button } from "@/components/ui/Button";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { FieldGroup, Input, Select, Textarea } from "@/components/ui/Input";
 import { ActivityPlanningAssistant } from "@/components/lesson-builder/ActivityPlanningAssistant";
+import { PedagogicalLensPanel } from "@/components/education/PedagogicalLensPanel";
+import { PedagogicalQualityPanel } from "@/components/education/PedagogyInsightCard";
+import { buildLessonPedagogicalQuality } from "@/lib/education/pedagogical-quality";
+import {
+  buildStructuredActivitiesFromPedagogy,
+  formatPedagogyActivities,
+} from "@/lib/education/lesson-structures";
+import type { PedagogicalModelId } from "@/src/lib/intelligence/frameworks/pedagogical-models";
 import { CurriculumMemoryPanel } from "@/components/lesson-builder/CurriculumMemoryPanel";
 import { LearningDesignAssistant } from "@/components/lesson-builder/LearningDesignAssistant";
 import { LessonActivityEditor } from "@/components/lesson-builder/LessonActivityEditor";
@@ -100,6 +108,7 @@ const emptyForm = (): LessonBuilderFormData => ({
   selectedPathways: [],
   structuredActivities: [],
   lessonEndings: [],
+  pedagogicalModels: [],
 });
 
 export default function LessonBuilderPage() {
@@ -880,8 +889,58 @@ export default function LessonBuilderPage() {
                     </Button>
                   </div>
                 </div>
-                <aside className="w-full xl:w-[22rem] xl:shrink-0">
-                  <div className="xl:sticky xl:top-[4.5rem]">
+                <aside className="w-full space-y-4 xl:w-[22rem] xl:shrink-0">
+                  <div className="xl:sticky xl:top-[4.5rem] space-y-4">
+                    {form.topicId && (
+                      <>
+                        <PedagogicalLensPanel
+                          selected={form.pedagogicalModels ?? []}
+                          topicId={form.topicId}
+                          skillId={form.skillId}
+                          yearGroupId={form.yearGroup}
+                          onChange={(models: PedagogicalModelId[]) =>
+                            updateForm("pedagogicalModels", models)
+                          }
+                        />
+                        {form.pedagogicalModels?.[0] && (
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            className="w-full text-xs"
+                            onClick={() => {
+                              const pedagogyId = form.pedagogicalModels![0];
+                              const topicName = getTopicDisplayName(form.topicId);
+                              const structured = buildStructuredActivitiesFromPedagogy(
+                                pedagogyId,
+                                topicName
+                              );
+                              const activitiesText = formatPedagogyActivities(
+                                pedagogyId,
+                                topicName
+                              );
+                              setForm((prev) => ({
+                                ...prev,
+                                structuredActivities: structured,
+                                activities: activitiesText,
+                              }));
+                              toast("Pedagogy structure applied to activities");
+                            }}
+                          >
+                            Apply pedagogy structure to activities
+                          </Button>
+                        )}
+                        {(() => {
+                          const quality = buildLessonPedagogicalQuality(form);
+                          return (
+                            <PedagogicalQualityPanel
+                              percentage={quality.percentage}
+                              strengths={quality.strengths}
+                              suggestions={quality.suggestions}
+                            />
+                          );
+                        })()}
+                      </>
+                    )}
                     <ActivityPlanningAssistant
                       topicId={form.topicId}
                       topicName={form.topicId ? getTopicDisplayName(form.topicId) : ""}

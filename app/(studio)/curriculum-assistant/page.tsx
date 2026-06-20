@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { AssistantSchemeDraftActions } from "@/components/assistant/AssistantSchemeDraftActions";
+import { PedagogySourcesList } from "@/components/education/PedagogyInsightCard";
 import { useApp } from "@/components/providers/AppProvider";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -113,6 +114,9 @@ function SequenceCard({ response }: { response: AssistantResponse }) {
               Lesson {step.lessonNumber}: {step.focus}
             </p>
             <p className="mt-1 text-slate-600">Activity: {step.activity}</p>
+            {step.sportPhase && step.sportPhase !== step.focus && (
+              <p className="mt-1 text-xs text-teal-700">Sport phase: {step.sportPhase}</p>
+            )}
             {step.waltExample && (
               <p className="mt-1 text-xs text-slate-500">WALT example: {step.waltExample}</p>
             )}
@@ -248,8 +252,31 @@ export default function CurriculumAssistantPage() {
         <div className="space-y-4">
           <Card>
             <CardHeader title="Response" />
-            <p className="text-sm leading-relaxed text-slate-800">{response.answer}</p>
+            <p className="whitespace-pre-wrap text-sm leading-relaxed text-slate-800">{response.answer}</p>
+            {response.pedagogySources && response.pedagogySources.length > 0 && (
+              <PedagogySourcesList sources={response.pedagogySources} />
+            )}
           </Card>
+
+          {response.pedagogyRecommendations && response.pedagogyRecommendations.length > 0 && (
+            <Card className="border-teal-100 bg-teal-50/20">
+              <CardHeader
+                title="Recommended pedagogical approaches"
+                description="Based on your topic, skill and year group from the Educational Knowledge Library."
+              />
+              <ul className="space-y-2">
+                {response.pedagogyRecommendations.map((rec) => (
+                  <li
+                    key={rec.id}
+                    className="rounded-xl border border-teal-100 bg-white/80 px-4 py-3 text-sm"
+                  >
+                    <p className="font-semibold text-teal-900">{rec.name}</p>
+                    <p className="mt-1 text-slate-600">{rec.reason}</p>
+                  </li>
+                ))}
+              </ul>
+            </Card>
+          )}
 
           <ContextCard response={response} />
           <PartialMatchCard response={response} />

@@ -1,9 +1,27 @@
 import type { AssistantResponse, AssistantSchemeDraftSource, PlanningSequenceStep } from "@/lib/assistant/responses";
-import { SOW_RESOURCE_OPTIONS } from "@/lib/scheme-builder/constants";
+import { computeAssistantConfidence, type AssistantConfidenceReport } from "@/lib/assistant/assistant-confidence";
+import { formatStructuredLessonActivities, buildLessonStructure, pickLessonTypesForCount } from "@/lib/assistant/lesson-structure-templates";
+import { applyPedagogyToSchemeLessonActivities } from "@/lib/education/lesson-structures";
+import {
+  primaryRecommendedPedagogy,
+  recommendPedagogies,
+} from "@/lib/education/recommendations";
+import { buildSchemePedagogicalQuality } from "@/lib/education/pedagogical-quality";
+import {
+  distributeOutcomesAcrossLessons,
+  rankOutcomesForScheme,
+} from "@/lib/assistant/outcome-distribution";
+import { pickResourcesForLesson } from "@/lib/assistant/resource-generator";
+import {
+  buildAssistantSchemeQualityReport,
+  type AssistantSchemeQualityReport,
+} from "@/lib/assistant/scheme-quality";
+import { buildIntelligentPlanningSequence } from "@/lib/assistant/sport-progressions";
 import { createEmptyLesson, getLessonCompletionStatus } from "@/lib/scheme-builder/helpers";
 import { markSchemeLessonPlanned } from "@/lib/progress/delivery";
 import type { SchemeOfWork, SOWLesson, YearGroup } from "@/lib/types";
 import { generateId } from "@/lib/storage";
+import { getPlanningTopicDisplayName, getPlanningSkillDisplayName } from "@/src/lib/curriculum/planning";
 
 export type { AssistantSchemeDraftSource } from "@/lib/assistant/responses";
 
@@ -12,29 +30,10 @@ export type AssistantSchemeDraft = Omit<SchemeOfWork, "id" | "createdAt" | "upda
 export interface AssistantSchemeDraftResult {
   draft: AssistantSchemeDraft;
   needsReview: boolean;
-}
-
-const DEFAULT_RESOURCES = ["Cones", "Balls", "Bibs", "Whistle"];
-
-function distributeOutcomes(outcomeIds: string[], lessonCount: number): string[][] {
-  const buckets: string[][] = Array.from({ length: lessonCount }, () => []);
-  if (outcomeIds.length === 0) return buckets;
-  outcomeIds.forEach((id, index) => {
-    buckets[index % lessonCount].push(id);
-  });
-  return buckets;
-}
-
-function formatLessonActivities(step: PlanningSequenceStep): string {
-  return [
-    `Lesson focus: ${step.focus}`,
-    "",
-    "Warm up:",
-    "",
-    `Main activity: ${step.activity}`,
-    "",
-    "Cool down:",
-  ].join("\n");
+  quality: AssistantSchemeQualityReport;
+  confidence: AssistantConfidenceReport;
+  pedagogicalQuality: import("@/lib/education/types").PedagogicalQualityReport;
+  pedagogyRecommendations: import("@/lib/education/types").PedagogyRecommendation[];
 }
 
 function lessonWilf(successCriteria: string[], lessonIndex: number): string {
@@ -53,8 +52,18 @@ function buildLessonFromStep(
   outcomeIds: string[],
   successCriteria: string[],
   skillId: string,
-  topicId: string
+  topicId: string,
+  topicLabel: string,
+  skillLabel: string
 ): SOWLesson {
+  const lessonType = step.lessonType ?? pickLessonTypesForCount(lessonIndex + 1)[lessonIndex] ?? "skill-development";
+  const template = buildLessonStructure(
+    lessonType,
+    topicLabel,
+    skillLabel,
+    step.sportPhase ?? step.focus
+  );
+
   const lesson = createEmptyLesson(step.lessonNumber);
   return markSchemeLessonPlanned({
     ...lesson,
@@ -62,8 +71,13 @@ function buildLessonFromStep(
     learningOutcomeIds: outcomeIds,
     walt: step.waltExample?.trim() ?? "",
     wilf: lessonWilf(successCriteria, lessonIndex),
-    activities: formatLessonActivities(step),
-    resources: pickResourcesForTopic(topicId),
+    activities: formatStructuredLessonActivities(template),
+    resources: pickResourcesForLesson({
+      topicId,
+      skillId,
+      lessonType,
+      lessonIndex,
+    }),
   });
 }
 
@@ -71,27 +85,42 @@ export function buildAssistantSchemeDraft(
   source: AssistantSchemeDraftSource,
   response: Pick<
     AssistantResponse,
-    "planningSequence" | "suggestedTitle" | "suggestedLessonCount" | "successCriteria" | "waltExamples"
+    | "planningSequence"
+    | "suggestedTitle"
+    | "suggestedLessonCount"
+    | "successCriteria"
+    | "waltExamples"
+    | "matches"
   >
 ): AssistantSchemeDraftResult {
-  const sequence = response.planningSequence ?? [];
   const lessonCount = Math.max(
-    sequence.length,
-    response.suggestedLessonCount ?? sequence.length,
+    response.planningSequence?.length ?? 0,
+    response.suggestedLessonCount ?? 0,
     1
   );
+
+  const topicLabel = getPlanningTopicDisplayName(source.topicId);
+  const skillLabel = source.skillId
+    ? getPlanningSkillDisplayName(source.skillId)
+    : "the focus skill";
+
   const steps =
-    sequence.length > 0
-      ? sequence
-      : Array.from({ length: lessonCount }, (_, index) => ({
-          lessonNumber: index + 1,
-          focus: `Lesson ${index + 1}`,
-          activity: "Main activity",
-          waltExample: response.waltExamples?.[index % (response.waltExamples?.length ?? 1)],
-        }));
+    response.planningSequence && response.planningSequence.length > 0
+      ? response.planningSequence
+      : buildIntelligentPlanningSequence({
+          lessonCount,
+          topicId: source.topicId,
+          topicLabel,
+          skillLabel,
+        });
 
   const successCriteria = response.successCriteria ?? [];
-  const outcomeBuckets = distributeOutcomes(source.outcomeIds, steps.length);
+  const rankedOutcomes = rankOutcomesForScheme(
+    source.outcomeIds,
+    source.topicId,
+    source.skillId
+  );
+  const outcomeBuckets = distributeOutcomesAcrossLessons(rankedOutcomes, steps.length);
 
   const lessons = steps.map((step, index) => {
     const walt =
@@ -104,9 +133,35 @@ export function buildAssistantSchemeDraft(
       outcomeBuckets[index] ?? [],
       successCriteria,
       source.skillId,
-      source.topicId
+      source.topicId,
+      topicLabel,
+      skillLabel
     );
   });
+
+  const pedagogyRecommendations = recommendPedagogies({
+    topicId: source.topicId,
+    skillId: source.skillId,
+    yearGroupId: source.yearGroupId,
+    limit: 3,
+  });
+  const primaryPedagogy = primaryRecommendedPedagogy({
+    topicId: source.topicId,
+    skillId: source.skillId,
+    yearGroupId: source.yearGroupId,
+  });
+
+  const lessonsWithPedagogy =
+    primaryPedagogy
+      ? lessons.map((lesson) => ({
+          ...lesson,
+          activities: applyPedagogyToSchemeLessonActivities(
+            lesson.activities,
+            primaryPedagogy,
+            topicLabel
+          ),
+        }))
+      : lessons;
 
   const draft: AssistantSchemeDraft = {
     title: response.suggestedTitle?.trim() || "Assistant scheme draft",
@@ -117,14 +172,27 @@ export function buildAssistantSchemeDraft(
     topicId: source.topicId,
     skillId: source.skillId,
     term: source.term,
-    plannedLessonCount: lessons.length,
-    lessons,
+    plannedLessonCount: lessonsWithPedagogy.length,
+    lessons: lessonsWithPedagogy,
+    pedagogicalModels: primaryPedagogy ? [primaryPedagogy] : [],
     status: "draft",
   };
 
-  const needsReview = lessons.some((lesson) => getLessonCompletionStatus(lesson) !== "complete");
+  const quality = buildAssistantSchemeQualityReport(draft);
+  const pedagogicalQuality = buildSchemePedagogicalQuality(draft);
+  const confidence = computeAssistantConfidence({
+    matchCount: response.matches?.length ?? source.outcomeIds.length,
+    outcomeIds: source.outcomeIds,
+    topicId: source.topicId,
+    lessonCount: lessons.length,
+    outcomeBuckets,
+  });
 
-  return { draft, needsReview };
+  const needsReview =
+    lessons.some((lesson) => getLessonCompletionStatus(lesson) !== "complete") ||
+    quality.percentage < 100;
+
+  return { draft, needsReview, quality, confidence, pedagogicalQuality, pedagogyRecommendations };
 }
 
 export function duplicateAssistantSchemeDraft(
@@ -157,15 +225,4 @@ export function duplicateAssistantSchemeDraft(
 export function schemeDraftReviewMessage(needsReview: boolean): string | null {
   if (!needsReview) return null;
   return "Some lessons need teacher review before export.";
-}
-
-export function pickResourcesForTopic(topicId: string): string[] {
-  const topic = topicId.toLowerCase();
-  if (topic.includes("gymnastics") || topic.includes("athletics")) {
-    return ["Cones", "Mats", "Timer", ...SOW_RESOURCE_OPTIONS.filter((r) => r !== "Balls")].slice(
-      0,
-      4
-    );
-  }
-  return DEFAULT_RESOURCES;
 }

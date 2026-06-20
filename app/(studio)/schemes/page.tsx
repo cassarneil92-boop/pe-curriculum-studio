@@ -6,6 +6,10 @@ import { ScheduleLessonModal } from "@/components/calendar/ScheduleLessonModal";
 import { ScheduleSchemeModal } from "@/components/calendar/ScheduleSchemeModal";
 import { createCalendarEntryFromSchemeLesson } from "@/lib/calendar/helpers";
 import { findCalendarEntryForSchemeLesson } from "@/lib/calendar/scheduling-lookup";
+import { PedagogicalLensPanel } from "@/components/education/PedagogicalLensPanel";
+import { PedagogicalQualityPanel } from "@/components/education/PedagogyInsightCard";
+import { buildSchemePedagogicalQuality } from "@/lib/education/pedagogical-quality";
+import type { PedagogicalModelId } from "@/src/lib/intelligence/frameworks/pedagogical-models";
 import { SchemeLessonEditor } from "@/components/scheme-builder/SchemeLessonEditor";
 import { SchemeLessonNavigator } from "@/components/scheme-builder/SchemeLessonNavigator";
 import { SchemePlanningAssistant } from "@/components/scheme-builder/SchemePlanningAssistant";
@@ -14,6 +18,9 @@ import { SOWPreviewTable } from "@/components/scheme-builder/SOWPreviewTable";
 import { SOWSchemeSetup } from "@/components/scheme-builder/SOWSchemeSetup";
 import { SOWScreenView } from "@/components/scheme-builder/SOWScreenView";
 import { useApp } from "@/components/providers/AppProvider";
+import { useToast } from "@/components/providers/ToastProvider";
+import { buildLessonBuilderDraftFromScheme } from "@/lib/assistant/scheme-to-lesson-builder";
+import { saveLessonDraft } from "@/lib/lesson-builder/draft";
 import { useDeliverySync } from "@/hooks/useDeliverySync";
 import { TopicIcon } from "@/components/design/TopicIcon";
 import { StickyActionBar } from "@/components/layout/StickyActionBar";
@@ -112,6 +119,7 @@ function createEmptyDraft(contextPathways: PathwayId[]): SchemeDraft {
     term: "Term 1",
     plannedLessonCount: DEFAULT_LESSON_COUNT,
     lessons: createLessonsForCount(DEFAULT_LESSON_COUNT),
+    pedagogicalModels: [],
   };
 }
 
@@ -142,6 +150,7 @@ export default function SchemesPage() {
   const editPrefillApplied = useRef<string | null>(null);
   const { data, addScheme, updateScheme, deleteScheme, addCalendarEntry, updateCalendarEntry } =
     useApp();
+  const { toast } = useToast();
   const { setSchemeLessonDelivery } = useDeliverySync();
   const { context } = useTeacherContext();
 
@@ -246,6 +255,16 @@ export default function SchemesPage() {
     () => getPlanningTerms(data.academicCalendar),
     [data.academicCalendar]
   );
+
+  const handleOpenLessonInBuilder = () => {
+    if (!draft) return;
+    const lesson = draft.lessons[activeLessonIndex];
+    if (!lesson) return;
+    const form = buildLessonBuilderDraftFromScheme(draft, lesson);
+    saveLessonDraft({ form, editingId: null, activeSection: "info" });
+    toast("Lesson draft ready in Lesson Builder");
+    router.push("/lesson-builder");
+  };
 
   const handleScheduleScheme = (entries: Omit<CalendarEntry, "id">[]) => {
     for (const entry of entries) {
@@ -883,6 +902,30 @@ export default function SchemesPage() {
             )}
           </Card>
 
+          {draft.topicId && (
+            <div className="grid gap-4 lg:grid-cols-2">
+              <PedagogicalLensPanel
+                selected={draft.pedagogicalModels ?? []}
+                topicId={draft.topicId}
+                skillId={draft.skillId}
+                yearGroupId={draft.yearGroup}
+                onChange={(models: PedagogicalModelId[]) =>
+                  updateDraft({ pedagogicalModels: models })
+                }
+              />
+              {(() => {
+                const quality = buildSchemePedagogicalQuality(draft);
+                return (
+                  <PedagogicalQualityPanel
+                    percentage={quality.percentage}
+                    strengths={quality.strengths}
+                    suggestions={quality.suggestions}
+                  />
+                );
+              })()}
+            </div>
+          )}
+
           {displayMode === "table" ? (
             <SOWPreviewTable scheme={previewScheme} />
           ) : (
@@ -984,6 +1027,7 @@ export default function SchemesPage() {
                         replaceResourceInLesson(activeLesson, oldResource, newResource)
                       )
                     }
+                    onOpenInLessonBuilder={handleOpenLessonInBuilder}
                   />
                 ) : (
                   <Card className="text-center">
