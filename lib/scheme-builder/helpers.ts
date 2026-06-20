@@ -9,6 +9,7 @@ import type { LearningOutcome } from "@/src/lib/curriculum/types";
 import type { PathwayId, SOWLesson, SchemeOfWork } from "@/lib/types";
 import { generateId } from "@/lib/storage";
 import { getYearGroupLabel } from "@/lib/year-groups";
+import { resolveLessonSkillId } from "./lesson-skills";
 import { ACTIVITY_TEMPLATE } from "./constants";
 
 export function createEmptyLesson(lessonNumber: number): SOWLesson {
@@ -142,7 +143,10 @@ export function buildSchemeExportFilename(
   return base.replace(/[^a-zA-Z0-9-]/g, "").replace(/-+/g, "-") || "scheme-of-work";
 }
 
-export function lessonPreviewTitle(lesson: SOWLesson): string {
+export function lessonPreviewTitle(
+  lesson: SOWLesson,
+  schemeDefaultSkillId = ""
+): string {
   if (lesson.walt.trim()) {
     const first = lesson.walt.split("\n")[0]?.trim() ?? "";
     return first.length > 48 ? `${first.slice(0, 48)}…` : first;
@@ -150,6 +154,11 @@ export function lessonPreviewTitle(lesson: SOWLesson): string {
   if (lesson.learningOutcomeIds.length > 0) {
     const outcome = resolveLearningOutcomeById(lesson.learningOutcomeIds[0]);
     if (outcome) return outcome.code;
+  }
+  const skillId = resolveLessonSkillId(lesson, schemeDefaultSkillId);
+  if (skillId) {
+    const skill = getSkillName(skillId);
+    if (skill) return `Lesson ${lesson.lessonNumber} — ${skill}`;
   }
   return `Lesson ${lesson.lessonNumber}`;
 }

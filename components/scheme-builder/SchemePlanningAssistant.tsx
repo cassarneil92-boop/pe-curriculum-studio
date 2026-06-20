@@ -40,7 +40,7 @@ export function SchemePlanningAssistant({
       <Card className="text-center">
         <p className="text-sm font-medium text-slate-800">Planning assistant</p>
         <p className="mt-2 text-sm text-slate-500">
-          Choose a topic and skill in scheme setup to unlock suggestions.
+          Choose a topic in scheme setup to unlock suggestions.
         </p>
       </Card>
     );
@@ -55,29 +55,41 @@ export function SchemePlanningAssistant({
           Planning assistant
         </p>
         <p className="mt-1 text-sm text-slate-700">
-          Adding to <span className="font-semibold">Lesson {lessonNumber}</span> — click a card to
-          insert.
+          Adding to <span className="font-semibold">Lesson {lessonNumber}</span>
+          {skillName && skillName !== "Select skill" ? (
+            <>
+              {" "}
+              · <span className="font-medium">{skillName}</span>
+            </>
+          ) : null}{" "}
+          — click a card to insert.
         </p>
       </div>
 
-      <Card padding={false} className="overflow-hidden">
-        <div className="max-h-[min(52vh,520px)] overflow-y-auto p-3">
-          <SOWCardBank
-            topicName={topicName}
-            skillName={skillName}
-            outcomeSuggestions={outcomeSuggestions}
-            selectedPathways={selectedPathways}
-            lessons={lessons}
-            selectedLessonIndex={selectedLessonIndex}
-            onAddCard={onAddCard}
-            compact
-          />
-        </div>
-      </Card>
+      {!alignmentReady ? (
+        <Card className="text-center text-sm text-slate-500">
+          Select a skill focus for this lesson to see curriculum suggestions.
+        </Card>
+      ) : (
+        <Card padding={false} className="overflow-hidden">
+          <div className="max-h-[min(52vh,520px)] overflow-y-auto p-3">
+            <SOWCardBank
+              topicName={topicName}
+              skillName={skillName}
+              outcomeSuggestions={outcomeSuggestions}
+              selectedPathways={selectedPathways}
+              lessons={lessons}
+              selectedLessonIndex={selectedLessonIndex}
+              onAddCard={onAddCard}
+              compact
+            />
+          </div>
+        </Card>
+      )}
 
-      {advisoryAlignment && <AlignmentScoreCard report={advisoryAlignment} />}
+      {alignmentReady && advisoryAlignment && <AlignmentScoreCard report={advisoryAlignment} />}
 
-      {coaching && (
+      {alignmentReady && coaching && (
         <CoachingPanel
           title="Curriculum coaching"
           strengths={coaching.strengths}

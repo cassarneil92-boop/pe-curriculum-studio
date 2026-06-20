@@ -7,6 +7,7 @@ import type {
 } from "@/lib/types";
 import { curriculumPathwayToApp } from "@/lib/lesson-plans/helpers";
 import { getTopicDisplayName } from "@/lib/scheme-builder/curriculum-options";
+import { resolveLessonSkillId } from "@/lib/scheme-builder/lesson-skills";
 import { DEFAULT_DELIVERY_STATUS } from "@/lib/progress/delivery";
 
 export type CalendarDragPayload =
@@ -86,6 +87,7 @@ export function createCalendarEntryFromSchemeLesson(
   if (!lesson) return null;
 
   const pathway = scheme.pathway ?? scheme.selectedPathways?.[0] ?? "general-pe";
+  const lessonSkillId = resolveLessonSkillId(lesson, scheme.skillId);
 
   const base: Omit<CalendarEntry, "id"> = {
     title: `${scheme.title || "Scheme"} — Lesson ${lessonNumber}`,
@@ -93,7 +95,7 @@ export function createCalendarEntryFromSchemeLesson(
     pathway,
     yearGroup: scheme.yearGroup,
     sport: scheme.topicId ? getTopicDisplayName(scheme.topicId) : "",
-    skills: scheme.skillId ? [scheme.skillId] : [],
+    skills: lessonSkillId ? [lessonSkillId] : [],
     startDate: dateIso,
     endDate: dateIso,
     classGroup: scheme.classGroup,

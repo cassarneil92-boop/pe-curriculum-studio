@@ -79,6 +79,11 @@ import {
   type SOWCardZone,
 } from "@/lib/scheme-builder/lesson-actions";
 import {
+  pruneAllLessonsOutcomes,
+  pruneLessonOutcomesForSkill,
+  resolveLessonSkillId,
+} from "@/lib/scheme-builder/lesson-skills";
+import {
   isAppPathwayVisible,
   pickYearGroupForPathwayFilter,
   pickYearGroupForPathwaysFilter,
@@ -167,10 +172,50 @@ export default function SchemesPage() {
   }, [draft?.topicId, draft?.yearGroup, draftPathways, context]);
 
   const outcomeSuggestions: PlanningOutcomeSuggestions = useMemo(() => {
-    if (!draft?.topicId || !draft.skillId || draftPathways.length === 0) {
+    if (!draft?.topicId || draftPathways.length === 0) {
       return { strict: [], additional: [], allSuggestedIds: new Set() };
     }
 
+    const activeLesson = draft.lessons[activeLessonIndex];
+    const skillId = activeLesson
+      ? resolveLessonSkillId(activeLesson, draft.skillId)
+      : draft.skillId;
+
+    if (!skillId) {
+      return { strict: [], additional: [], allSuggestedIds: new Set() };
+    }
+
+    return getPlanningOutcomeSuggestions({
+      appPathways: draftPathways,
+      yearGroup: draft.yearGroup,
+      topicId: draft.topicId,
+      skillId,
+      context,
+    });
+  }, [
+    draft?.topicId,
+    draft?.skillId,
+    draft?.yearGroup,
+    draft?.lessons,
+    draftPathways,
+    context,
+    activeLessonIndex,
+  ]);
+
+  const activeLessonSkillId = useMemo(() => {
+    if (!draft) return "";
+    const lesson = draft.lessons[activeLessonIndex];
+    if (!lesson) return "";
+    return resolveLessonSkillId(lesson, draft.skillId);
+  }, [draft, activeLessonIndex]);
+
+  const alignmentReady = Boolean(draft?.topicId && draftPathways.length > 0);
+  const lessonPlanningReady = alignmentReady && Boolean(activeLessonSkillId);
+
+  const defaultOutcomeSuggestions: PlanningOutcomeSuggestions = useMemo(() => {
+    if (!draft?.topicId || !draft.skillId || draftPathways.length === 0) {
+      return { strict: [], additional: [], allSuggestedIds: new Set() };
+    }
     return getPlanningOutcomeSuggestions({
       appPathways: draftPathways,
       yearGroup: draft.yearGroup,
@@ -179,8 +224,6 @@ export default function SchemesPage() {
       context,
     });
   }, [draft?.topicId, draft?.skillId, draft?.yearGroup, draftPathways, context]);
-
-  const alignmentReady = Boolean(draft?.topicId && draft?.skillId && draftPathways.length > 0);
 
   const advisoryAlignment = useMemo(() => {
     if (!draft || !alignmentReady) return null;
@@ -409,14 +452,25 @@ export default function SchemesPage() {
     setDraft((prev) => (prev ? { ...prev, ...patch } : prev));
   };
 
-  const pruneLessonOutcomeSelections = (
+  const pruneLessonsForSchemeContext = (
     lessons: SOWLesson[],
-    validOutcomeIds: Set<string>
-  ): SOWLesson[] =>
-    lessons.map((lesson) => ({
-      ...lesson,
-      learningOutcomeIds: lesson.learningOutcomeIds.filter((id) => validOutcomeIds.has(id)),
-    }));
+    schemeDefaultSkillId: string,
+    topicId: string,
+    yearGroup: YearGroup,
+    appPathways: PathwayId[]
+  ): SOWLesson[] => {
+    if (!topicId) {
+      return lessons.map((lesson) => ({
+        ...lesson,
+        skillId: undefined,
+        learningOutcomeIds: [],
+      }));
+    }
+
+    return pruneAllLessonsOutcomes(lessons, schemeDefaultSkillId, (skillId) =>
+      getVisibleOutcomeIds(appPathways, yearGroup, topicId, skillId, context)
+    );
+  };
 
   const handleTopicChange = (topicId: string) => {
     setDraft((prev) => {
@@ -429,7 +483,11 @@ export default function SchemesPage() {
         title:
           prev.title ||
           suggestedSchemeTitle(topicId, getYearGroupLabel(prev.yearGroup), prev.term),
-        lessons: pruneLessonOutcomeSelections(prev.lessons, new Set()),
+        lessons: prev.lessons.map((lesson) => ({
+          ...lesson,
+          skillId: undefined,
+          learningOutcomeIds: [],
+        })),
       };
     });
   };
@@ -443,21 +501,55 @@ export default function SchemesPage() {
         !skillId ||
         isSchemeSkillValid(appPathways, prev.yearGroup, prev.topicId, skillId, context);
       const nextSkillId = validSkill ? skillId : "";
-      const visibleIds = getVisibleOutcomeIds(
-        appPathways,
-        prev.yearGroup,
-        prev.topicId,
-        nextSkillId,
-        context
-      );
 
       return {
         ...prev,
         skillId: nextSkillId,
-        lessons: pruneLessonOutcomeSelections(prev.lessons, visibleIds),
       };
     });
     if (skillId) setSetupOpen(false);
+  };
+
+  const handleLessonSkillChange = (lessonIndex: number, skillId: string) => {
+    setDraft((prev) => {
+      if (!prev) return prev;
+      const lesson = prev.lessons[lessonIndex];
+      if (!lesson) return prev;
+
+      const appPathways = resolveSchemeAppPathways(prev.selectedPathways, prev.pathway);
+      const nextLessonSkillId =
+        !skillId || !isSchemeSkillValid(appPathways, prev.yearGroup, prev.topicId, skillId, context)
+          ? undefined
+          : skillId;
+
+      const resolvedSkill = resolveLessonSkillId(
+        { skillId: nextLessonSkillId },
+        prev.skillId
+      );
+      const visibleIds = resolvedSkill
+        ? getVisibleOutcomeIds(
+            appPathways,
+            prev.yearGroup,
+            prev.topicId,
+            resolvedSkill,
+            context
+          )
+        : new Set<string>();
+
+      const nextLesson: SOWLesson = {
+        ...lesson,
+        skillId: nextLessonSkillId,
+      };
+
+      return {
+        ...prev,
+        lessons: prev.lessons.map((existing, i) =>
+          i === lessonIndex
+            ? pruneLessonOutcomesForSkill(nextLesson, visibleIds)
+            : existing
+        ),
+      };
+    });
   };
 
   const handleYearGroupChange = (yearGroup: YearGroup) => {
@@ -474,20 +566,18 @@ export default function SchemesPage() {
       const skillStillValid = skills.some((skill) => skill.id === prev.skillId);
       const nextSkillId = skillStillValid ? prev.skillId : "";
 
-      const visibleIds = getVisibleOutcomeIds(
-        appPathways,
-        yearGroup,
-        nextTopicId,
-        nextSkillId,
-        context
-      );
-
       return {
         ...prev,
         yearGroup,
         topicId: nextTopicId,
         skillId: nextSkillId,
-        lessons: pruneLessonOutcomeSelections(prev.lessons, visibleIds),
+        lessons: pruneLessonsForSchemeContext(
+          prev.lessons,
+          nextSkillId,
+          nextTopicId,
+          yearGroup,
+          appPathways
+        ),
       };
     });
   };
@@ -521,14 +611,6 @@ export default function SchemesPage() {
       const skillStillValid = skills.some((skill) => skill.id === prev.skillId);
       const nextSkillId = skillStillValid ? prev.skillId : "";
 
-      const visibleIds = getVisibleOutcomeIds(
-        selectedPathways,
-        nextYearGroup,
-        nextTopicId,
-        nextSkillId,
-        context
-      );
-
       return {
         ...prev,
         pathway,
@@ -536,7 +618,13 @@ export default function SchemesPage() {
         yearGroup: nextYearGroup,
         topicId: nextTopicId,
         skillId: nextSkillId,
-        lessons: pruneLessonOutcomeSelections(prev.lessons, visibleIds),
+        lessons: pruneLessonsForSchemeContext(
+          prev.lessons,
+          nextSkillId,
+          nextTopicId,
+          nextYearGroup,
+          selectedPathways
+        ),
       };
     });
   };
@@ -711,7 +799,9 @@ export default function SchemesPage() {
                 <p className="text-sm font-semibold text-slate-900">Scheme setup</p>
                 <p className="text-xs text-slate-500">
                   {getTopicName(draft.topicId) || "Choose topic"} ·{" "}
-                  {getSkillName(draft.skillId) || "Choose skill"} · {draft.lessons.length} lessons
+                  {draft.skillId
+                    ? `Default: ${getSkillName(draft.skillId)}`
+                    : "Per-lesson skills"} · {draft.lessons.length} lessons
                 </p>
               </div>
               <span className="text-xs text-slate-400">{setupOpen ? "Collapse" : "Expand"}</span>
@@ -723,7 +813,8 @@ export default function SchemesPage() {
                   topicOptions={topicOptions}
                   topicSkills={topicSkills}
                   suggestedOutcomeCount={
-                    outcomeSuggestions.strict.length + outcomeSuggestions.additional.length
+                    defaultOutcomeSuggestions.strict.length +
+                    defaultOutcomeSuggestions.additional.length
                   }
                   exploreAllNote={context.exploreAllEnabled}
                   onPathwaysChange={handlePathwaysChange}
@@ -746,12 +837,13 @@ export default function SchemesPage() {
                   {alignmentReady ? (
                     <SchemeLessonNavigator
                       lessons={draft.lessons}
+                      schemeDefaultSkillId={draft.skillId}
                       activeIndex={activeLessonIndex}
                       onSelect={setActiveLessonIndex}
                     />
                   ) : (
                     <Card className="text-center text-sm text-slate-500">
-                      Set topic &amp; skill to unlock lesson navigator.
+                      Set a topic to unlock the lesson navigator.
                     </Card>
                   )}
                 </div>
@@ -761,6 +853,10 @@ export default function SchemesPage() {
                 {alignmentReady && activeLesson ? (
                   <SchemeLessonEditor
                     lesson={activeLesson}
+                    skillOptions={topicSkills}
+                    resolvedSkillId={activeLessonSkillId}
+                    schemeDefaultSkillId={draft.skillId}
+                    onSkillChange={(skillId) => handleLessonSkillChange(activeLessonIndex, skillId)}
                     onLessonChange={(next) => {
                       const prev = activeLesson;
                       updateLesson(activeLessonIndex, next);
@@ -837,10 +933,14 @@ export default function SchemesPage() {
                 ) : (
                   <Card className="text-center">
                     <p className="text-sm font-medium text-slate-800">
-                      Choose a topic and skill to start planning lessons
+                      {alignmentReady
+                        ? "Select a skill focus for this lesson to start planning"
+                        : "Choose a topic to start planning lessons"}
                     </p>
                     <p className="mt-1 text-sm text-slate-500">
-                      Expand scheme setup above to configure your scheme focus.
+                      {alignmentReady
+                        ? "Use the skill dropdown above, or set a default skill in scheme setup."
+                        : "Expand scheme setup above to configure your scheme focus."}
                     </p>
                   </Card>
                 )}
@@ -850,12 +950,14 @@ export default function SchemesPage() {
                 <div className="xl:sticky xl:top-[4.5rem]">
                   <SchemePlanningAssistant
                     topicName={getTopicName(draft.topicId)}
-                    skillName={getSkillName(draft.skillId)}
+                    skillName={
+                      activeLessonSkillId ? getSkillName(activeLessonSkillId) : "Select skill"
+                    }
                     outcomeSuggestions={outcomeSuggestions}
                     selectedPathways={draftPathways}
                     lessons={draft.lessons}
                     selectedLessonIndex={activeLessonIndex}
-                    alignmentReady={alignmentReady}
+                    alignmentReady={lessonPlanningReady}
                     advisoryAlignment={advisoryAlignment}
                     coaching={coaching}
                     onAddCard={handleAddCard}

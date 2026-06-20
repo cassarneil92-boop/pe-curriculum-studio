@@ -153,14 +153,14 @@ export function SOWSchemeSetup({
             ))}
           </Select>
         </FieldGroup>
-        <FieldGroup label="Skill focus">
+        <FieldGroup label="Default skill focus">
           <Select
             value={draft.skillId}
             onChange={(e) => onSkillChange(e.target.value)}
             disabled={!draft.topicId}
           >
             <option value="">
-              {draft.topicId ? "Select skill" : "Choose topic first"}
+              {draft.topicId ? "Optional — select a starting skill" : "Choose topic first"}
             </option>
             {topicSkills.map((skill) => (
               <option key={skill.id} value={skill.id}>
@@ -168,6 +168,9 @@ export function SOWSchemeSetup({
               </option>
             ))}
           </Select>
+          <p className="mt-1 text-xs text-slate-500">
+            Suggested starting skill for new lessons. Each lesson can use its own skill focus.
+          </p>
         </FieldGroup>
         <FieldGroup label="Number of lessons">
           <Input
@@ -180,11 +183,19 @@ export function SOWSchemeSetup({
         </FieldGroup>
       </div>
 
-      {draft.topicId && draft.skillId && (
+      {draft.topicId && (
         <p className="mt-4 text-xs text-slate-500">
-          {getTopicName(draft.topicId)} · {getSkillName(draft.skillId)} · {pathwaySummary} ·{" "}
-          {suggestedOutcomeCount} curriculum outcome
-          {suggestedOutcomeCount === 1 ? "" : "s"} ready
+          {getTopicName(draft.topicId)}
+          {draft.skillId ? ` · Default skill: ${getSkillName(draft.skillId)}` : ""} · {pathwaySummary}
+          {draft.skillId ? (
+            <>
+              {" "}
+              · {suggestedOutcomeCount} outcome{suggestedOutcomeCount === 1 ? "" : "s"} for default
+              skill
+            </>
+          ) : (
+            " · Choose a skill per lesson in the lesson editor"
+          )}
           {exploreAllNote ? "" : " · Intelligent Mode active"}
         </p>
       )}

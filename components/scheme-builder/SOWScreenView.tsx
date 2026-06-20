@@ -13,8 +13,10 @@ import {
   getSkillName,
   getTopicName,
   lessonHasContent,
+  lessonPreviewTitle,
   schemeDisplayTitle,
 } from "@/lib/scheme-builder/helpers";
+import { resolveLessonSkillId } from "@/lib/scheme-builder/lesson-skills";
 import { activityLabels, isActivitiesEmpty } from "@/lib/scheme-builder/lesson-actions";
 import { getPathwayLabel } from "@/lib/constants";
 import { getYearGroupLabel } from "@/lib/year-groups";
@@ -50,11 +52,6 @@ function activityCount(activities: string): number {
   if (isActivitiesEmpty(activities)) return 0;
   const labels = activityLabels(activities);
   return labels.length > 0 ? labels.length : 1;
-}
-
-function lessonPreviewTitle(lesson: SOWLesson): string {
-  if (lesson.walt.trim()) return lesson.walt.split("\n")[0]?.trim() ?? "";
-  return `Lesson ${lesson.lessonNumber}`;
 }
 
 function lessonStatusBadge(lesson: SOWLesson): {
@@ -110,6 +107,7 @@ function LessonSection({
 
 function LessonScreenCard({
   lesson,
+  schemeDefaultSkillId,
   expanded,
   onToggle,
   scheduledDate,
@@ -118,6 +116,7 @@ function LessonScreenCard({
   onScheduleLesson,
 }: {
   lesson: SOWLesson;
+  schemeDefaultSkillId: string;
   expanded: boolean;
   onToggle: () => void;
   scheduledDate?: string;
@@ -128,6 +127,9 @@ function LessonScreenCard({
   const resolvedOutcomes = resolveSchemeLearningOutcomes(lesson.learningOutcomeIds);
   const wilf = formatWilfLines(lesson.wilf);
   const status = lessonStatusBadge(lesson);
+  const lessonSkillName = getSkillName(
+    resolveLessonSkillId(lesson, schemeDefaultSkillId)
+  );
   const loCount = lesson.learningOutcomeIds.length;
   const actCount = activityCount(lesson.activities);
   const resCount = lesson.resources.length;
@@ -139,9 +141,12 @@ function LessonScreenCard({
           {lesson.lessonNumber}
         </span>
         <div className="min-w-0 flex-1">
-          <p className="font-semibold text-slate-900">{lessonPreviewTitle(lesson)}</p>
+          <p className="font-semibold text-slate-900">
+            {lessonPreviewTitle(lesson, schemeDefaultSkillId)}
+          </p>
           <p className="truncate text-sm text-slate-500">
             Lesson {lesson.lessonNumber}
+            {lessonSkillName ? ` · ${lessonSkillName}` : ""}
             {!expanded && (
               <span className="text-slate-400">
                 {" "}
@@ -307,7 +312,7 @@ export function SOWScreenView({
           {scheme.classGroup ? ` · ${scheme.classGroup}` : ""} · {scheme.term} ·{" "}
           {pathwayLabels.join(" + ")}
           {topicName ? ` · ${topicName}` : ""}
-          {skillName ? ` · ${skillName}` : ""}
+          {skillName ? ` · Default skill: ${skillName}` : ""}
         </p>
         <div className="mt-3 flex flex-wrap gap-2">
           <Badge tone="slate">{scheme.lessons.length} lessons</Badge>
@@ -350,6 +355,7 @@ export function SOWScreenView({
             <LessonScreenCard
               key={lesson.id}
               lesson={lesson}
+              schemeDefaultSkillId={scheme.skillId}
               expanded={!collapsedIds.has(lesson.id)}
               onToggle={() => toggleLesson(lesson.id)}
               scheduledDate={getSchemeLessonScheduledDate(

@@ -14,10 +14,16 @@ import {
   markSchemeLessonSkipped,
 } from "@/lib/progress/delivery";
 import { resolveSchemeLearningOutcomes } from "@/lib/scheme-builder/helpers";
+import { FieldGroup, Select } from "@/components/ui/Input";
+import type { SchemeSkillOption } from "@/lib/scheme-builder/curriculum-options";
 import type { LessonDeliveryStatus, SOWLesson } from "@/lib/types";
 
 interface SchemeLessonEditorProps {
   lesson: SOWLesson;
+  skillOptions: SchemeSkillOption[];
+  resolvedSkillId: string;
+  schemeDefaultSkillId: string;
+  onSkillChange?: (skillId: string) => void;
   onLessonChange?: (lesson: SOWLesson) => void;
   onRemoveOutcome: (id: string) => void;
   onRemoveWalt: (text: string) => void;
@@ -163,6 +169,10 @@ function RemovableChip({
 
 export function SchemeLessonEditor({
   lesson,
+  skillOptions,
+  resolvedSkillId,
+  schemeDefaultSkillId,
+  onSkillChange,
   onLessonChange,
   onRemoveOutcome,
   onRemoveWalt,
@@ -175,6 +185,7 @@ export function SchemeLessonEditor({
   onEditResource,
 }: SchemeLessonEditorProps) {
   const resolvedOutcomes = resolveSchemeLearningOutcomes(lesson.learningOutcomeIds);
+  const usingDefaultSkill = !lesson.skillId?.trim() && Boolean(schemeDefaultSkillId);
 
   return (
     <div className="space-y-4">
@@ -188,6 +199,42 @@ export function SchemeLessonEditor({
             : `Lesson ${lesson.lessonNumber}`}
         </p>
       </div>
+
+      {onSkillChange && (
+        <div className="rounded-2xl border border-slate-200 bg-white px-5 py-4">
+          <FieldGroup label="Skill focus">
+            <Select
+              value={lesson.skillId ?? ""}
+              onChange={(e) => onSkillChange(e.target.value)}
+            >
+              <option value="">
+                {schemeDefaultSkillId
+                  ? `Use scheme default (${skillOptions.find((s) => s.id === schemeDefaultSkillId)?.name ?? "default"})`
+                  : "Select skill for this lesson"}
+              </option>
+              {skillOptions.map((skill) => (
+                <option key={skill.id} value={skill.id}>
+                  {skill.name}
+                </option>
+              ))}
+            </Select>
+            <p className="mt-1.5 text-xs text-slate-500">
+              {resolvedSkillId ? (
+                <>
+                  Learning outcomes are filtered for{" "}
+                  <span className="font-medium text-slate-700">
+                    {skillOptions.find((s) => s.id === resolvedSkillId)?.name ??
+                      resolvedSkillId}
+                  </span>
+                  {usingDefaultSkill ? " (scheme default)" : ""}.
+                </>
+              ) : (
+                "Select a skill to see curriculum-aligned outcome suggestions."
+              )}
+            </p>
+          </FieldGroup>
+        </div>
+      )}
 
       {onLessonChange && (
         <SchemeLessonDeliveryControls

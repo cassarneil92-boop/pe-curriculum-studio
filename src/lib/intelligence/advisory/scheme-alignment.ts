@@ -7,6 +7,7 @@ import {
 import type { LearningOutcome } from "@/src/lib/curriculum/types";
 import { getPlanningTopicDisplayName } from "@/src/lib/curriculum/planning";
 import { resolveSchemeAppPathways } from "@/lib/scheme-builder/curriculum-options";
+import { resolveSchemeAdvisorySkillId } from "@/lib/scheme-builder/lesson-skills";
 import type { TeacherContextSnapshot } from "@/lib/teacher-context";
 export interface AdvisoryAlignmentReport {
   score: number;
@@ -49,11 +50,13 @@ export function buildSchemeAdvisoryAlignment(
     scheme.lessons.flatMap((lesson) => lesson.learningOutcomeIds ?? [])
   );
 
+  const advisorySkillId = resolveSchemeAdvisorySkillId(scheme.lessons, scheme.skillId);
+
   const relevant = filterPlanningOutcomes({
     appPathways,
     yearGroup: scheme.yearGroup,
     topicId: scheme.topicId,
-    skillId: scheme.skillId,
+    skillId: advisorySkillId,
     context,
   });
 
@@ -61,7 +64,7 @@ export function buildSchemeAdvisoryAlignment(
     appPathways,
     yearGroup: scheme.yearGroup,
     topicId: scheme.topicId,
-    skillId: scheme.skillId,
+    skillId: advisorySkillId || scheme.skillId,
     context,
   });
 

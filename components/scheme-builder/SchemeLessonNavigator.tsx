@@ -2,18 +2,22 @@
 
 import {
   getLessonCompletionStatus,
+  getSkillName,
   lessonPreviewTitle,
 } from "@/lib/scheme-builder/helpers";
+import { resolveLessonSkillId } from "@/lib/scheme-builder/lesson-skills";
 import type { SOWLesson } from "@/lib/types";
 
 interface SchemeLessonNavigatorProps {
   lessons: SOWLesson[];
+  schemeDefaultSkillId: string;
   activeIndex: number;
   onSelect: (index: number) => void;
 }
 
 export function SchemeLessonNavigator({
   lessons,
+  schemeDefaultSkillId,
   activeIndex,
   onSelect,
 }: SchemeLessonNavigatorProps) {
@@ -25,7 +29,9 @@ export function SchemeLessonNavigator({
       {lessons.map((lesson, index) => {
         const active = index === activeIndex;
         const status = getLessonCompletionStatus(lesson);
-        const preview = lessonPreviewTitle(lesson);
+        const preview = lessonPreviewTitle(lesson, schemeDefaultSkillId);
+        const skillId = resolveLessonSkillId(lesson, schemeDefaultSkillId);
+        const skillLabel = skillId ? getSkillName(skillId) : "";
         const statusLabel =
           status === "complete" ? "Complete" : status === "partial" ? "Partial" : "Empty";
         const statusColor =
@@ -61,6 +67,11 @@ export function SchemeLessonNavigator({
             </span>
             <span className="min-w-0 flex-1">
               <span className="block truncate">{preview}</span>
+              {skillLabel ? (
+                <span className="mt-0.5 block truncate text-[11px] text-slate-500">
+                  {skillLabel}
+                </span>
+              ) : null}
               <span
                 className={`mt-0.5 inline-flex items-center gap-1 text-[10px] font-medium uppercase tracking-wide ${statusColor}`}
               >

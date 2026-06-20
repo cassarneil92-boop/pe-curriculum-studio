@@ -232,6 +232,8 @@ export interface SOWWeek {
 export interface SOWLesson {
   id: string;
   lessonNumber: number;
+  /** Per-lesson skill — falls back to scheme default when unset. */
+  skillId?: string;
   learningOutcomeIds: string[];
   walt: string;
   wilf: string;
