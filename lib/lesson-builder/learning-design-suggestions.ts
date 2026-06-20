@@ -1,6 +1,7 @@
 import { resolveLearningOutcomeById } from "@/src/lib/curriculum/metadata";
 import type { LearningOutcome } from "@/src/lib/curriculum/types";
 import { getPlanningSkillDisplayName } from "@/src/lib/curriculum/planning";
+import type { SuggestionBadge } from "@/lib/lesson-builder/planning-coach-labels";
 
 export type LearningDesignField =
   | "learningIntention"
@@ -14,6 +15,7 @@ export interface DesignSuggestion {
   field: LearningDesignField;
   text: string;
   sourceLabel: string;
+  badge: SuggestionBadge;
   sourceOutcomeCode?: string;
 }
 
@@ -120,18 +122,21 @@ function buildSafetySuggestions(topicId: string, skillName: string): DesignSugge
       field: "safetyConsiderations",
       text: "Ensure a progressive warm-up before the main activity.",
       sourceLabel: "General PE safety",
+      badge: "SAFETY",
     },
     {
       id: "safety-space",
       field: "safetyConsiderations",
       text: "Check the playing area for hazards and maintain safe spacing between groups.",
       sourceLabel: "General PE safety",
+      badge: "SAFETY",
     },
     {
       id: "safety-supervision",
       field: "safetyConsiderations",
       text: "Maintain clear sightlines and active supervision throughout the session.",
       sourceLabel: "General PE safety",
+      badge: "SAFETY",
     },
   ];
 
@@ -141,6 +146,7 @@ function buildSafetySuggestions(topicId: string, skillName: string): DesignSugge
       field: "safetyConsiderations",
       text: "Emphasise controlled contact, awareness of others, and safe use of space.",
       sourceLabel: "Contact / invasion activity",
+      badge: "SAFETY",
     });
   }
 
@@ -150,6 +156,7 @@ function buildSafetySuggestions(topicId: string, skillName: string): DesignSugge
       field: "safetyConsiderations",
       text: "Inspect equipment before use and establish clear rules for safe handling.",
       sourceLabel: "Equipment-based activity",
+      badge: "SAFETY",
     });
   }
 
@@ -158,7 +165,8 @@ function buildSafetySuggestions(topicId: string, skillName: string): DesignSugge
       id: "safety-skill",
       field: "safetyConsiderations",
       text: `Introduce ${skillName.toLowerCase()} progressions gradually to reduce injury risk.`,
-      sourceLabel: "Based on skill focus",
+      sourceLabel: "Professional insight · skill focus",
+      badge: "SKILL",
     });
   }
 
@@ -179,6 +187,7 @@ function suggestionsFromOutcome(outcome: LearningOutcome): {
       field: "learningIntention",
       text: toLearningIntention(outcome),
       sourceLabel,
+      badge: "CURRICULUM",
       sourceOutcomeCode: outcome.code,
     },
   ];
@@ -189,6 +198,7 @@ function suggestionsFromOutcome(outcome: LearningOutcome): {
       field: "walt",
       text: toWalt(outcome),
       sourceLabel,
+      badge: "CURRICULUM",
       sourceOutcomeCode: outcome.code,
     },
   ];
@@ -198,6 +208,7 @@ function suggestionsFromOutcome(outcome: LearningOutcome): {
     field: "successCriteria",
     text,
     sourceLabel,
+    badge: "CURRICULUM" as const,
     sourceOutcomeCode: outcome.code,
   }));
 
@@ -207,11 +218,24 @@ function suggestionsFromOutcome(outcome: LearningOutcome): {
       field: "assessmentNotes",
       text: toAssessmentCheck(outcome),
       sourceLabel,
+      badge: "ASSESSMENT",
       sourceOutcomeCode: outcome.code,
     },
   ];
 
   return { learningIntentions, walt, successCriteria, assessment };
+}
+
+export function buildLearningDesignContextKey(input: {
+  selectedOutcomeIds: string[];
+  topicId: string;
+  skillId: string;
+}): string {
+  return [
+    input.topicId,
+    input.skillId,
+    [...input.selectedOutcomeIds].sort().join("\0"),
+  ].join("|");
 }
 
 export function buildLearningDesignSuggestions(input: {

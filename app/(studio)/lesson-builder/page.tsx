@@ -10,11 +10,15 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { FieldGroup, Input, Select, Textarea } from "@/components/ui/Input";
-import { LessonActivityEditor } from "@/components/lesson-builder/LessonActivityEditor";
+import { ActivityPlanningAssistant } from "@/components/lesson-builder/ActivityPlanningAssistant";
+import { CurriculumMemoryPanel } from "@/components/lesson-builder/CurriculumMemoryPanel";
 import { LearningDesignAssistant } from "@/components/lesson-builder/LearningDesignAssistant";
+import { LessonActivityEditor } from "@/components/lesson-builder/LessonActivityEditor";
 import { LessonBuilderProgress } from "@/components/lesson-builder/LessonBuilderProgress";
+import { LessonEndingAssistant } from "@/components/lesson-builder/LessonEndingAssistant";
 import { LessonEndingBuilder } from "@/components/lesson-builder/LessonEndingBuilder";
 import { LessonQualityChecklist } from "@/components/lesson-builder/LessonQualityChecklist";
+import { LessonStructureCoach } from "@/components/lesson-builder/LessonStructureCoach";
 import { useToast } from "@/components/providers/ToastProvider";
 import { BrandLogoHorizontal } from "@/components/brand/BrandLogoHorizontal";
 import { PageHeader } from "@/components/layout/PageHeader";
@@ -669,6 +673,18 @@ export default function LessonBuilderPage() {
                   </div>
                 )}
 
+                {form.topicId && (
+                  <div className="mt-4">
+                    <CurriculumMemoryPanel
+                      savedLessons={data.lessons}
+                      currentLessonId={editingId}
+                      topicId={form.topicId}
+                      topicName={getTopicDisplayName(form.topicId)}
+                      skillId={form.skillId}
+                    />
+                  </div>
+                )}
+
                 <div className="mt-6 flex justify-between">
                   <Button type="button" variant="ghost" onClick={() => setActiveSection("info")}>
                     ← Back
@@ -804,85 +820,140 @@ export default function LessonBuilderPage() {
             )}
 
             {activeSection === "activities" && (
-              <div className="space-y-4">
-                <Card>
-                  <CardHeader
-                    title="PE Activities"
-                    description="Structured activity blocks with progressions, differentiation, and teaching cues."
-                  />
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    onClick={() =>
-                      updateActivities([
-                        ...(form.structuredActivities ?? []),
-                        createEmptyActivity((form.structuredActivities ?? []).length + 1),
-                      ])
-                    }
-                  >
-                    + Add activity
-                  </Button>
-                </Card>
+              <div className="flex flex-col gap-6 xl:flex-row xl:items-start">
+                <div className="min-w-0 flex-1 space-y-4">
+                  <LessonStructureCoach lesson={form} />
+                  <Card>
+                    <CardHeader
+                      title="PE Activities"
+                      description="Structured activity blocks with progressions, differentiation, and teaching cues."
+                    />
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      onClick={() =>
+                        updateActivities([
+                          ...(form.structuredActivities ?? []),
+                          createEmptyActivity((form.structuredActivities ?? []).length + 1),
+                        ])
+                      }
+                    >
+                      + Add activity
+                    </Button>
+                  </Card>
 
-                {(form.structuredActivities ?? []).map((activity, index, list) => (
-                  <LessonActivityEditor
-                    key={activity.id}
-                    activity={activity}
-                    onChange={(next) =>
-                      updateActivities(list.map((item, i) => (i === index ? next : item)))
-                    }
-                    onRemove={() => updateActivities(list.filter((_, i) => i !== index))}
-                    onMoveUp={
-                      index > 0
-                        ? () => {
-                            const next = [...list];
-                            [next[index - 1], next[index]] = [next[index], next[index - 1]];
-                            updateActivities(next);
-                          }
-                        : undefined
-                    }
-                    onMoveDown={
-                      index < list.length - 1
-                        ? () => {
-                            const next = [...list];
-                            [next[index], next[index + 1]] = [next[index + 1], next[index]];
-                            updateActivities(next);
-                          }
-                        : undefined
-                    }
-                  />
-                ))}
+                  {(form.structuredActivities ?? []).map((activity, index, list) => (
+                    <LessonActivityEditor
+                      key={activity.id}
+                      activity={activity}
+                      onChange={(next) =>
+                        updateActivities(list.map((item, i) => (i === index ? next : item)))
+                      }
+                      onRemove={() => updateActivities(list.filter((_, i) => i !== index))}
+                      onMoveUp={
+                        index > 0
+                          ? () => {
+                              const next = [...list];
+                              [next[index - 1], next[index]] = [next[index], next[index - 1]];
+                              updateActivities(next);
+                            }
+                          : undefined
+                      }
+                      onMoveDown={
+                        index < list.length - 1
+                          ? () => {
+                              const next = [...list];
+                              [next[index], next[index + 1]] = [next[index + 1], next[index]];
+                              updateActivities(next);
+                            }
+                          : undefined
+                      }
+                    />
+                  ))}
 
-                <div className="flex justify-between">
-                  <Button type="button" variant="ghost" onClick={() => setActiveSection("design")}>
-                    ← Back
-                  </Button>
-                  <Button type="button" variant="secondary" onClick={() => setActiveSection("ending")}>
-                    Next: Lesson Ending →
-                  </Button>
+                  <div className="flex justify-between">
+                    <Button type="button" variant="ghost" onClick={() => setActiveSection("design")}>
+                      ← Back
+                    </Button>
+                    <Button type="button" variant="secondary" onClick={() => setActiveSection("ending")}>
+                      Next: Lesson Ending →
+                    </Button>
+                  </div>
                 </div>
+                <aside className="w-full xl:w-[22rem] xl:shrink-0">
+                  <div className="xl:sticky xl:top-[4.5rem]">
+                    <ActivityPlanningAssistant
+                      topicId={form.topicId}
+                      topicName={form.topicId ? getTopicDisplayName(form.topicId) : ""}
+                      skillId={form.skillId}
+                      skillName={form.skillId ? getSkillDisplayName(form.skillId) : ""}
+                      yearGroupLabel={getYearGroupLabel(form.yearGroup)}
+                      roleLabel={context.roleLabel}
+                      appPathways={appPathways}
+                      selectedOutcomeIds={form.selectedLearningOutcomeIds}
+                      lessonDuration={form.duration}
+                      existingActivityCount={(form.structuredActivities ?? []).length}
+                      onAddActivity={(activity) =>
+                        updateActivities([...(form.structuredActivities ?? []), activity])
+                      }
+                      onAddActivities={(activities) =>
+                        updateActivities([...(form.structuredActivities ?? []), ...activities])
+                      }
+                    />
+                  </div>
+                </aside>
               </div>
             )}
 
             {activeSection === "ending" && (
-              <div className="space-y-4">
-                <LessonEndingBuilder
-                  endings={form.lessonEndings ?? []}
-                  onChange={(lessonEndings) => updateForm("lessonEndings", lessonEndings)}
-                />
-                <div className="flex justify-between">
-                  <Button type="button" variant="ghost" onClick={() => setActiveSection("activities")}>
-                    ← Back
-                  </Button>
-                  <Button type="button" variant="secondary" onClick={() => setActiveSection("review")}>
-                    Next: Quality Review →
-                  </Button>
+              <div className="flex flex-col gap-6 xl:flex-row xl:items-start">
+                <div className="min-w-0 flex-1 space-y-4">
+                  <LessonEndingBuilder
+                    endings={form.lessonEndings ?? []}
+                    onChange={(lessonEndings) => updateForm("lessonEndings", lessonEndings)}
+                  />
+                  <div className="flex justify-between">
+                    <Button type="button" variant="ghost" onClick={() => setActiveSection("activities")}>
+                      ← Back
+                    </Button>
+                    <Button type="button" variant="secondary" onClick={() => setActiveSection("review")}>
+                      Next: Quality Review →
+                    </Button>
+                  </div>
                 </div>
+                <aside className="w-full xl:w-[22rem] xl:shrink-0">
+                  <div className="xl:sticky xl:top-[4.5rem]">
+                    <LessonEndingAssistant
+                      topicId={form.topicId}
+                      topicName={form.topicId ? getTopicDisplayName(form.topicId) : ""}
+                      skillId={form.skillId}
+                      skillName={form.skillId ? getSkillDisplayName(form.skillId) : ""}
+                      selectedOutcomeIds={form.selectedLearningOutcomeIds}
+                      existingEndingCount={(form.lessonEndings ?? []).length}
+                      onAddEnding={(ending) =>
+                        updateForm("lessonEndings", [...(form.lessonEndings ?? []), ending])
+                      }
+                      onAddEndings={(endings) =>
+                        updateForm("lessonEndings", [...(form.lessonEndings ?? []), ...endings])
+                      }
+                    />
+                  </div>
+                </aside>
               </div>
             )}
 
             {activeSection === "review" && (
               <div className="space-y-4">
+                <LessonStructureCoach lesson={form} />
+                {form.topicId && (
+                  <CurriculumMemoryPanel
+                    savedLessons={data.lessons}
+                    currentLessonId={editingId}
+                    topicId={form.topicId}
+                    topicName={getTopicDisplayName(form.topicId)}
+                    skillId={form.skillId}
+                  />
+                )}
                 <LessonQualityChecklist lesson={form} />
                 <div className="flex justify-between">
                   <Button type="button" variant="ghost" onClick={() => setActiveSection("ending")}>
