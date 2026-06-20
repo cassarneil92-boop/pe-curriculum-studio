@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { AssistantSchemeDraftActions } from "@/components/assistant/AssistantSchemeDraftActions";
+import { AssistantLessonDraftActions } from "@/components/assistant/AssistantLessonDraftActions";
 import { PedagogySourcesList } from "@/components/education/PedagogyInsightCard";
 import { useApp } from "@/components/providers/AppProvider";
 import { Badge } from "@/components/ui/Badge";
@@ -87,6 +88,55 @@ function MatchesCard({ response }: { response: AssistantResponse }) {
           </li>
         ))}
       </ul>
+    </Card>
+  );
+}
+
+function LessonPreviewCard({ response }: { response: AssistantResponse }) {
+  const preview = response.lessonPreview;
+  if (!preview) return null;
+
+  return (
+    <Card>
+      <CardHeader
+        title="Lesson preview"
+        description={preview.title}
+      />
+      <dl className="space-y-3 text-sm">
+        <div>
+          <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">WALT</dt>
+          <dd className="mt-1 text-slate-800">{preview.walt}</dd>
+        </div>
+        <div>
+          <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">WILF</dt>
+          <dd className="mt-1 whitespace-pre-wrap text-slate-800">{preview.wilf}</dd>
+        </div>
+        <div>
+          <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">Warm up</dt>
+          <dd className="mt-1 text-slate-700">{preview.warmUp}</dd>
+        </div>
+        <div>
+          <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">Main activity</dt>
+          <dd className="mt-1 text-slate-700">{preview.mainActivity}</dd>
+        </div>
+        <div>
+          <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">Cool down / reflection</dt>
+          <dd className="mt-1 text-slate-700">{preview.coolDown}</dd>
+        </div>
+        {preview.resources.length > 0 && (
+          <div>
+            <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">Resources</dt>
+            <dd className="mt-1 text-slate-700">{preview.resources.join(" · ")}</dd>
+          </div>
+        )}
+        {preview.pedagogicalApproach && (
+          <div>
+            <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">Pedagogical approach</dt>
+            <dd className="mt-1 text-teal-800">{preview.pedagogicalApproach}</dd>
+          </div>
+        )}
+      </dl>
+      <AssistantLessonDraftActions response={response} />
     </Card>
   );
 }
@@ -281,6 +331,7 @@ export default function CurriculumAssistantPage() {
           <ContextCard response={response} />
           <PartialMatchCard response={response} />
           <MatchesCard response={response} />
+          <LessonPreviewCard response={response} />
           <SequenceCard response={response} />
 
           {response.actions && response.actions.length > 0 && (

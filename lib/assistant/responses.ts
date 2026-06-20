@@ -21,8 +21,12 @@ import type { LearningOutcome } from "@/src/lib/curriculum/types";
 import { buildCurriculumAnalytics } from "@/src/lib/intelligence/analytics/coverage-analytics";
 import { buildSchemeAdvisoryAlignment } from "@/src/lib/intelligence/advisory/scheme-alignment";
 import { PEDAGOGICAL_MODELS } from "@/src/lib/intelligence/frameworks/pedagogical-models";
+import { buildCreateLessonAssistantResponse } from "@/lib/assistant/lesson-draft-builder";
+import { resolveOutcomesForTopic } from "@/lib/assistant/topic-fallback";
+import { isPlanningCreationIntent } from "@/lib/assistant/query-parser";
 import type { ParsedAssistantQuery } from "./query-parser";
 import { parseAssistantQuery } from "./query-parser";
+import type { EducationPedagogyId } from "@/lib/education/types";
 import { SUGGESTED_PROMPT_CHIPS } from "./synonyms";
 
 export interface DetectedContext {
@@ -64,6 +68,30 @@ export interface AssistantSchemeDraftSource {
   outcomeIds: string[];
 }
 
+export interface AssistantLessonPreview {
+  title: string;
+  walt: string;
+  wilf: string;
+  warmUp: string;
+  mainActivity: string;
+  coolDown: string;
+  activities: string;
+  resources: string[];
+  topicMappingNote?: string;
+  needsReview?: boolean;
+  pedagogicalApproach?: string;
+}
+
+export interface AssistantLessonDraftSource {
+  yearGroupId: YearGroupId;
+  appPathways: PathwayId[];
+  topicId: string;
+  resolvedTopicId: string;
+  skillId: string;
+  outcomeIds: string[];
+  pedagogicalModelId?: EducationPedagogyId;
+}
+
 export interface AssistantResponse {
   answer: string;
   detectedContext?: DetectedContext;
@@ -74,6 +102,8 @@ export interface AssistantResponse {
   suggestedTitle?: string;
   suggestedLessonCount?: number;
   schemeDraftSource?: AssistantSchemeDraftSource;
+  lessonPreview?: AssistantLessonPreview;
+  lessonDraftSource?: AssistantLessonDraftSource;
   relatedOutcomeCodes: string[];
   relatedTopicIds: string[];
   suggestions: string[];
@@ -158,6 +188,7 @@ function pathwayLabels(ids: PathwayId[]): string[] {
 function intentLabel(intent: ParsedAssistantQuery["intent"]): string {
   const labels: Record<ParsedAssistantQuery["intent"], string> = {
     "find-outcomes": "Find curriculum outcomes",
+    "create-lesson": "Create lesson",
     "create-scheme": "Create scheme of work",
     "suggest-lessons": "Suggest lesson ideas",
     activities: "Suggest activities",
@@ -385,84 +416,147 @@ export function buildAssistantResponse(
 
   const topicId = parsed.topicId;
   if (!topicId) {
+    if (isPlanningCreationIntent(parsed.intent)) {
+      const closestTopics = findClosestTopics(parsed.raw, appPathways, yearGroup, teacherContext);
+      if (closestTopics[0]) {
+        const resolvedTopicId = closestTopics[0].id;
+        const outcomeResolution = resolveOutcomesForTopic({
+          appPathways,
+          yearGroup,
+          topicId: resolvedTopicId,
+          context: teacherContext,
+        });
+
+        if (parsed.intent === "create-lesson") {
+          return {
+            ...buildCreateLessonAssistantResponse({
+              parsedTopicLabel: closestTopics[0].label,
+              yearGroup,
+              appPathways,
+              topicId: resolvedTopicId,
+              outcomeResolution,
+              confidence: parsed.confidence,
+            }),
+            detectedContext: {
+              intent: intentLabel(parsed.intent),
+              yearGroup: getYearGroupLabel(yearGroup),
+              pathways: pathwayLabels(appPathways),
+              topic: closestTopics[0].label,
+              confidence: parsed.confidence,
+            },
+            pedagogyRecommendations: recommendPedagogies({
+              topicId: resolvedTopicId,
+              skillId: outcomeResolution.primarySkillId,
+              yearGroupId: yearGroup,
+              limit: 3,
+            }),
+          };
+        }
+      }
+    }
     return buildPartialMatchResponse(parsed, appPathways, yearGroup, teacherContext);
   }
 
-  const topicLabel = getPlanningTopicDisplayName(topicId);
-  const outcomes = filterPlanningOutcomes({
+  const topicLabel =
+    parsed.topicLabel ?? getPlanningTopicDisplayName(topicId);
+  const outcomeResolution = resolveOutcomesForTopic({
     appPathways,
     yearGroup,
     topicId,
     context: teacherContext,
   });
+  const resolvedTopicId = outcomeResolution.topic.resolvedTopicId;
+  const resolvedTopicLabel = getPlanningTopicDisplayName(resolvedTopicId);
+  const displayTopicLabel =
+    parsed.topicLabel && parsed.topicId === topicId
+      ? getPlanningTopicDisplayName(topicId)
+      : resolvedTopicLabel;
 
-  if (outcomes.length === 0) {
+  if (parsed.intent === "create-lesson") {
+    return buildCreateLessonAssistantResponse({
+      parsedTopicLabel: getPlanningTopicDisplayName(topicId),
+      yearGroup,
+      appPathways,
+      topicId,
+      outcomeResolution,
+      confidence: parsed.confidence,
+    });
+  }
+
+  const outcomes = outcomeResolution.outcomes;
+  const ranked = outcomeResolution.ranked;
+
+  if (outcomes.length === 0 && !isPlanningCreationIntent(parsed.intent)) {
     return buildPartialMatchResponse(parsed, appPathways, yearGroup, teacherContext);
   }
 
   const suggestions_result = getPlanningOutcomeSuggestions({
     appPathways,
     yearGroup,
-    topicId,
-    skillId: "",
+    topicId: resolvedTopicId,
+    skillId: outcomeResolution.primarySkillId,
     context: teacherContext,
   });
-  const ranked = [...suggestions_result.strict, ...suggestions_result.additional];
-  const matches = toMatches(ranked.length > 0 ? ranked : outcomes, 8);
+  const rankedForScheme = ranked.length > 0 ? ranked : [...suggestions_result.strict, ...suggestions_result.additional];
+  const matches = toMatches(rankedForScheme.length > 0 ? rankedForScheme : outcomes, 8);
 
   const lessonCount = parsed.lessonCount ?? DEFAULT_LESSON_COUNT;
-  const primarySkill =
-    outcomes[0]?.skillIds[0] ? outcomes[0].skillIds[0] : "";
+  const primarySkill = outcomeResolution.primarySkillId;
   const skillLabel = primarySkill.replace(/-/g, " ") || "the focus skill";
-  const waltExamples = buildWaltIdeas(topicLabel, skillLabel);
+  const waltExamples = buildWaltIdeas(displayTopicLabel, skillLabel);
   const successCriteria = [...SOW_WILF_CARDS].slice(0, 4);
   const planningSequence = buildPlanningSequence(
     lessonCount,
-    topicId,
-    topicLabel,
+    resolvedTopicId,
+    displayTopicLabel,
     skillLabel
   );
-  const schemeTitle = suggestedSchemeTitle(topicId, getYearGroupLabel(yearGroup), "Term 1");
-  const outcomeIds = (ranked.length > 0 ? ranked : outcomes)
+  const schemeTitle = suggestedSchemeTitle(resolvedTopicId, getYearGroupLabel(yearGroup), "Term 1");
+  const outcomeIds = (rankedForScheme.length > 0 ? rankedForScheme : outcomes)
     .slice(0, Math.max(lessonCount * 2, 12))
     .map((o) => o.id);
 
   const schemeDraftSource: AssistantSchemeDraftSource = {
     yearGroupId: yearGroup,
     appPathways,
-    topicId,
+    topicId: topicId,
     skillId: primarySkill,
     term: "Term 1",
     outcomeIds,
   };
 
   const pedagogyRecommendations = recommendPedagogies({
-    topicId,
+    topicId: resolvedTopicId,
     skillId: primarySkill,
     yearGroupId: yearGroup,
     limit: 3,
   });
 
+  const mappingNote = outcomeResolution.topic.mappingNote;
+  const reviewNote = outcomeResolution.topic.needsReview
+    ? " Review curriculum alignment before saving."
+    : "";
+
   const schemeHref = buildSchemesLink({
     appPathways,
     yearGroupId: yearGroup,
-    topicLabel,
+    topicLabel: displayTopicLabel,
   });
 
   if (parsed.intent === "create-scheme") {
     return {
-      answer: `I can help you plan a **${lessonCount}-lesson** scheme for **${getYearGroupLabel(yearGroup)}** ${pathwayLabels(appPathways).join(" + ")} — **${topicLabel}**. Official outcomes and a suggested sequence are below. Review before saving — nothing is auto-applied.`,
+      answer: `I can help you plan a **${lessonCount}-lesson** scheme for **${getYearGroupLabel(yearGroup)}** ${pathwayLabels(appPathways).join(" + ")} — **${displayTopicLabel}**. Official outcomes and a suggested sequence are below.${mappingNote ? ` ${mappingNote}` : ""}${reviewNote}`,
       detectedContext: detected,
       matches,
       planningSequence,
       waltExamples,
       successCriteria,
-      suggestedTitle: schemeTitle || `${topicLabel} — Term 1`,
+      suggestedTitle: schemeTitle || `${displayTopicLabel} — Term 1`,
       suggestedLessonCount: lessonCount,
       schemeDraftSource,
       pedagogyRecommendations,
       relatedOutcomeCodes: matches.map((m) => m.code),
-      relatedTopicIds: [topicId],
+      relatedTopicIds: [topicId, resolvedTopicId],
       suggestions: [
         "Review outcomes in Scheme Builder before saving.",
         "Adjust lesson skills individually if your unit covers multiple skills.",
@@ -476,18 +570,18 @@ export function buildAssistantResponse(
 
   if (parsed.intent === "suggest-lessons" || parsed.intent === "activities") {
     return {
-      answer: `Here are curriculum-aligned ideas for **${topicLabel}** with **${getYearGroupLabel(yearGroup)}** (${matches.length} matching outcomes shown).`,
+      answer: `Here are curriculum-aligned ideas for **${displayTopicLabel}** with **${getYearGroupLabel(yearGroup)}** (${matches.length} matching outcomes shown).${mappingNote ? ` ${mappingNote}` : ""}`,
       detectedContext: detected,
       matches,
       planningSequence,
       waltExamples,
       successCriteria,
-      suggestedTitle: schemeTitle || `${topicLabel} — Term 1`,
+      suggestedTitle: schemeTitle || `${displayTopicLabel} — Term 1`,
       suggestedLessonCount: lessonCount,
       schemeDraftSource,
       pedagogyRecommendations,
       relatedOutcomeCodes: matches.map((m) => m.code),
-      relatedTopicIds: [topicId],
+      relatedTopicIds: [topicId, resolvedTopicId],
       suggestions: [
         "Use Lesson Builder to attach official outcomes to a single lesson.",
         "Use Scheme Builder for a full term unit.",
@@ -500,14 +594,14 @@ export function buildAssistantResponse(
   }
 
   return {
-    answer: `Found **${outcomes.length}** official curriculum outcomes for **${topicLabel}** (${getYearGroupLabel(yearGroup)}, ${pathwayLabels(appPathways).join(" + ")}).`,
+    answer: `Found **${outcomes.length}** official curriculum outcomes for **${displayTopicLabel}** (${getYearGroupLabel(yearGroup)}, ${pathwayLabels(appPathways).join(" + ")}).${mappingNote ? ` ${mappingNote}` : ""}`,
     detectedContext: detected,
     matches,
     relatedOutcomeCodes: matches.map((m) => m.code),
-    relatedTopicIds: [topicId],
+    relatedTopicIds: [topicId, resolvedTopicId],
     suggestions: [
-      `Create a ${lessonCount} lesson SOW for ${getYearGroupLabel(yearGroup)} ${topicLabel}`,
-      `Suggest activities for ${topicLabel}`,
+      `Create a ${lessonCount} lesson SOW for ${getYearGroupLabel(yearGroup)} ${displayTopicLabel}`,
+      `Suggest activities for ${displayTopicLabel}`,
     ],
     actions: [
       { label: "Start scheme", href: schemeHref, variant: "primary" },

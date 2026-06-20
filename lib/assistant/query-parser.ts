@@ -10,6 +10,7 @@ import {
 
 export type AssistantIntent =
   | "find-outcomes"
+  | "create-lesson"
   | "create-scheme"
   | "suggest-lessons"
   | "activities"
@@ -34,23 +35,86 @@ export interface ParsedAssistantQuery {
   matchedTerms: string[];
 }
 
+const CREATION_VERBS =
+  /\b(create|build|generate|make|plan|design|prepare)\b/;
+
+const LESSON_ARTIFACTS = /\b(lesson|session|activity)\b/;
+
+const SCHEME_ARTIFACTS = /\b(scheme|sow|unit)\b/;
+
+const EXPLICIT_FIND_OUTCOME_PHRASES = [
+  "find outcomes",
+  "show outcomes",
+  "list outcomes",
+  "what outcomes",
+  "curriculum outcomes for",
+  "outcomes for",
+  "learning outcomes for",
+  "find learning outcomes",
+  "show learning outcomes",
+];
+
 function normalise(raw: string): string {
   return raw.trim().toLowerCase().replace(/['']/g, "'").replace(/\s+/g, " ");
 }
 
+function isExplicitFindOutcomesQuery(q: string): boolean {
+  if (EXPLICIT_FIND_OUTCOME_PHRASES.some((phrase) => q.includes(phrase))) {
+    return true;
+  }
+  if (/\boutcomes?\b/.test(q) && /\b(find|show|list|what|curriculum)\b/.test(q)) {
+    return true;
+  }
+  return false;
+}
+
+function isCreationQuery(q: string): boolean {
+  return CREATION_VERBS.test(q);
+}
+
+function detectCreationIntent(q: string): AssistantIntent | null {
+  if (!isCreationQuery(q)) return null;
+
+  const hasSchemeArtifact = SCHEME_ARTIFACTS.test(q);
+  const hasLessonArtifact = LESSON_ARTIFACTS.test(q);
+  const hasNumberedLessons = /\b\d{1,2}\s*(?:lesson|week|session)s?\b/.test(q);
+
+  if (hasSchemeArtifact || (hasNumberedLessons && /\b(sow|scheme|unit)\b/.test(q))) {
+    return "create-scheme";
+  }
+
+  if (hasSchemeArtifact && !hasLessonArtifact) {
+    return "create-scheme";
+  }
+
+  if (hasLessonArtifact) {
+    return "create-lesson";
+  }
+
+  if (/\bunit\b/.test(q)) {
+    return "create-scheme";
+  }
+
+  return null;
+}
+
 function detectIntent(q: string): AssistantIntent {
+  if (isExplicitFindOutcomesQuery(q)) {
+    return "find-outcomes";
+  }
+
+  const creationIntent = detectCreationIntent(q);
+  if (creationIntent) return creationIntent;
+
   for (const [intent, phrases] of Object.entries(INTENT_PHRASES)) {
+    if (intent === "find-outcomes") continue;
     if (phrases.some((phrase) => q.includes(phrase))) {
       return intent as AssistantIntent;
     }
   }
 
-  if (/\b(sow|scheme)\b/.test(q) && /\b(create|plan|build|start|make)\b/.test(q)) {
+  if (/\b(sow|scheme)\b/.test(q) && CREATION_VERBS.test(q)) {
     return "create-scheme";
-  }
-
-  if (/\boutcomes?\b/.test(q) && /\b(find|show|list|year|form)\b/.test(q)) {
-    return "find-outcomes";
   }
 
   if (/\bactivities?\b/.test(q)) return "activities";
@@ -131,15 +195,11 @@ function detectOutcomeCode(raw: string): string | null {
 
 function inferIntentFromContext(
   intent: AssistantIntent,
-  q: string,
-  topicId: string | null,
-  yearGroupId: YearGroupId | null
+  q: string
 ): AssistantIntent {
   if (intent !== "unknown") return intent;
 
   if (q.includes("missing") && q.includes("scheme")) return "missing-scheme";
-  if (topicId && yearGroupId) return "find-outcomes";
-  if (topicId) return "find-outcomes";
 
   return "unknown";
 }
@@ -164,6 +224,10 @@ function scoreConfidence(params: {
   return "low";
 }
 
+export function isPlanningCreationIntent(intent: AssistantIntent): boolean {
+  return intent === "create-lesson" || intent === "create-scheme";
+}
+
 export function parseAssistantQuery(raw: string): ParsedAssistantQuery {
   const normalised = normalise(raw);
   const matchedTerms: string[] = [];
@@ -184,18 +248,10 @@ export function parseAssistantQuery(raw: string): ParsedAssistantQuery {
   const lessonCount = detectLessonCount(normalised);
   if (lessonCount) matchedTerms.push(`${lessonCount} lessons`);
 
-  intent = inferIntentFromContext(intent, normalised, topic.topicId, year.id);
+  intent = inferIntentFromContext(intent, normalised);
 
   if (intent === "unknown" && (normalised.includes("coverage") || normalised.includes("not taught"))) {
     intent = normalised.includes("not taught") ? "show-gaps" : "coverage";
-  }
-
-  if (
-    intent === "unknown" &&
-    normalised.includes("create") &&
-    (topic.topicId || normalised.includes("sow"))
-  ) {
-    intent = "create-scheme";
   }
 
   const confidence = scoreConfidence({

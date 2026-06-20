@@ -16,8 +16,13 @@ export {
   type AssistantConfidenceReport,
 } from "./assistant-confidence";
 export { buildLessonBuilderDraftFromScheme } from "./scheme-to-lesson-builder";
+export {
+  buildAssistantLessonDraft,
+  buildCreateLessonAssistantResponse,
+} from "./lesson-draft-builder";
+export { resolveOutcomesForTopic, type OutcomeResolution, type TopicResolution } from "./topic-fallback";
 export type { AssistantSchemeDraftSource } from "./responses";
-export { parseAssistantQuery, type ParsedAssistantQuery, type AssistantIntent } from "./query-parser";
+export { parseAssistantQuery, isPlanningCreationIntent, type ParsedAssistantQuery, type AssistantIntent } from "./query-parser";
 export {
   buildAssistantResponse,
   buildAssistantResponseFromPrompt,
@@ -28,6 +33,8 @@ export {
   type CurriculumMatch,
   type PlanningSequenceStep,
   type AssistantAction,
+  type AssistantLessonPreview,
+  type AssistantLessonDraftSource,
 } from "./responses";
 export {
   SUGGESTED_PROMPT_CHIPS as PROMPT_CHIPS,
