@@ -1,3 +1,11 @@
+export {
+  buildAssistantSchemeDraft,
+  duplicateAssistantSchemeDraft,
+  schemeDraftReviewMessage,
+  type AssistantSchemeDraft,
+  type AssistantSchemeDraftResult,
+} from "./scheme-draft-builder";
+export type { AssistantSchemeDraftSource } from "./responses";
 export { parseAssistantQuery, type ParsedAssistantQuery, type AssistantIntent } from "./query-parser";
 export {
   buildAssistantResponse,

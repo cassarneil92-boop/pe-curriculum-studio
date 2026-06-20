@@ -53,6 +53,15 @@ export interface AssistantAction {
   variant: "primary" | "secondary";
 }
 
+export interface AssistantSchemeDraftSource {
+  yearGroupId: YearGroupId;
+  appPathways: PathwayId[];
+  topicId: string;
+  skillId: string;
+  term: string;
+  outcomeIds: string[];
+}
+
 export interface AssistantResponse {
   answer: string;
   detectedContext?: DetectedContext;
@@ -62,6 +71,7 @@ export interface AssistantResponse {
   successCriteria?: string[];
   suggestedTitle?: string;
   suggestedLessonCount?: number;
+  schemeDraftSource?: AssistantSchemeDraftSource;
   relatedOutcomeCodes: string[];
   relatedTopicIds: string[];
   suggestions: string[];
@@ -389,15 +399,28 @@ export function buildAssistantResponse(
 
   const lessonCount = parsed.lessonCount ?? DEFAULT_LESSON_COUNT;
   const primarySkill =
-    outcomes[0]?.skillIds[0] ? outcomes[0].skillIds[0] : "the focus skill";
-  const waltExamples = buildWaltIdeas(topicLabel, primarySkill.replace(/-/g, " "));
+    outcomes[0]?.skillIds[0] ? outcomes[0].skillIds[0] : "";
+  const skillLabel = primarySkill.replace(/-/g, " ") || "the focus skill";
+  const waltExamples = buildWaltIdeas(topicLabel, skillLabel);
   const successCriteria = [...SOW_WILF_CARDS].slice(0, 4);
   const planningSequence = buildPlanningSequence(
     lessonCount,
     topicLabel,
-    primarySkill.replace(/-/g, " ")
+    skillLabel
   );
   const schemeTitle = suggestedSchemeTitle(topicId, getYearGroupLabel(yearGroup), "Term 1");
+  const outcomeIds = (ranked.length > 0 ? ranked : outcomes)
+    .slice(0, Math.max(lessonCount, 8))
+    .map((o) => o.id);
+
+  const schemeDraftSource: AssistantSchemeDraftSource = {
+    yearGroupId: yearGroup,
+    appPathways,
+    topicId,
+    skillId: primarySkill,
+    term: "Term 1",
+    outcomeIds,
+  };
 
   const schemeHref = buildSchemesLink({
     appPathways,
@@ -415,6 +438,7 @@ export function buildAssistantResponse(
       successCriteria,
       suggestedTitle: schemeTitle || `${topicLabel} — Term 1`,
       suggestedLessonCount: lessonCount,
+      schemeDraftSource,
       relatedOutcomeCodes: matches.map((m) => m.code),
       relatedTopicIds: [topicId],
       suggestions: [
@@ -433,9 +457,12 @@ export function buildAssistantResponse(
       answer: `Here are curriculum-aligned ideas for **${topicLabel}** with **${getYearGroupLabel(yearGroup)}** (${matches.length} matching outcomes shown).`,
       detectedContext: detected,
       matches,
-      planningSequence: planningSequence.slice(0, Math.min(4, lessonCount)),
+      planningSequence,
       waltExamples,
       successCriteria,
+      suggestedTitle: schemeTitle || `${topicLabel} — Term 1`,
+      suggestedLessonCount: lessonCount,
+      schemeDraftSource,
       relatedOutcomeCodes: matches.map((m) => m.code),
       relatedTopicIds: [topicId],
       suggestions: [

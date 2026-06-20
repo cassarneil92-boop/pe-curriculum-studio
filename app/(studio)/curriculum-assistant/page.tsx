@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { AssistantSchemeDraftActions } from "@/components/assistant/AssistantSchemeDraftActions";
 import { useApp } from "@/components/providers/AppProvider";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -142,6 +143,7 @@ function SequenceCard({ response }: { response: AssistantResponse }) {
           </ul>
         </div>
       )}
+      <AssistantSchemeDraftActions response={response} />
     </Card>
   );
 }

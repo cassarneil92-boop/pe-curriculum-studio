@@ -139,6 +139,7 @@ export default function SchemesPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const hubPrefillApplied = useRef(false);
+  const editPrefillApplied = useRef<string | null>(null);
   const { data, addScheme, updateScheme, deleteScheme, addCalendarEntry, updateCalendarEntry } =
     useApp();
   const { setSchemeLessonDelivery } = useDeliverySync();
@@ -430,6 +431,60 @@ export default function SchemesPage() {
     setSetupOpen(false);
     setDisplayMode("screen");
   };
+
+  useEffect(() => {
+    const editId = searchParams?.get("edit");
+    if (!editId || editPrefillApplied.current === editId) return;
+
+    const scheme = data.schemes.find((item) => item.id === editId);
+    if (!scheme) return;
+
+    editPrefillApplied.current = editId;
+    setEditingId(scheme.id);
+    setViewingScheme(null);
+
+    const appPathways = getSchemeSelectedPathways(scheme);
+    const topicStillValid = isSchemeTopicValid(
+      appPathways,
+      scheme.yearGroup,
+      scheme.topicId,
+      context
+    );
+    const topicId = topicStillValid ? scheme.topicId : "";
+
+    const skills = topicId
+      ? getSchemeSkillOptions(appPathways, scheme.yearGroup, topicId, context)
+      : [];
+    const skillStillValid = skills.some((skill) => skill.id === scheme.skillId);
+    const skillId = skillStillValid ? scheme.skillId : "";
+
+    const visibleIds = getVisibleOutcomeIds(
+      appPathways,
+      scheme.yearGroup,
+      topicId,
+      skillId,
+      context
+    );
+
+    setDraft({
+      title: scheme.title,
+      classGroup: scheme.classGroup,
+      pathway: scheme.pathway,
+      selectedPathways: appPathways,
+      yearGroup: scheme.yearGroup,
+      topicId,
+      skillId,
+      term: scheme.term,
+      plannedLessonCount: scheme.plannedLessonCount ?? scheme.lessons.length,
+      lessons: scheme.lessons.map((lesson) => ({
+        ...lesson,
+        learningOutcomeIds: lesson.learningOutcomeIds.filter((id) => visibleIds.has(id)),
+      })),
+    });
+    setActiveLessonIndex(0);
+    setSetupOpen(false);
+    setDisplayMode("screen");
+  }, [searchParams, data.schemes, context]);
 
   const openSchemeView = (scheme: SchemeOfWork) => {
     setViewingScheme(scheme);
