@@ -23,10 +23,7 @@ import {
   buildUpcomingLessons,
   countUnplannedOutcomeWarnings,
 } from "@/lib/dashboard/insights";
-import {
-  buildTeacherPersonalisation,
-  formatWeeklyLessonSummary,
-} from "@/lib/design/personalisation";
+import { formatWeeklyLessonSummary } from "@/lib/design/personalisation";
 import { getCoverageScore } from "@/lib/progress/coverage-score";
 
 function todayIso(): string {
@@ -38,7 +35,6 @@ export default function DashboardPage() {
   const { teacher, calendar, schemes, lessons } = data;
   const { context } = useTeacherContext();
   const today = todayIso();
-  const personal = buildTeacherPersonalisation(teacher, context.roleLabel);
 
   const weekStart = toIso(startOfWeek(new Date()));
   const weekEnd = toIso(addDays(startOfWeek(new Date()), 6));
@@ -87,7 +83,7 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6">
       <DashboardHero
-        personal={personal}
+        teacher={teacher}
         subtitle={formatWeeklyLessonSummary(weekStats.scheduled)}
       />
 

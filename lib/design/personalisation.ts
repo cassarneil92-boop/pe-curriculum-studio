@@ -1,30 +1,15 @@
 import type { TeacherProfile } from "@/lib/types";
-import { getPathwayLabel } from "@/lib/constants";
 import { getTeacherGreetingName, getTimeGreeting } from "./greeting";
-import { resolveSchoolDisplayName } from "@/src/lib/schools";
 
 export interface TeacherPersonalisation {
   greeting: string;
   name: string;
-  schoolLine: string;
-  pathwayLine: string;
-  roleLine: string;
 }
 
-export function buildTeacherPersonalisation(
-  teacher: TeacherProfile,
-  roleLabel?: string
-): TeacherPersonalisation {
-  const name = getTeacherGreetingName(teacher);
-  const schoolName = resolveSchoolDisplayName(teacher.school, teacher.manualSchoolName);
-  const primaryPathway = teacher.pathways[0];
-
+export function buildTeacherPersonalisation(teacher: TeacherProfile): TeacherPersonalisation {
   return {
     greeting: getTimeGreeting(),
-    name,
-    schoolLine: schoolName || "",
-    pathwayLine: primaryPathway ? getPathwayLabel(primaryPathway) : "",
-    roleLine: teacher.role?.trim() || roleLabel || "",
+    name: getTeacherGreetingName(teacher),
   };
 }
 
