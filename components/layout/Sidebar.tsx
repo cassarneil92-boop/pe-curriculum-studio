@@ -18,6 +18,7 @@ const HEAVY_ROUTES = new Set([
   "/lesson-builder",
   "/curriculum",
   "/curriculum-analytics",
+  "/curriculum-intelligence",
   "/calendar",
 ]);
 

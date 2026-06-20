@@ -2,6 +2,7 @@ import {
   BarChart3,
   BookOpen,
   Calendar,
+  ChartNetwork,
   ClipboardList,
   Eye,
   FileText,
@@ -23,6 +24,7 @@ export type IconName =
   | "schemes"
   | "curriculum"
   | "analytics"
+  | "intelligence"
   | "assistant"
   | "tester"
   | "coverage"
@@ -38,6 +40,7 @@ const ICONS: Record<IconName, LucideIcon> = {
   schemes: LayoutGrid,
   curriculum: BookOpen,
   analytics: BarChart3,
+  intelligence: ChartNetwork,
   assistant: MessageCircle,
   tester: FlaskConical,
   coverage: ClipboardList,

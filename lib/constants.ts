@@ -145,6 +145,7 @@ export const NAV_SECTIONS = [
     items: [
       { href: "/curriculum", label: "Curriculum Hub", icon: "curriculum" },
       { href: "/curriculum-analytics", label: "Teaching Progress", icon: "analytics" },
+      { href: "/curriculum-intelligence", label: "Curriculum Intelligence", icon: "intelligence" },
     ],
   },
   {
