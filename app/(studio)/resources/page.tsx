@@ -135,20 +135,21 @@ export default function ResourcesPage() {
   };
 
   return (
-    <div>
+    <div className="space-y-6">
       <PageHeader
+        eyebrow="Teaching library"
         title="Teaching Resources"
         description="Your PE teaching library — lesson cards, rubrics, assessments and more."
       />
 
-      <section className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard label="Total resources" value={String(summary.total)} />
         <StatCard label="Lesson cards" value={String(summary.lessonCards)} tone="teal" />
         <StatCard label="Assessments" value={String(summary.assessments)} tone="blue" />
         <StatCard label="Linked to outcomes" value={String(summary.linkedOutcomes)} tone="green" />
       </section>
 
-      <Card className="mb-6">
+      <Card>
         <CardHeader title="Filters" />
         <div className="flex flex-wrap gap-3">
           <Input

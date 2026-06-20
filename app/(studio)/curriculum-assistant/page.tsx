@@ -43,18 +43,19 @@ export default function CurriculumAssistantPage() {
   }
 
   return (
-    <div>
+    <div className="mx-auto max-w-3xl space-y-5">
       <PageHeader
+        eyebrow="Planning tools"
         title="Curriculum Assistant"
         description="Curriculum-aware guidance using official Maltese PE data. Advisory only — never auto-modifies your plans."
       />
 
-      <p className="mb-6 rounded-lg border border-blue-100 bg-blue-50/60 px-4 py-3 text-sm text-blue-900">
+      <p className="rounded-[20px] border border-blue-100/80 bg-blue-50/50 px-4 py-3 text-sm leading-relaxed text-blue-900">
         This assistant queries your curriculum database first. It does not invent learning outcomes
         or change official wording. External AI can be added later — architecture is ready.
       </p>
 
-      <Card className="mb-6">
+      <Card>
         <FieldGroup label="Ask about the curriculum">
           <div className="flex gap-2">
             <Input

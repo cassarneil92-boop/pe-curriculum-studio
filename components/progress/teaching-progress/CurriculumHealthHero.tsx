@@ -20,7 +20,7 @@ const STATUS_TEXT: Record<CurriculumHealthScore["variant"], string> = {
 export function CurriculumHealthHero({ health }: { health: CurriculumHealthScore }) {
   return (
     <section
-      className={`relative overflow-hidden rounded-2xl border bg-gradient-to-br p-6 sm:p-8 ${STATUS_RING[health.variant]}`}
+      className={`relative overflow-hidden rounded-[20px] border bg-gradient-to-br p-6 sm:p-8 ${STATUS_RING[health.variant]}`}
     >
       <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0 flex-1">

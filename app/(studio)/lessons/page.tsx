@@ -133,7 +133,7 @@ export default function LessonsPage() {
       {sortedLessons.length === 0 ? (
         <EmptyState
           title="No lesson plans yet"
-          description="Create your first curriculum-aligned lesson plan."
+          description="Create your first curriculum-aligned lesson plan. Build it in Lesson Builder and it will appear here instantly."
           icon={<LessonsEmptyIllustration />}
           action={
             <Link href="/lesson-builder">

@@ -9,7 +9,7 @@ interface CardProps {
 export function Card({ children, className = "", padding = true }: CardProps) {
   return (
     <div
-      className={`rounded-2xl border border-slate-200/70 bg-white shadow-[0_1px_3px_rgba(15,23,42,0.04),0_4px_12px_rgba(15,23,42,0.03)] ${padding ? "p-6" : ""} ${className}`}
+      className={`rounded-[20px] border border-[#E5E7EB] bg-white shadow-[0_1px_3px_rgba(15,23,42,0.08),0_8px_24px_rgba(15,23,42,0.04)] ${padding ? "p-6" : ""} ${className}`}
     >
       {children}
     </div>
@@ -26,10 +26,12 @@ export function CardHeader({
   action?: ReactNode;
 }) {
   return (
-    <div className="mb-5 flex items-start justify-between gap-4">
+    <div className="mb-4 flex items-start justify-between gap-4">
       <div>
-        <h2 className="text-lg font-semibold tracking-tight text-slate-900">{title}</h2>
-        {description && <p className="mt-1 text-sm leading-relaxed text-slate-500">{description}</p>}
+        <h2 className="text-lg font-semibold leading-snug tracking-tight text-[#0F172A]">{title}</h2>
+        {description && (
+          <p className="mt-1 text-sm leading-relaxed text-slate-500">{description}</p>
+        )}
       </div>
       {action}
     </div>

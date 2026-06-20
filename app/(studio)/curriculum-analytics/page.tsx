@@ -4,11 +4,13 @@ import Link from "next/link";
 import { useMemo, type ReactNode } from "react";
 import { useApp } from "@/components/providers/AppProvider";
 import { CoverageBar } from "@/components/intelligence/CoverageBar";
-import { CurriculumHealthHero } from "@/components/progress/teaching-progress/CurriculumHealthHero";
-import { CurriculumJourney } from "@/components/progress/teaching-progress/CurriculumJourney";
-import { ImmediatePriorities } from "@/components/progress/teaching-progress/ImmediatePriorities";
-import { TeachingInsightsPanel } from "@/components/progress/teaching-progress/TeachingInsightsPanel";
-import { TopicCoverageTable } from "@/components/progress/teaching-progress/TopicCoverageTable";
+import {
+  CurriculumHealthHero,
+  CurriculumJourney,
+  ImmediatePriorities,
+  TeachingInsightsPanel,
+  TopicCoverageTable,
+} from "@/components/progress/teaching-progress";
 import { Button } from "@/components/ui/Button";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
