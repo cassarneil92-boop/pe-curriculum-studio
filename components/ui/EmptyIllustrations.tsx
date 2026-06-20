@@ -48,3 +48,24 @@ export function CalendarEmptyIllustration() {
     </svg>
   );
 }
+
+export function TeachingProgressIllustration() {
+  return (
+    <svg viewBox="0 0 80 64" className="h-20 w-24" fill="none" aria-hidden>
+      <rect x="8" y="12" width="64" height="40" rx="8" className="fill-teal-50 stroke-teal-200" strokeWidth="1.5" />
+      <path
+        d="M20 40 L32 28 L44 34 L60 22"
+        className="stroke-teal-600"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <circle cx="20" cy="40" r="3" className="fill-teal-600" />
+      <circle cx="32" cy="28" r="3" className="fill-teal-500" />
+      <circle cx="44" cy="34" r="3" className="fill-teal-500" />
+      <circle cx="60" cy="22" r="3" className="fill-emerald-500" />
+      <rect x="52" y="8" width="16" height="10" rx="4" className="fill-emerald-100 stroke-emerald-300" strokeWidth="1" />
+      <path d="M56 13h8M60 9v8" className="stroke-emerald-600" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  );
+}

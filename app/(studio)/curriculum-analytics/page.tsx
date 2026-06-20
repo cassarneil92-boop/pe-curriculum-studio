@@ -1,125 +1,173 @@
 "use client";
 
-import { useMemo, useState } from "react";
 import Link from "next/link";
+import { useMemo, type ReactNode } from "react";
 import { useApp } from "@/components/providers/AppProvider";
 import { CoverageBar } from "@/components/intelligence/CoverageBar";
-import { CoverageHeatmap } from "@/components/intelligence/CoverageHeatmap";
-import { Badge } from "@/components/ui/Badge";
+import { CurriculumHealthHero } from "@/components/progress/teaching-progress/CurriculumHealthHero";
+import { CurriculumJourney } from "@/components/progress/teaching-progress/CurriculumJourney";
+import { ImmediatePriorities } from "@/components/progress/teaching-progress/ImmediatePriorities";
+import { TeachingInsightsPanel } from "@/components/progress/teaching-progress/TeachingInsightsPanel";
+import { TopicCoverageTable } from "@/components/progress/teaching-progress/TopicCoverageTable";
 import { Button } from "@/components/ui/Button";
 import { Card, CardHeader } from "@/components/ui/Card";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { TeachingProgressIllustration } from "@/components/ui/EmptyIllustrations";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { ProgressBar } from "@/components/ui/ProgressBar";
+import { StatCard } from "@/components/ui/StatCard";
 import { buildSchemeProgressSummary } from "@/lib/progress/summary";
-import { buildTeachingWarnings } from "@/lib/progress/warnings";
-import { schemeDisplayTitle } from "@/lib/scheme-builder/helpers";
 import {
-  buildCurriculumAnalytics,
-  type CoverageMode,
-} from "@/src/lib/intelligence/analytics/coverage-analytics";
+  buildImmediatePriorities,
+  buildTeachingInsights,
+  buildTeachingProgressReports,
+  buildTopicCoverageRows,
+  computeDeliveredPercent,
+  getCurriculumHealthScore,
+  hasTeachingProgressData,
+} from "@/lib/progress/teaching-progress-ui";
+import { schemeDisplayTitle } from "@/lib/scheme-builder/helpers";
 
-const MODE_LABELS: Record<CoverageMode, string> = {
-  planned: "Planned coverage",
-  taught: "Taught coverage",
-  remaining: "Remaining to teach",
-};
+function KpiIcon({ children }: { children: ReactNode }) {
+  return (
+    <span className="text-teal-700" aria-hidden>
+      {children}
+    </span>
+  );
+}
 
 export default function CurriculumAnalyticsPage() {
   const { data } = useApp();
-  const [mode, setMode] = useState<CoverageMode>("taught");
 
-  const report = useMemo(
-    () => buildCurriculumAnalytics(data.lessons, data.schemes, undefined, mode, data.calendar),
-    [data.lessons, data.schemes, data.calendar, mode]
-  );
-
-  const warnings = useMemo(
-    () => buildTeachingWarnings(data.lessons, data.schemes, data.calendar),
+  const reports = useMemo(
+    () => buildTeachingProgressReports(data.lessons, data.schemes, data.calendar),
     [data.lessons, data.schemes, data.calendar]
   );
 
+  const { taught, planned } = reports;
+
+  const topicRows = useMemo(
+    () => buildTopicCoverageRows(taught, planned),
+    [taught, planned]
+  );
+
+  const health = useMemo(
+    () => getCurriculumHealthScore(computeDeliveredPercent(taught)),
+    [taught]
+  );
+
+  const priorities = useMemo(() => buildImmediatePriorities(topicRows), [topicRows]);
+
+  const insights = useMemo(
+    () => buildTeachingInsights(taught, planned, data.lessons, data.schemes),
+    [taught, planned, data.lessons, data.schemes]
+  );
+
+  const hasData = hasTeachingProgressData(data.lessons, data.schemes);
+
+  if (!hasData) {
+    return (
+      <div className="space-y-6">
+        <PageHeader
+          eyebrow="Curriculum intelligence"
+          title="Teaching Progress"
+          description="Understand your curriculum health, delivery coverage, and what to teach next."
+        />
+        <EmptyState
+          title="Start planning your curriculum"
+          description="Create lessons or schemes of work to begin tracking curriculum coverage."
+          icon={<TeachingProgressIllustration />}
+          action={
+            <div className="flex flex-wrap items-center justify-center gap-3">
+              <Link href="/lesson-builder">
+                <Button>Create lesson</Button>
+              </Link>
+              <Link href="/schemes">
+                <Button variant="secondary">Create scheme</Button>
+              </Link>
+            </div>
+          }
+        />
+      </div>
+    );
+  }
+
   return (
-    <div>
+    <div className="space-y-6">
       <PageHeader
+        eyebrow="Curriculum intelligence"
         title="Teaching Progress"
-        description="See what you have planned, what you have delivered, and what is still left to teach."
+        description="Am I doing well? What should I teach next? Your curriculum health at a glance."
       />
 
-      <p className="mb-4 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
-        Only lessons marked <strong>delivered</strong> count as taught. Planned lessons and schemes
-        show intended coverage only. Mark delivery from{" "}
-        <Link href="/calendar" className="font-medium text-teal-700 hover:text-teal-800">
-          Calendar
-        </Link>
-        ,{" "}
-        <Link href="/lessons" className="font-medium text-teal-700 hover:text-teal-800">
-          Lesson Plans
-        </Link>
-        , or{" "}
-        <Link href="/schemes" className="font-medium text-teal-700 hover:text-teal-800">
-          Schemes of Work
-        </Link>
-        . Official curriculum wording is never modified.
-      </p>
+      <CurriculumHealthHero health={health} />
 
-      {warnings.length > 0 && (
-        <Card className="mb-6 border-amber-200 bg-amber-50/40">
-          <CardHeader
-            title="Topics needing attention"
-            description="Automatic checks based on your planned and delivered lessons."
-          />
-          <ul className="space-y-2">
-            {warnings.map((warning) => (
-              <li
-                key={warning.id}
-                className={`flex items-start gap-2 text-sm ${
-                  warning.tone === "rose" ? "text-rose-800" : "text-amber-900"
-                }`}
-              >
-                <span aria-hidden>⚠</span>
-                <span>{warning.message}</span>
-              </li>
-            ))}
-          </ul>
-        </Card>
-      )}
-
-      <div className="mb-6 flex flex-wrap gap-2">
-        {(["planned", "taught", "remaining"] as CoverageMode[]).map((value) => (
-          <Button
-            key={value}
-            variant={mode === value ? "primary" : "secondary"}
-            onClick={() => setMode(value)}
-          >
-            {MODE_LABELS[value]}
-          </Button>
-        ))}
-      </div>
-
-      <section className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <SummaryCard label="Planned outcomes" value={String(report.summary.plannedOutcomeIds)} />
-        <SummaryCard label="Taught outcomes" value={String(report.summary.taughtOutcomeIds)} />
-        <SummaryCard label="Remaining outcomes" value={String(report.summary.remainingOutcomeIds)} />
-        <Card>
-          <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
-            {MODE_LABELS[mode]}
-          </p>
-          <p className="mt-1 text-2xl font-semibold text-slate-900">
-            {report.summary.overallCoveragePercent}%
-          </p>
-          <ProgressBar
-            className="mt-3"
-            value={report.summary.overallCoveragePercent}
-            max={100}
-            showPercent={false}
-            variant="teal"
-          />
-        </Card>
+      <section className="grid gap-3 sm:grid-cols-3">
+        <StatCard
+          label="Planned"
+          value={taught.summary.plannedOutcomeIds}
+          hint="Outcomes in your lessons and schemes"
+          tone="blue"
+          icon={
+            <KpiIcon>
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+              </svg>
+            </KpiIcon>
+          }
+        />
+        <StatCard
+          label="Delivered"
+          value={taught.summary.taughtOutcomeIds}
+          hint="Outcomes from delivered lessons"
+          tone="green"
+          icon={
+            <KpiIcon>
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </KpiIcon>
+          }
+        />
+        <StatCard
+          label="Remaining"
+          value={taught.summary.remainingOutcomeIds}
+          hint="Still to deliver across curriculum"
+          tone="amber"
+          icon={
+            <KpiIcon>
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </KpiIcon>
+          }
+        />
       </section>
 
+      <CurriculumJourney
+        planned={taught.summary.plannedOutcomeIds}
+        delivered={taught.summary.taughtOutcomeIds}
+        remaining={taught.summary.remainingOutcomeIds}
+        total={taught.summary.totalCurriculumOutcomes}
+      />
+
+      <div className="grid gap-6 lg:grid-cols-5">
+        <div className="lg:col-span-3">
+          <ImmediatePriorities priorities={priorities} />
+        </div>
+        <div className="lg:col-span-2">
+          <TeachingInsightsPanel insights={insights} />
+        </div>
+      </div>
+
+      <TopicCoverageTable rows={topicRows} />
+
       {data.schemes.length > 0 && (
-        <Card className="mb-8">
-          <CardHeader title="Scheme progress" description="Lessons delivered per scheme of work." />
+        <Card>
+          <CardHeader
+            title="Scheme delivery"
+            description="Lessons marked delivered within each scheme of work."
+          />
           <div className="space-y-4">
             {data.schemes.slice(0, 8).map((scheme) => {
               const summary = buildSchemeProgressSummary(scheme);
@@ -143,85 +191,63 @@ export default function CurriculumAnalyticsPage() {
         </Card>
       )}
 
-      {report.underrepresented.length > 0 && mode !== "planned" && (
-        <Card className="mb-6 border-amber-100 bg-amber-50/30">
-          <CardHeader
-            title="Topics needing attention"
-            description="Low coverage in your current teaching context."
-          />
-          <div className="flex flex-wrap gap-2">
-            {report.underrepresented.map((s) => (
-              <Badge key={s.id} tone="amber">
-                {s.label}: {s.modeCount ?? 0}/{s.totalOutcomes}
-              </Badge>
-            ))}
-          </div>
-        </Card>
-      )}
-
-      <div className="mb-8 grid gap-6 lg:grid-cols-2">
-        <Card>
-          <CardHeader title="Topic coverage" description={MODE_LABELS[mode]} />
-          <div className="space-y-4">
-            {report.byTopic.slice(0, 12).map((slice) => (
-              <CoverageBar key={slice.id} slice={slice} />
-            ))}
-          </div>
-        </Card>
-
-        <Card>
-          <CardHeader title="Learning area coverage" />
-          <div className="space-y-4">
-            {report.byLearningArea.map((slice) => (
-              <CoverageBar key={slice.id} slice={slice} />
-            ))}
-          </div>
-        </Card>
-      </div>
-
-      <Card className="mb-8">
-        <CoverageHeatmap slices={report.byTopic} title="Topic heat map" />
-      </Card>
-
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Card>
-          <CardHeader title="Holistic development" />
-          <div className="space-y-3">
-            {report.byHolisticDevelopment.map((slice) => (
-              <CoverageBar key={slice.id} slice={slice} />
-            ))}
-          </div>
-        </Card>
-        <Card>
-          <CardHeader title="Fitness strands" />
-          <div className="space-y-3">
-            {report.byFitnessStrand.length === 0 ? (
-              <p className="text-sm text-slate-500">No fitness-coded outcomes in current data.</p>
-            ) : (
-              report.byFitnessStrand.map((slice) => (
+      <div className="border-t border-slate-200/80 pt-6">
+        <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-500">
+          Detailed breakdown
+        </h2>
+        <div className="grid gap-6 lg:grid-cols-2">
+          <Card>
+            <CardHeader title="Learning areas" description="Delivered coverage by learning area." />
+            <div className="space-y-4">
+              {taught.byLearningArea.map((slice) => (
                 <CoverageBar key={slice.id} slice={slice} />
-              ))
-            )}
-          </div>
-        </Card>
+              ))}
+            </div>
+          </Card>
+
+          <Card>
+            <CardHeader title="Holistic development" description="Delivered coverage across holistic strands." />
+            <div className="space-y-4">
+              {taught.byHolisticDevelopment.map((slice) => (
+                <CoverageBar key={slice.id} slice={slice} />
+              ))}
+            </div>
+          </Card>
+
+          <Card>
+            <CardHeader title="Fitness strands" description="Health-related fitness coverage." />
+            <div className="space-y-4">
+              {taught.byFitnessStrand.length === 0 ? (
+                <p className="text-sm text-slate-500">No fitness-coded outcomes in current data.</p>
+              ) : (
+                taught.byFitnessStrand.map((slice) => (
+                  <CoverageBar key={slice.id} slice={slice} />
+                ))
+              )}
+            </div>
+          </Card>
+
+          <Card className="bg-slate-50/50">
+            <CardHeader title="How delivery is counted" />
+            <p className="text-sm leading-relaxed text-slate-600">
+              Only lessons marked <strong>delivered</strong> count as taught. Planned lessons and
+              schemes show intended coverage only. Mark delivery from{" "}
+              <Link href="/calendar" className="font-medium text-teal-700 hover:text-teal-800">
+                Calendar
+              </Link>
+              ,{" "}
+              <Link href="/lessons" className="font-medium text-teal-700 hover:text-teal-800">
+                Lesson Plans
+              </Link>
+              , or{" "}
+              <Link href="/schemes" className="font-medium text-teal-700 hover:text-teal-800">
+                Schemes of Work
+              </Link>
+              . Official curriculum wording is never modified.
+            </p>
+          </Card>
+        </div>
       </div>
-
-      <p className="mt-8 text-sm text-slate-500">
-        Metadata quality checks live under{" "}
-        <Link href="/settings" className="font-medium text-teal-700 hover:underline">
-          Settings → Advanced tools
-        </Link>
-        .
-      </p>
     </div>
-  );
-}
-
-function SummaryCard({ label, value }: { label: string; value: string }) {
-  return (
-    <Card>
-      <p className="text-xs font-medium uppercase tracking-wide text-slate-500">{label}</p>
-      <p className="mt-1 text-2xl font-semibold text-slate-900">{value}</p>
-    </Card>
   );
 }
