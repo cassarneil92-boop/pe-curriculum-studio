@@ -6,6 +6,7 @@ import { ScheduleLessonModal } from "@/components/calendar/ScheduleLessonModal";
 import { ScheduleSchemeModal } from "@/components/calendar/ScheduleSchemeModal";
 import { createCalendarEntryFromSchemeLesson } from "@/lib/calendar/helpers";
 import { findCalendarEntryForSchemeLesson } from "@/lib/calendar/scheduling-lookup";
+import { SchemeProgressionCoach } from "@/components/pe-knowledge/SchemeProgressionCoach";
 import { PedagogicalLensPanel } from "@/components/education/PedagogicalLensPanel";
 import { PedagogicalQualityPanel } from "@/components/education/PedagogyInsightCard";
 import { buildSchemePedagogicalQuality } from "@/lib/education/pedagogical-quality";
@@ -924,6 +925,10 @@ export default function SchemesPage() {
                 );
               })()}
             </div>
+          )}
+
+          {draft.topicId && draft.lessons.length > 0 && (
+            <SchemeProgressionCoach scheme={draft} />
           )}
 
           {displayMode === "table" ? (

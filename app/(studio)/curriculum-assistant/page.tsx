@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { AssistantSchemeDraftActions } from "@/components/assistant/AssistantSchemeDraftActions";
 import { AssistantLessonDraftActions } from "@/components/assistant/AssistantLessonDraftActions";
+import { PedagogySuggestionList } from "@/components/pe-knowledge/PedagogySuggestionList";
 import { PedagogySourcesList } from "@/components/education/PedagogyInsightCard";
 import { useApp } from "@/components/providers/AppProvider";
 import { Badge } from "@/components/ui/Badge";
@@ -17,6 +18,8 @@ import {
   type AssistantResponse,
 } from "@/lib/assistant";
 import { queryCurriculumAssistant } from "@/src/lib/intelligence/assistant/curriculum-assistant";
+import { getPlanningAssistantKnowledgeSuggestions } from "@/src/lib/peKnowledge/coaching";
+import type { PathwayId } from "@/lib/types";
 
 function ContextCard({ response }: { response: AssistantResponse }) {
   const ctx = response.detectedContext;
@@ -250,6 +253,14 @@ export default function CurriculumAssistantPage() {
 
   const activeScheme = data.schemes[0];
 
+  const specialistSuggestions = useMemo(() => {
+    if (!response && !prompt.trim()) return [];
+    return getPlanningAssistantKnowledgeSuggestions(prompt, response, {
+      yearGroup: context.teacher.yearGroups[0],
+      pathway: context.visibleAppPathways[0] as PathwayId | undefined,
+    }).slice(0, 5);
+  }, [prompt, response, context.teacher.yearGroups, context.visibleAppPathways]);
+
   function handleAsk(example?: string) {
     const q = example ?? prompt;
     if (!q.trim()) return;
@@ -329,6 +340,11 @@ export default function CurriculumAssistantPage() {
           )}
 
           <ContextCard response={response} />
+
+          {(specialistSuggestions.length > 0 || response) && (
+            <PedagogySuggestionList suggestions={specialistSuggestions} />
+          )}
+
           <PartialMatchCard response={response} />
           <MatchesCard response={response} />
           <LessonPreviewCard response={response} />

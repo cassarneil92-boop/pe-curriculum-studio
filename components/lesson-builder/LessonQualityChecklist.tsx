@@ -1,39 +1,57 @@
 "use client";
 
+import { useMemo } from "react";
+import { LessonQualityInsight } from "@/components/pe-knowledge/LessonQualityInsight";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { buildLessonCoachingReport } from "@/lib/lesson-builder/curriculum-coaching";
+import type { LessonBuilderFormData } from "@/lib/lesson-builder/types";
 import { PLANNING_COACH } from "@/lib/lesson-builder/planning-coach-labels";
 import type { LessonPlan } from "@/lib/types";
+import { buildKnowledgeQualityInsights } from "@/src/lib/peKnowledge/coaching";
+
+type LessonQualityInput = Pick<
+  LessonPlan,
+  | "selectedLearningOutcomeIds"
+  | "learningIntention"
+  | "walt"
+  | "successCriteria"
+  | "safetyConsiderations"
+  | "structuredActivities"
+  | "activities"
+  | "differentiation"
+  | "lessonEndings"
+  | "assessmentNotes"
+  | "reflectionNotes"
+  | "topicId"
+  | "yearGroup"
+  | "pathwayId"
+  | "selectedPathways"
+  | "pedagogicalModels"
+  | "equipment"
+  | "skillId"
+>;
 
 interface LessonQualityChecklistProps {
-  lesson: Pick<
-    LessonPlan,
-    | "selectedLearningOutcomeIds"
-    | "learningIntention"
-    | "walt"
-    | "successCriteria"
-    | "safetyConsiderations"
-    | "structuredActivities"
-    | "activities"
-    | "differentiation"
-    | "lessonEndings"
-    | "assessmentNotes"
-    | "reflectionNotes"
-  >;
+  lesson: LessonQualityInput;
   compact?: boolean;
 }
 
 export function LessonQualityChecklist({ lesson, compact = false }: LessonQualityChecklistProps) {
   const report = buildLessonCoachingReport(lesson as LessonPlan);
+  const knowledgeInsights = useMemo(
+    () => buildKnowledgeQualityInsights(lesson as LessonBuilderFormData),
+    [lesson]
+  );
 
   if (compact) {
     return (
-      <div className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs">
+      <div className="flex flex-wrap items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs">
         <span className="font-semibold text-slate-700">Coaching: </span>
         <span className="text-teal-700">
           {report.strengths.length} strengths · {report.suggestions.length} to review
         </span>
-        <span className="text-slate-400"> (advisory)</span>
+        <LessonQualityInsight insights={knowledgeInsights} compact />
+        <span className="text-slate-400">(advisory)</span>
       </div>
     );
   }
@@ -72,7 +90,7 @@ export function LessonQualityChecklist({ lesson, compact = false }: LessonQualit
       )}
 
       {report.suggestions.length > 0 && (
-        <div>
+        <div className="mb-4">
           <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-amber-800">
             Suggestions
           </p>
@@ -86,6 +104,10 @@ export function LessonQualityChecklist({ lesson, compact = false }: LessonQualit
           </ul>
         </div>
       )}
+
+      <div className="border-t border-slate-100 pt-4">
+        <LessonQualityInsight insights={knowledgeInsights} />
+      </div>
     </Card>
   );
 }

@@ -228,6 +228,19 @@ export {
   MALTA_CONTEXT_ENTRIES,
 };
 
+export {
+  buildKnowledgeContextFromPrompt,
+  buildLessonPedagogyCoachReport,
+  buildSchemeProgressionCoachReport,
+  buildKnowledgeQualityInsights,
+  getPlanningAssistantKnowledgeSuggestions,
+  toPEKnowledgeCardViewModel,
+  type PEKnowledgeCardViewModel,
+  type LessonPedagogyCoachReport,
+  type SchemeProgressionCoachReport,
+  type KnowledgeQualityInsight,
+} from "./coaching";
+
 export type {
   PEKnowledgeEntry,
   PEKnowledgeCategory,
