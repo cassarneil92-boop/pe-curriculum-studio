@@ -13,8 +13,10 @@ import {
   buildTeachingForLearningQualityReviewForLesson,
   buildCooperativeLearningQualityReviewForLesson,
   buildTPSRQualityReviewForLesson,
+  buildPrimaryPEQualityReviewForLesson,
   type KnowledgeQualityInsight,
 } from "@/src/lib/peKnowledge/coaching";
+import { isPrimaryPEYearGroup } from "@/src/lib/peKnowledge/primaryPEMaster";
 import {
   applyQuestioningToLesson,
   applyTextToLessonForm,
@@ -73,6 +75,10 @@ export function LessonQualityChecklist({
   );
   const tpsrReview = useMemo(
     () => buildTPSRQualityReviewForLesson(lesson as LessonBuilderFormData),
+    [lesson]
+  );
+  const primaryPEReview = useMemo(
+    () => buildPrimaryPEQualityReviewForLesson(lesson as LessonBuilderFormData),
     [lesson]
   );
 
@@ -266,6 +272,33 @@ export function LessonQualityChecklist({
             <p className="mt-2 text-xs text-slate-700">{tpsrReview.recommendations[0]}</p>
           )}
         </div>
+        {isPrimaryPEYearGroup(String(lesson.yearGroup ?? "")) && (
+          <div className="mb-4 rounded-lg border border-orange-100 bg-orange-50/40 px-3 py-3">
+            <p className="text-xs font-semibold uppercase tracking-wide text-orange-800">
+              Primary PE Review
+            </p>
+            <p className="mt-1 text-sm font-medium text-slate-800">
+              {primaryPEReview.band} — {primaryPEReview.score}/100
+            </p>
+            <ul className="mt-2 space-y-1 text-xs text-slate-600">
+              {primaryPEReview.checks.map((c) => (
+                <li key={c.label}>
+                  {c.met ? "✓" : "○"} {c.label}
+                </li>
+              ))}
+            </ul>
+            {primaryPEReview.warnings.length > 0 && (
+              <ul className="mt-2 space-y-1 text-xs text-amber-800">
+                {primaryPEReview.warnings.slice(0, 2).map((w) => (
+                  <li key={w}>⚠ {w}</li>
+                ))}
+              </ul>
+            )}
+            {primaryPEReview.recommendations[0] && (
+              <p className="mt-2 text-xs text-slate-700">{primaryPEReview.recommendations[0]}</p>
+            )}
+          </div>
+        )}
         <LessonQualityInsight
           insights={knowledgeInsights}
           onApplyFix={onApplyLesson ? handleApplyFix : undefined}

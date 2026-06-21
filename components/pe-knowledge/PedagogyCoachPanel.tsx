@@ -111,6 +111,31 @@ export function PedagogyCoachPanel({ lesson, onApplyLesson }: PedagogyCoachPanel
         </div>
       )}
 
+      {report.primaryPEMetrics && (
+        <div className="rounded-lg border border-orange-100 bg-orange-50/50 px-3 py-2 space-y-2">
+          <p className="text-xs font-semibold text-orange-900">Primary PE Quality Score</p>
+          <p className="text-xs text-slate-700">
+            Overall: <strong>{report.primaryPEMetrics.score}</strong>/100 ({report.primaryPEMetrics.band})
+          </p>
+          <p className="text-xs text-slate-600">
+            FMS focus: {report.primaryPEMetrics.fmsFocus} · Readiness:{" "}
+            {report.primaryPEMetrics.developmentalReadiness}
+          </p>
+          <p className="text-xs text-slate-700">
+            Movement concept: {report.primaryPEMetrics.movementConcept}
+          </p>
+          <p className="text-xs text-slate-600">
+            Safety: {report.primaryPEMetrics.safetyNote}
+          </p>
+          <p className="text-xs text-slate-700">
+            Assess: {report.primaryPEMetrics.assessmentIdea}
+          </p>
+          {report.primaryPEMetrics.activeParticipationWarning && (
+            <p className="text-xs text-amber-800">⚠ {report.primaryPEMetrics.activeParticipationWarning}</p>
+          )}
+        </div>
+      )}
+
       {report.physicalLiteracyMetrics && (
         <div className="rounded-lg border border-violet-100 bg-violet-50/50 px-3 py-2 space-y-2">
           <p className="text-xs font-semibold text-violet-900">Physical Literacy Score</p>

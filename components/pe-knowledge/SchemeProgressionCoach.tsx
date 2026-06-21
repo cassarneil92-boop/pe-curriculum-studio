@@ -145,6 +145,17 @@ export function SchemeProgressionCoach({
             }))}
           />
         )}
+        {(report.primaryPETips ?? []).length > 0 && (
+          <ActionableCoachList
+            label="Primary PE & FMS progression"
+            items={(report.primaryPETips ?? []).map((text, index) => ({
+              id: `primary-pe-${index}`,
+              text,
+              actionLabel: "Add FMS note",
+              onApply: () => applyScheme(text, "coachNote", `${lessonLabel} primary PE`),
+            }))}
+          />
+        )}
         {(report.teachingForLearningTips ?? []).length > 0 && (
           <ActionableCoachList
             label="Teaching for Learning unit design"

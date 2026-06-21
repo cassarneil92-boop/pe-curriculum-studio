@@ -13,6 +13,7 @@ import { PHYSICAL_LITERACY_MASTER_PE_ENTRY } from "./physicalLiteracyMaster";
 import { TEACHING_FOR_LEARNING_MASTER_PE_ENTRY } from "./teachingForLearningMaster";
 import { COOPERATIVE_LEARNING_MASTER_PE_ENTRY, isCooperativeLearningRelevant } from "./cooperativeLearningMaster";
 import { TPSR_MASTER_PE_ENTRY, isTPSRRelevant } from "./tpsrMaster";
+import { PRIMARY_PE_MASTER_PE_ENTRY, isPrimaryPEYearGroup, isPrimaryPERelevant } from "./primaryPEMaster";
 import { isTGfURelevantTopic, TGfU_MASTER_PE_ENTRY } from "./tgfuMaster";
 import type {
   AgePhase,
@@ -29,6 +30,7 @@ export const ALL_PE_KNOWLEDGE_ENTRIES: PEKnowledgeEntry[] = [
   TEACHING_FOR_LEARNING_MASTER_PE_ENTRY,
   COOPERATIVE_LEARNING_MASTER_PE_ENTRY,
   TPSR_MASTER_PE_ENTRY,
+  PRIMARY_PE_MASTER_PE_ENTRY,
   ...PHYSICAL_LITERACY_ENTRIES,
   PHYSICAL_LITERACY_MASTER_PE_ENTRY,
   ...MOTIVATION_ENTRIES,
@@ -186,6 +188,14 @@ function scoreEntryForContext(
     ) {
       score += 5;
       reasons.push("TPSR responsibility development guidance");
+    }
+    if (
+      (entry.id === "primary-pe-master" || entry.tags.includes("primary-pe")) &&
+      (isPrimaryPEYearGroup(context.yearGroup) ||
+        isPrimaryPERelevant(`${context.lessonAim ?? ""} ${area}`, context.yearGroup))
+    ) {
+      score += 7;
+      reasons.push("Primary PE and fundamental movement guidance");
     }
     if (
       (entry.id === "physical-literacy-master" ||
@@ -486,6 +496,49 @@ export {
 } from "./tpsrEngines";
 
 export {
+  PRIMARY_PE_FRAMEWORK,
+  PRIMARY_PE_CORE_MESSAGE,
+  FUNDAMENTAL_MOVEMENT_SKILLS,
+  MOVEMENT_CONCEPTS_FRAMEWORK,
+  PRIMARY_PE_WARNINGS,
+  PRIMARY_PE_MASTER_PE_ENTRY,
+  isPrimaryPEYearGroup,
+  isPrimaryPERelevant,
+  yearGroupToPrimaryPhase,
+  getFMSSkillById,
+  getFMSSkillsByCategory,
+  type PrimaryPEFrameworkArea,
+  type FundamentalMovementSkill,
+  type FMSCategory,
+  type PrimaryYearPhase,
+} from "./primaryPEMaster";
+
+export {
+  evaluateDevelopmentalReadiness,
+  buildPrimaryPELessonStructure,
+  evaluatePrimaryLessonStructure,
+  suggestMovementConcepts,
+  evaluatePrimaryActiveParticipation,
+  evaluatePrimarySafetyAndOrganisation,
+  evaluatePrimaryPEInclusion,
+  suggestPrimaryPEAssessment,
+  buildPrimarySkillProgression,
+  suggestPrimaryGameFoundation,
+  suggestChildFriendlyFitnessApproach,
+  evaluatePrimaryPEQuality,
+  buildPrimaryPEPlanningInsights,
+  buildPedagogyCoachPrimaryPEMetrics,
+  buildPrimaryPEQualityReview,
+  buildPrimaryPEQualityInsights,
+  buildSchemePrimaryPETips,
+  lessonToPrimaryPEContext,
+  detectFMSSkillFocus,
+  type PrimaryPEQualityBand,
+  type ReadinessVerdict,
+  type SkillProgressionStage,
+} from "./primaryPEEngines";
+
+export {
   LEARNING_SCIENCE_ENTRIES,
   PEDAGOGY_MODEL_ENTRIES,
   PHYSICAL_LITERACY_ENTRIES,
@@ -527,10 +580,12 @@ export {
   type TeachingForLearningQualityReview,
   type CooperativeLearningQualityReview,
   type TPSRQualityReview,
+  type PrimaryPEQualityReview,
   buildPhysicalLiteracyQualityReviewForLesson,
   buildTeachingForLearningQualityReviewForLesson,
   buildCooperativeLearningQualityReviewForLesson,
   buildTPSRQualityReviewForLesson,
+  buildPrimaryPEQualityReviewForLesson,
 } from "./coaching";
 
 export type {
