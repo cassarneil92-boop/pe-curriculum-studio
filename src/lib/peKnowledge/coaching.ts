@@ -93,6 +93,14 @@ import {
   buildPedagogyCoachVLMetrics,
   buildSchemeVisibleLearningTips,
 } from "./visibleLearningEngines";
+import { SEM_MASTER_PE_ENTRY } from "./semMaster";
+import {
+  buildSEMPlanningInsights,
+  buildSEMQualityInsights,
+  buildSEMQualityReview,
+  buildPedagogyCoachSEMMetrics,
+  buildSchemeSEMTips,
+} from "./semEngines";
 
 export interface PEKnowledgeCardViewModel {
   entry: PEKnowledgeEntry;
@@ -195,6 +203,15 @@ export interface LessonPedagogyCoachReport {
     progressVisibilityReview: string;
     warning: string | null;
   };
+  semMetrics?: {
+    score: number;
+    band: string;
+    roleOpportunities: string;
+    responsibilityOpportunities: string;
+    reflectionOpportunities: string;
+    teamAffiliationIdeas: string;
+    warning: string | null;
+  };
 }
 
 export interface PhysicalLiteracyQualityReview {
@@ -267,6 +284,14 @@ export interface VisibleLearningQualityReview {
   recommendations: string[];
 }
 
+export interface SEMQualityReview {
+  score: number;
+  band: string;
+  checks: { label: string; met: boolean }[];
+  warnings: string[];
+  recommendations: string[];
+}
+
 export interface SchemeProgressionCoachReport {
   sequencingTips: string[];
   spacingTips: string[];
@@ -281,6 +306,7 @@ export interface SchemeProgressionCoachReport {
   learningScienceTips?: string[];
   educationalPsychologyTips?: string[];
   visibleLearningTips?: string[];
+  semTips?: string[];
 }
 
 export interface KnowledgeQualityInsight {
@@ -512,6 +538,24 @@ export function getPlanningAssistantKnowledgeSuggestions(
     lessonAim: context.lessonAim ?? prompt,
     walt: context.lessonAim ?? prompt,
   });
+  const semInsights = buildSEMPlanningInsights(prompt, {
+    yearGroup: context.yearGroup,
+    topicId: context.topicId,
+    activityArea: context.activityArea,
+    lessonAim: context.lessonAim ?? prompt,
+    walt: context.lessonAim ?? prompt,
+    activities: prompt,
+  });
+  if (semInsights.length > 0) {
+    const semCard: PEKnowledgeCardViewModel = {
+      entry: SEM_MASTER_PE_ENTRY,
+      reason: semInsights[0],
+      planningPrompts: semInsights.slice(0, 3),
+      assessmentPrompt: "Holistic SEM rubric: physical, cognitive, social, affective evidence.",
+      differentiationPrompt: "Assign roles by strength — wellbeing and fair play roles for inclusion.",
+    };
+    return [semCard, ...cards].slice(0, limit);
+  }
   if (clInsights.length > 0) {
     const clCard: PEKnowledgeCardViewModel = {
       entry: COOPERATIVE_LEARNING_MASTER_PE_ENTRY,
@@ -738,6 +782,7 @@ export function buildLessonPedagogyCoachReport(
   const learningScienceMetrics = buildPedagogyCoachLSMetrics(lesson);
   const educationalPsychologyMetrics = buildPedagogyCoachEPMetrics(lesson);
   const visibleLearningMetrics = buildPedagogyCoachVLMetrics(lesson);
+  const semMetrics = buildPedagogyCoachSEMMetrics(lesson) ?? undefined;
 
   return {
     teachingModel,
@@ -756,6 +801,7 @@ export function buildLessonPedagogyCoachReport(
     learningScienceMetrics,
     educationalPsychologyMetrics,
     visibleLearningMetrics,
+    semMetrics,
   };
 }
 
@@ -864,6 +910,7 @@ export function buildSchemeProgressionCoachReport(
   const learningScienceTips = buildSchemeLearningScienceTips(scheme, activeLessonIndex);
   const educationalPsychologyTips = buildSchemeEducationalPsychologyTips(scheme, activeLessonIndex);
   const visibleLearningTips = buildSchemeVisibleLearningTips(scheme, activeLessonIndex);
+  const semTips = buildSchemeSEMTips(scheme, activeLessonIndex);
 
   return {
     sequencingTips: sequencingTips.slice(0, 3),
@@ -879,6 +926,7 @@ export function buildSchemeProgressionCoachReport(
     learningScienceTips,
     educationalPsychologyTips,
     visibleLearningTips,
+    semTips,
   };
 }
 
@@ -1164,6 +1212,15 @@ export function buildKnowledgeQualityInsights(
     insights.push(insight);
   }
 
+  const semInsights = buildSEMQualityInsights(lesson);
+  const tpsrRoleWarned = tpsrInsights.some((i) => i.message.includes("role") || i.message.includes("leadership"));
+  for (const insight of semInsights) {
+    if (tpsrRoleWarned && insight.message.includes("role") && insight.id !== "sem-review") {
+      continue;
+    }
+    insights.push(insight);
+  }
+
   return insights.slice(0, 14);
 }
 
@@ -1201,6 +1258,12 @@ export function buildVisibleLearningQualityReviewForLesson(
   lesson: LessonBuilderFormData
 ): VisibleLearningQualityReview {
   return buildVisibleLearningQualityReview(lesson);
+}
+
+export function buildSEMQualityReviewForLesson(
+  lesson: LessonBuilderFormData
+): SEMQualityReview {
+  return buildSEMQualityReview(lesson);
 }
 
 export function formatYearGroupForContext(yearGroup?: string): string | undefined {

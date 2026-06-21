@@ -17,6 +17,7 @@ import { PRIMARY_PE_MASTER_PE_ENTRY, isPrimaryPEYearGroup, isPrimaryPERelevant }
 import { LEARNING_SCIENCE_MASTER_PE_ENTRY, isLearningScienceRelevant } from "./learningScienceMaster";
 import { EDUCATIONAL_PSYCHOLOGY_MASTER_PE_ENTRY, isEducationalPsychologyRelevant } from "./educationalPsychologyMaster";
 import { VISIBLE_LEARNING_MASTER_PE_ENTRY, isVisibleLearningRelevant } from "./visibleLearningMaster";
+import { SEM_MASTER_PE_ENTRY, isSEMRelevant } from "./semMaster";
 import { isTGfURelevantTopic, TGfU_MASTER_PE_ENTRY } from "./tgfuMaster";
 import type {
   AgePhase,
@@ -37,6 +38,7 @@ export const ALL_PE_KNOWLEDGE_ENTRIES: PEKnowledgeEntry[] = [
   LEARNING_SCIENCE_MASTER_PE_ENTRY,
   EDUCATIONAL_PSYCHOLOGY_MASTER_PE_ENTRY,
   VISIBLE_LEARNING_MASTER_PE_ENTRY,
+  SEM_MASTER_PE_ENTRY,
   ...PHYSICAL_LITERACY_ENTRIES,
   PHYSICAL_LITERACY_MASTER_PE_ENTRY,
   ...MOTIVATION_ENTRIES,
@@ -223,6 +225,13 @@ function scoreEntryForContext(
     ) {
       score += 6;
       reasons.push("Visible Learning — clarity, impact, and evidence");
+    }
+    if (
+      (entry.id === "sem-master" || entry.tags.includes("sem")) &&
+      (context.lessonAim || context.activityArea || isSEMRelevant(`${context.lessonAim ?? ""} ${area}`))
+    ) {
+      score += 7;
+      reasons.push("Sport Education Model — season, teams, and roles");
     }
     if (
       (entry.id === "physical-literacy-master" ||
@@ -678,6 +687,50 @@ export {
   type ChallengeVerdict,
   type LearningWalkVerdict,
 } from "./visibleLearningEngines";
+
+export {
+  SEM_FRAMEWORK,
+  SEM_CORE_MESSAGE,
+  SEM_CHARACTERISTICS,
+  SEM_ROLES,
+  SEM_WARNINGS,
+  SEM_MASTER_PE_ENTRY,
+  isSEMRelevant,
+  getSEMCharacteristic,
+  getSEMRole,
+  type SEMFramework,
+  type SEMCharacteristic,
+  type SEMRole,
+  type SEMSeasonRecord,
+  type SEMTeamRecord,
+} from "./semMaster";
+
+export {
+  generateSEMSeason,
+  generateSEMTeams,
+  generateSEMRoleAssignments,
+  generateSEMAssessmentFramework,
+  evaluateSEMMotivationPotential,
+  evaluateSEMInclusion,
+  evaluateSEMCompetitionBalance,
+  generateFairPlayFramework,
+  generateSEMRecordKeeping,
+  generateSEMCulminatingEvent,
+  buildSEMLessonTemplate,
+  evaluateSEMQuality,
+  buildSEMPlanningInsights,
+  buildPedagogyCoachSEMMetrics,
+  buildSEMQualityReview,
+  buildSEMQualityInsights,
+  buildSchemeSEMTips,
+  buildSEMSeasonRecord,
+  getSEMCharacteristicsSummary,
+  getSEMRolesSummary,
+  lessonToSEMContext,
+  type SEMQualityBand,
+  type SEMSeasonPlan,
+  type SEMContext,
+} from "./semEngines";
 
 export {
   LEARNING_SCIENCE_ENTRIES,

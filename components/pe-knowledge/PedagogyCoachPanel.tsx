@@ -216,6 +216,30 @@ export function PedagogyCoachPanel({ lesson, onApplyLesson }: PedagogyCoachPanel
         </div>
       )}
 
+      {report.semMetrics && (
+        <div className="rounded-lg border border-amber-100 bg-amber-50/50 px-3 py-2 space-y-2">
+          <p className="text-xs font-semibold text-amber-900">Sport Education Model (SEM)</p>
+          <p className="text-xs text-slate-700">
+            Overall: <strong>{report.semMetrics.score}</strong>/100 ({report.semMetrics.band})
+          </p>
+          <p className="text-xs text-slate-600">
+            Roles: {report.semMetrics.roleOpportunities}
+          </p>
+          <p className="text-xs text-slate-700">
+            Responsibility: {report.semMetrics.responsibilityOpportunities}
+          </p>
+          <p className="text-xs text-slate-600">
+            Reflection: {report.semMetrics.reflectionOpportunities}
+          </p>
+          <p className="text-xs text-slate-700">
+            Team affiliation: {report.semMetrics.teamAffiliationIdeas}
+          </p>
+          {report.semMetrics.warning && (
+            <p className="text-xs text-amber-800">⚠ {report.semMetrics.warning}</p>
+          )}
+        </div>
+      )}
+
       {report.physicalLiteracyMetrics && (
         <div className="rounded-lg border border-violet-100 bg-violet-50/50 px-3 py-2 space-y-2">
           <p className="text-xs font-semibold text-violet-900">Physical Literacy Score</p>

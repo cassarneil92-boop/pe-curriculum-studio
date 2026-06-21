@@ -189,6 +189,17 @@ export function SchemeProgressionCoach({
             }))}
           />
         )}
+        {(report.semTips ?? []).length > 0 && (
+          <ActionableCoachList
+            label="Sport Education Model (SEM)"
+            items={(report.semTips ?? []).map((text, index) => ({
+              id: `sem-${index}`,
+              text,
+              actionLabel: "Add SEM note",
+              onApply: () => applyScheme(text, "coachNote", `${lessonLabel} sport education`),
+            }))}
+          />
+        )}
         {(report.teachingForLearningTips ?? []).length > 0 && (
           <ActionableCoachList
             label="Teaching for Learning unit design"
