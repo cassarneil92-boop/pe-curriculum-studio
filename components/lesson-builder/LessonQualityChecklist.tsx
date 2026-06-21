@@ -18,6 +18,7 @@ import {
   buildEducationalPsychologyQualityReviewForLesson,
   buildVisibleLearningQualityReviewForLesson,
   buildSEMQualityReviewForLesson,
+  buildFormativeAssessmentQualityReviewForLesson,
   type KnowledgeQualityInsight,
 } from "@/src/lib/peKnowledge/coaching";
 import { isPrimaryPEYearGroup } from "@/src/lib/peKnowledge/primaryPEMaster";
@@ -99,6 +100,10 @@ export function LessonQualityChecklist({
   );
   const semReview = useMemo(
     () => buildSEMQualityReviewForLesson(lesson as LessonBuilderFormData),
+    [lesson]
+  );
+  const faReview = useMemo(
+    () => buildFormativeAssessmentQualityReviewForLesson(lesson as LessonBuilderFormData),
     [lesson]
   );
 
@@ -417,6 +422,31 @@ export function LessonQualityChecklist({
           )}
           {semReview.recommendations[0] && (
             <p className="mt-2 text-xs text-slate-700">{semReview.recommendations[0]}</p>
+          )}
+        </div>
+        <div className="mb-4 rounded-lg border border-sky-100 bg-sky-50/40 px-3 py-3">
+          <p className="text-xs font-semibold uppercase tracking-wide text-sky-800">
+            Formative Assessment Review
+          </p>
+          <p className="mt-1 text-sm font-medium text-slate-800">
+            {faReview.band} — {faReview.score}/100
+          </p>
+          <ul className="mt-2 space-y-1 text-xs text-slate-600">
+            {faReview.checks.map((c) => (
+              <li key={c.label}>
+                {c.met ? "✓" : "○"} {c.label}
+              </li>
+            ))}
+          </ul>
+          {faReview.warnings.length > 0 && (
+            <ul className="mt-2 space-y-1 text-xs text-amber-800">
+              {faReview.warnings.slice(0, 2).map((w) => (
+                <li key={w}>⚠ {w}</li>
+              ))}
+            </ul>
+          )}
+          {faReview.recommendations[0] && (
+            <p className="mt-2 text-xs text-slate-700">{faReview.recommendations[0]}</p>
           )}
         </div>
         <LessonQualityInsight

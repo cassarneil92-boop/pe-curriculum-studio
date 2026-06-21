@@ -189,6 +189,17 @@ export function SchemeProgressionCoach({
             }))}
           />
         )}
+        {(report.faTips ?? []).length > 0 && (
+          <ActionableCoachList
+            label="Formative Assessment"
+            items={(report.faTips ?? []).map((text, index) => ({
+              id: `fa-${index}`,
+              text,
+              actionLabel: "Add AfL note",
+              onApply: () => applyScheme(text, "coachNote", `${lessonLabel} formative assessment`),
+            }))}
+          />
+        )}
         {(report.semTips ?? []).length > 0 && (
           <ActionableCoachList
             label="Sport Education Model (SEM)"

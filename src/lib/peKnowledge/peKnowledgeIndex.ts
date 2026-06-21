@@ -18,6 +18,7 @@ import { LEARNING_SCIENCE_MASTER_PE_ENTRY, isLearningScienceRelevant } from "./l
 import { EDUCATIONAL_PSYCHOLOGY_MASTER_PE_ENTRY, isEducationalPsychologyRelevant } from "./educationalPsychologyMaster";
 import { VISIBLE_LEARNING_MASTER_PE_ENTRY, isVisibleLearningRelevant } from "./visibleLearningMaster";
 import { SEM_MASTER_PE_ENTRY, isSEMRelevant } from "./semMaster";
+import { FORMATIVE_ASSESSMENT_MASTER_PE_ENTRY, isFormativeAssessmentRelevant } from "./formativeAssessmentMaster";
 import { isTGfURelevantTopic, TGfU_MASTER_PE_ENTRY } from "./tgfuMaster";
 import type {
   AgePhase,
@@ -39,6 +40,7 @@ export const ALL_PE_KNOWLEDGE_ENTRIES: PEKnowledgeEntry[] = [
   EDUCATIONAL_PSYCHOLOGY_MASTER_PE_ENTRY,
   VISIBLE_LEARNING_MASTER_PE_ENTRY,
   SEM_MASTER_PE_ENTRY,
+  FORMATIVE_ASSESSMENT_MASTER_PE_ENTRY,
   ...PHYSICAL_LITERACY_ENTRIES,
   PHYSICAL_LITERACY_MASTER_PE_ENTRY,
   ...MOTIVATION_ENTRIES,
@@ -232,6 +234,15 @@ function scoreEntryForContext(
     ) {
       score += 7;
       reasons.push("Sport Education Model — season, teams, and roles");
+    }
+    if (
+      (entry.id === "formative-assessment-master" || entry.tags.includes("formative")) &&
+      (context.lessonAim ||
+        context.activityArea ||
+        isFormativeAssessmentRelevant(`${context.lessonAim ?? ""} ${area}`))
+    ) {
+      score += 7;
+      reasons.push("Formative Assessment — evidence-driven learning design");
     }
     if (
       (entry.id === "physical-literacy-master" ||
@@ -731,6 +742,42 @@ export {
   type SEMSeasonPlan,
   type SEMContext,
 } from "./semEngines";
+
+export {
+  FORMATIVE_ASSESSMENT_FRAMEWORK,
+  FORMATIVE_ASSESSMENT_CORE_MESSAGE,
+  FORMATIVE_ASSESSMENT_WARNINGS,
+  FORMATIVE_ASSESSMENT_MASTER_PE_ENTRY,
+  isFormativeAssessmentRelevant,
+  getFormativeAssessmentDomain,
+  type FormativeAssessmentDomain,
+} from "./formativeAssessmentMaster";
+
+export {
+  evaluateLearningIntentions as evaluateFormativeLearningIntentions,
+  evaluateSuccessCriteria as evaluateFormativeSuccessCriteria,
+  generateEvidenceCollectionPlan,
+  generateHingeQuestions,
+  generateMisconceptionChecks,
+  generateFeedForwardFeedback,
+  generatePeerAssessmentFramework,
+  generateSelfAssessmentFramework,
+  evaluateStudentOwnership,
+  generateExitTicket,
+  generateInstructionalDecisionSuggestions,
+  evaluateShortCycleAssessment,
+  evaluateFormativeAssessmentQuality,
+  buildFAPlanningInsights,
+  buildPedagogyCoachFAMetrics,
+  buildFAQualityReview,
+  buildFAQualityInsights,
+  buildSchemeFATips,
+  lessonToFAContext,
+  detectFAPathwayPhase,
+  type FAQualityBand,
+  type FALessonContext,
+  type HingeQuestion,
+} from "./formativeAssessmentEngines";
 
 export {
   LEARNING_SCIENCE_ENTRIES,

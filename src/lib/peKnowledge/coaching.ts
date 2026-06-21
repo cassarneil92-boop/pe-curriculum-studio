@@ -101,6 +101,14 @@ import {
   buildPedagogyCoachSEMMetrics,
   buildSchemeSEMTips,
 } from "./semEngines";
+import { FORMATIVE_ASSESSMENT_MASTER_PE_ENTRY } from "./formativeAssessmentMaster";
+import {
+  buildFAPlanningInsights,
+  buildFAQualityInsights,
+  buildFAQualityReview,
+  buildPedagogyCoachFAMetrics,
+  buildSchemeFATips,
+} from "./formativeAssessmentEngines";
 
 export interface PEKnowledgeCardViewModel {
   entry: PEKnowledgeEntry;
@@ -212,6 +220,15 @@ export interface LessonPedagogyCoachReport {
     teamAffiliationIdeas: string;
     warning: string | null;
   };
+  formativeAssessmentMetrics?: {
+    score: number;
+    band: string;
+    evidenceCollectionReview: string;
+    hingeQuestionSuggestions: string;
+    feedbackQualityReview: string;
+    studentOwnershipReview: string;
+    warning: string | null;
+  };
 }
 
 export interface PhysicalLiteracyQualityReview {
@@ -292,6 +309,14 @@ export interface SEMQualityReview {
   recommendations: string[];
 }
 
+export interface FormativeAssessmentQualityReview {
+  score: number;
+  band: string;
+  checks: { label: string; met: boolean }[];
+  warnings: string[];
+  recommendations: string[];
+}
+
 export interface SchemeProgressionCoachReport {
   sequencingTips: string[];
   spacingTips: string[];
@@ -307,6 +332,7 @@ export interface SchemeProgressionCoachReport {
   educationalPsychologyTips?: string[];
   visibleLearningTips?: string[];
   semTips?: string[];
+  faTips?: string[];
 }
 
 export interface KnowledgeQualityInsight {
@@ -546,6 +572,24 @@ export function getPlanningAssistantKnowledgeSuggestions(
     walt: context.lessonAim ?? prompt,
     activities: prompt,
   });
+  const faInsights = buildFAPlanningInsights(prompt, {
+    yearGroup: context.yearGroup,
+    topicId: context.topicId,
+    activityArea: context.activityArea,
+    lessonAim: context.lessonAim ?? prompt,
+    walt: context.lessonAim ?? prompt,
+    activities: prompt,
+  });
+  if (faInsights.length > 0) {
+    const faCard: PEKnowledgeCardViewModel = {
+      entry: FORMATIVE_ASSESSMENT_MASTER_PE_ENTRY,
+      reason: faInsights[0],
+      planningPrompts: faInsights.slice(0, 3),
+      assessmentPrompt: "Add hinge question with planned response if pupils are unsure.",
+      differentiationPrompt: "Tiered WILF — same intention, accessible evidence for all pathways.",
+    };
+    return [faCard, ...cards].slice(0, limit);
+  }
   if (semInsights.length > 0) {
     const semCard: PEKnowledgeCardViewModel = {
       entry: SEM_MASTER_PE_ENTRY,
@@ -783,6 +827,7 @@ export function buildLessonPedagogyCoachReport(
   const educationalPsychologyMetrics = buildPedagogyCoachEPMetrics(lesson);
   const visibleLearningMetrics = buildPedagogyCoachVLMetrics(lesson);
   const semMetrics = buildPedagogyCoachSEMMetrics(lesson) ?? undefined;
+  const formativeAssessmentMetrics = buildPedagogyCoachFAMetrics(lesson) ?? undefined;
 
   return {
     teachingModel,
@@ -802,6 +847,7 @@ export function buildLessonPedagogyCoachReport(
     educationalPsychologyMetrics,
     visibleLearningMetrics,
     semMetrics,
+    formativeAssessmentMetrics,
   };
 }
 
@@ -911,6 +957,7 @@ export function buildSchemeProgressionCoachReport(
   const educationalPsychologyTips = buildSchemeEducationalPsychologyTips(scheme, activeLessonIndex);
   const visibleLearningTips = buildSchemeVisibleLearningTips(scheme, activeLessonIndex);
   const semTips = buildSchemeSEMTips(scheme, activeLessonIndex);
+  const faTips = buildSchemeFATips(scheme, activeLessonIndex);
 
   return {
     sequencingTips: sequencingTips.slice(0, 3),
@@ -927,6 +974,7 @@ export function buildSchemeProgressionCoachReport(
     educationalPsychologyTips,
     visibleLearningTips,
     semTips,
+    faTips,
   };
 }
 
@@ -1221,6 +1269,24 @@ export function buildKnowledgeQualityInsights(
     insights.push(insight);
   }
 
+  const faInsights = buildFAQualityInsights(lesson);
+  const vlWilfWarnedForFa = vlInsights.some(
+    (i) =>
+      i.message.includes("criteria") ||
+      i.message.includes("Success") ||
+      i.message.includes("intention")
+  );
+  for (const insight of faInsights) {
+    if (
+      vlWilfWarnedForFa &&
+      (insight.message.includes("intention") || insight.message.includes("criteria")) &&
+      insight.id !== "fa-review"
+    ) {
+      continue;
+    }
+    insights.push(insight);
+  }
+
   return insights.slice(0, 14);
 }
 
@@ -1264,6 +1330,12 @@ export function buildSEMQualityReviewForLesson(
   lesson: LessonBuilderFormData
 ): SEMQualityReview {
   return buildSEMQualityReview(lesson);
+}
+
+export function buildFormativeAssessmentQualityReviewForLesson(
+  lesson: LessonBuilderFormData
+): FormativeAssessmentQualityReview {
+  return buildFAQualityReview(lesson);
 }
 
 export function formatYearGroupForContext(yearGroup?: string): string | undefined {

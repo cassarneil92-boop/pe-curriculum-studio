@@ -216,6 +216,31 @@ export function PedagogyCoachPanel({ lesson, onApplyLesson }: PedagogyCoachPanel
         </div>
       )}
 
+      {report.formativeAssessmentMetrics && (
+        <div className="rounded-lg border border-sky-100 bg-sky-50/50 px-3 py-2 space-y-2">
+          <p className="text-xs font-semibold text-sky-900">Formative Assessment</p>
+          <p className="text-xs text-slate-700">
+            Score: <strong>{report.formativeAssessmentMetrics.score}</strong>/100 (
+            {report.formativeAssessmentMetrics.band})
+          </p>
+          <p className="text-xs text-slate-600">
+            Evidence: {report.formativeAssessmentMetrics.evidenceCollectionReview}
+          </p>
+          <p className="text-xs text-slate-700">
+            Hinge question: {report.formativeAssessmentMetrics.hingeQuestionSuggestions}
+          </p>
+          <p className="text-xs text-slate-600">
+            Feedback: {report.formativeAssessmentMetrics.feedbackQualityReview}
+          </p>
+          <p className="text-xs text-slate-700">
+            Student ownership: {report.formativeAssessmentMetrics.studentOwnershipReview}
+          </p>
+          {report.formativeAssessmentMetrics.warning && (
+            <p className="text-xs text-amber-800">⚠ {report.formativeAssessmentMetrics.warning}</p>
+          )}
+        </div>
+      )}
+
       {report.semMetrics && (
         <div className="rounded-lg border border-amber-100 bg-amber-50/50 px-3 py-2 space-y-2">
           <p className="text-xs font-semibold text-amber-900">Sport Education Model (SEM)</p>
