@@ -134,6 +134,17 @@ export function SchemeProgressionCoach({
             }))}
           />
         )}
+        {(report.tpsrTips ?? []).length > 0 && (
+          <ActionableCoachList
+            label="TPSR responsibility progression"
+            items={(report.tpsrTips ?? []).map((text, index) => ({
+              id: `tpsr-${index}`,
+              text,
+              actionLabel: "Add TPSR note",
+              onApply: () => applyScheme(text, "coachNote", `${lessonLabel} TPSR`),
+            }))}
+          />
+        )}
         {(report.teachingForLearningTips ?? []).length > 0 && (
           <ActionableCoachList
             label="Teaching for Learning unit design"

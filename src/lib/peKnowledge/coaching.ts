@@ -53,6 +53,14 @@ import {
   buildPedagogyCoachCLMetrics,
   buildSchemeCooperativeLearningTips,
 } from "./cooperativeLearningEngines";
+import { TPSR_MASTER_PE_ENTRY } from "./tpsrMaster";
+import {
+  buildTPSRPlanningInsights,
+  buildTPSRQualityInsights,
+  buildTPSRQualityReview,
+  buildPedagogyCoachTPSRMetrics,
+  buildSchemeTPSRTips,
+} from "./tpsrEngines";
 
 export interface PEKnowledgeCardViewModel {
   entry: PEKnowledgeEntry;
@@ -105,6 +113,17 @@ export interface LessonPedagogyCoachReport {
     roleSuggestion: string;
     reflectionSuggestion: string;
   };
+  tpsrMetrics?: {
+    score: number;
+    band: string;
+    recommendedLevel: string;
+    responsibilityPrompt: string;
+    reflectionPrompt: string;
+    transferQuestion: string;
+    warning: string | null;
+    strongestLevel: string;
+    weakestLevel: string;
+  };
 }
 
 export interface PhysicalLiteracyQualityReview {
@@ -137,6 +156,14 @@ export interface CooperativeLearningQualityReview {
   recommendations: string[];
 }
 
+export interface TPSRQualityReview {
+  score: number;
+  band: string;
+  checks: { label: string; met: boolean }[];
+  warnings: string[];
+  recommendations: string[];
+}
+
 export interface SchemeProgressionCoachReport {
   sequencingTips: string[];
   spacingTips: string[];
@@ -146,6 +173,7 @@ export interface SchemeProgressionCoachReport {
   physicalLiteracyTips?: string[];
   teachingForLearningTips?: string[];
   cooperativeLearningTips?: string[];
+  tpsrTips?: string[];
 }
 
 export interface KnowledgeQualityInsight {
@@ -342,6 +370,13 @@ export function getPlanningAssistantKnowledgeSuggestions(
     lessonAim: context.lessonAim ?? prompt,
     walt: context.lessonAim ?? prompt,
   });
+  const tpsrInsights = buildTPSRPlanningInsights(prompt, {
+    yearGroup: context.yearGroup,
+    topicId: context.topicId,
+    activityArea: context.activityArea,
+    lessonAim: context.lessonAim ?? prompt,
+    walt: context.lessonAim ?? prompt,
+  });
   if (clInsights.length > 0) {
     const clCard: PEKnowledgeCardViewModel = {
       entry: COOPERATIVE_LEARNING_MASTER_PE_ENTRY,
@@ -351,6 +386,16 @@ export function getPlanningAssistantKnowledgeSuggestions(
       differentiationPrompt: "Roles matched to strengths — equal status for all roles.",
     };
     return [clCard, ...cards].slice(0, limit);
+  }
+  if (tpsrInsights.length > 0) {
+    const tpsrCard: PEKnowledgeCardViewModel = {
+      entry: TPSR_MASTER_PE_ENTRY,
+      reason: tpsrInsights[0],
+      planningPrompts: tpsrInsights.slice(0, 3),
+      assessmentPrompt: "Observe responsibility evidence against today's level focus.",
+      differentiationPrompt: "Match responsibility level to pupil readiness — respect before leadership.",
+    };
+    return [tpsrCard, ...cards].slice(0, limit);
   }
   if (tflInsights.length > 0) {
     const tflCard: PEKnowledgeCardViewModel = {
@@ -513,6 +558,7 @@ export function buildLessonPedagogyCoachReport(
   const physicalLiteracyMetrics = buildPedagogyCoachPhysicalLiteracyMetrics(lesson);
   const teachingForLearningMetrics = buildPedagogyCoachTFLMetrics(lesson);
   const cooperativeLearningMetrics = buildPedagogyCoachCLMetrics(lesson) ?? undefined;
+  const tpsrMetrics = buildPedagogyCoachTPSRMetrics(lesson);
 
   return {
     teachingModel,
@@ -526,6 +572,7 @@ export function buildLessonPedagogyCoachReport(
     physicalLiteracyMetrics,
     teachingForLearningMetrics,
     cooperativeLearningMetrics,
+    tpsrMetrics,
   };
 }
 
@@ -629,6 +676,7 @@ export function buildSchemeProgressionCoachReport(
   const physicalLiteracyTips = buildSchemePhysicalLiteracyTips(scheme);
   const teachingForLearningTips = buildSchemeTeachingForLearningTips(scheme);
   const cooperativeLearningTips = buildSchemeCooperativeLearningTips(scheme);
+  const tpsrTips = buildSchemeTPSRTips(scheme);
 
   return {
     sequencingTips: sequencingTips.slice(0, 3),
@@ -639,6 +687,7 @@ export function buildSchemeProgressionCoachReport(
     physicalLiteracyTips,
     teachingForLearningTips,
     cooperativeLearningTips,
+    tpsrTips,
   };
 }
 
@@ -852,6 +901,15 @@ export function buildKnowledgeQualityInsights(
   const clInsights = buildCooperativeLearningQualityInsights(lesson);
   insights.push(...clInsights);
 
+  const tpsrInsights = buildTPSRQualityInsights(lesson);
+  const clReflectionWarned = clInsights.some((i) => i.message.includes("reflection"));
+  for (const insight of tpsrInsights) {
+    if (clReflectionWarned && insight.message.includes("reflection") && insight.id !== "tpsr-review") {
+      continue;
+    }
+    insights.push(insight);
+  }
+
   return insights.slice(0, 14);
 }
 
@@ -859,6 +917,12 @@ export function buildCooperativeLearningQualityReviewForLesson(
   lesson: LessonBuilderFormData
 ): CooperativeLearningQualityReview {
   return buildCooperativeLearningQualityReview(lesson);
+}
+
+export function buildTPSRQualityReviewForLesson(
+  lesson: LessonBuilderFormData
+): TPSRQualityReview {
+  return buildTPSRQualityReview(lesson);
 }
 
 export function formatYearGroupForContext(yearGroup?: string): string | undefined {

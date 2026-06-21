@@ -12,6 +12,7 @@ import { PHYSICAL_LITERACY_ENTRIES } from "./physicalLiteracy";
 import { PHYSICAL_LITERACY_MASTER_PE_ENTRY } from "./physicalLiteracyMaster";
 import { TEACHING_FOR_LEARNING_MASTER_PE_ENTRY } from "./teachingForLearningMaster";
 import { COOPERATIVE_LEARNING_MASTER_PE_ENTRY, isCooperativeLearningRelevant } from "./cooperativeLearningMaster";
+import { TPSR_MASTER_PE_ENTRY, isTPSRRelevant } from "./tpsrMaster";
 import { isTGfURelevantTopic, TGfU_MASTER_PE_ENTRY } from "./tgfuMaster";
 import type {
   AgePhase,
@@ -27,6 +28,7 @@ export const ALL_PE_KNOWLEDGE_ENTRIES: PEKnowledgeEntry[] = [
   TGfU_MASTER_PE_ENTRY,
   TEACHING_FOR_LEARNING_MASTER_PE_ENTRY,
   COOPERATIVE_LEARNING_MASTER_PE_ENTRY,
+  TPSR_MASTER_PE_ENTRY,
   ...PHYSICAL_LITERACY_ENTRIES,
   PHYSICAL_LITERACY_MASTER_PE_ENTRY,
   ...MOTIVATION_ENTRIES,
@@ -177,6 +179,13 @@ function scoreEntryForContext(
     ) {
       score += 6;
       reasons.push("Cooperative Learning design guidance");
+    }
+    if (
+      (entry.id === "tpsr-master" || entry.tags.includes("tpsr")) &&
+      (context.lessonAim || context.activityArea || isTPSRRelevant(`${context.lessonAim ?? ""} ${area}`))
+    ) {
+      score += 5;
+      reasons.push("TPSR responsibility development guidance");
     }
     if (
       (entry.id === "physical-literacy-master" ||
@@ -442,6 +451,41 @@ export {
 } from "./cooperativeLearningEngines";
 
 export {
+  TPSR_FRAMEWORK,
+  TPSR_CORE_MESSAGE,
+  TPSR_QUESTION_BANK,
+  TPSR_WARNINGS,
+  TPSR_MASTER_PE_ENTRY,
+  getTPSRLevelDefinition,
+  getTPSRQuestions,
+  isTPSRRelevant,
+  yearGroupToTPSRQuestionBand,
+  ACTIVITY_EMBEDDING_HINTS,
+  type TPSRLevel,
+  type TPSRLevelDefinition,
+  type TPSRQuestionAgeBand,
+} from "./tpsrMaster";
+
+export {
+  evaluateTPSRQuality,
+  suggestTPSRLevelFocus,
+  buildTPSRLessonStructure,
+  embedResponsibilityIntoActivity,
+  evaluateRelationalTeaching,
+  evaluateStudentVoiceAndEmpowerment,
+  evaluateTransferBeyondPE,
+  suggestTPSRAssessment,
+  buildTPSRUnitProgression,
+  buildTPSRPlanningInsights,
+  buildPedagogyCoachTPSRMetrics,
+  buildTPSRQualityReview,
+  buildTPSRQualityInsights,
+  buildSchemeTPSRTips,
+  lessonToTPSRContext,
+  type TPSRQualityBand,
+} from "./tpsrEngines";
+
+export {
   LEARNING_SCIENCE_ENTRIES,
   PEDAGOGY_MODEL_ENTRIES,
   PHYSICAL_LITERACY_ENTRIES,
@@ -482,9 +526,11 @@ export {
   type PhysicalLiteracyQualityReview,
   type TeachingForLearningQualityReview,
   type CooperativeLearningQualityReview,
+  type TPSRQualityReview,
   buildPhysicalLiteracyQualityReviewForLesson,
   buildTeachingForLearningQualityReviewForLesson,
   buildCooperativeLearningQualityReviewForLesson,
+  buildTPSRQualityReviewForLesson,
 } from "./coaching";
 
 export type {
