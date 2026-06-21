@@ -32,7 +32,7 @@ export function AssistantLessonDraftActions({ response }: AssistantLessonDraftAc
 
   const handleSaveDraft = () => {
     addLesson(draftPayload);
-    toast("Lesson saved to your library");
+    toast("Lesson draft saved");
     if (response.lessonPreview?.needsReview) {
       toast("Review curriculum alignment before teaching.", "info");
     }
@@ -49,7 +49,12 @@ export function AssistantLessonDraftActions({ response }: AssistantLessonDraftAc
   const handleDuplicate = () => {
     const copy = duplicateAssistantLessonDraft(draftPayload);
     addLesson(copy);
-    toast("Duplicate lesson saved to your library");
+    toast("Duplicate draft saved");
+  };
+
+  const handleContinueEditing = () => {
+    saveLessonDraft({ form: draftPayload, editingId: null, activeSection: "info" });
+    router.push("/lesson-builder");
   };
 
   return (
@@ -61,13 +66,16 @@ export function AssistantLessonDraftActions({ response }: AssistantLessonDraftAc
       )}
       <div className="flex flex-wrap gap-2">
         <Button type="button" variant="secondary" onClick={handleSaveDraft}>
-          Save as editable lesson draft
+          Save Draft
         </Button>
         <Button type="button" variant="primary" onClick={handleSaveAndOpen}>
-          Save and open in Lesson Builder
+          Open in Lesson Builder
         </Button>
-        <Button type="button" variant="ghost" onClick={handleDuplicate}>
-          Duplicate as new lesson
+        <Button type="button" variant="secondary" onClick={handleDuplicate}>
+          Duplicate Draft
+        </Button>
+        <Button type="button" variant="ghost" onClick={handleContinueEditing}>
+          Continue Editing
         </Button>
       </div>
     </div>

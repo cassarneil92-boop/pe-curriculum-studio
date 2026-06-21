@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { Card, CardHeader } from "@/components/ui/Card";
-import { ProgressBar } from "@/components/ui/ProgressBar";
 import type { ActiveSchemeProgress } from "@/lib/progress/teaching-progress-teacher-view";
 
 interface CurrentSchemesPanelProps {
@@ -14,49 +13,41 @@ export function CurrentSchemesPanel({ schemes }: CurrentSchemesPanelProps) {
   if (schemes.length === 0) {
     return (
       <Card>
-        <CardHeader
-          title="Current schemes"
-          description="No active schemes in progress."
-        />
+        <CardHeader title="Active schemes" description="No active schemes in progress." />
       </Card>
     );
   }
 
   return (
     <Card>
-      <CardHeader
-        title="Current schemes"
-        description="Schemes you are currently teaching."
-      />
-      <ul className="space-y-4">
+      <CardHeader title="Active schemes" description="Schemes you are currently teaching." />
+      <div className="grid gap-3 sm:grid-cols-2">
         {schemes.map((scheme) => (
-          <li
+          <div
             key={scheme.schemeId}
-            className="rounded-xl border border-slate-100 bg-slate-50/40 px-4 py-3"
+            className="rounded-xl border border-slate-100 bg-slate-50/40 px-4 py-4"
           >
-            <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-              <p className="font-semibold text-slate-900">{scheme.title}</p>
-              <Link href={scheme.continueHref}>
-                <Button variant="secondary" className="text-xs">
-                  Continue scheme
-                </Button>
-              </Link>
+            <p className="font-semibold text-slate-900">{scheme.title}</p>
+            <p className="mt-1 text-sm text-slate-600">
+              {scheme.totalLessons} lessons · {scheme.completedLessons} delivered
+            </p>
+            <p className="mt-0.5 text-lg font-semibold tabular-nums text-teal-700">
+              {scheme.deliveryPercent}%
+            </p>
+            <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-200">
+              <div
+                className="h-full rounded-full bg-teal-600 transition-all"
+                style={{ width: `${scheme.deliveryPercent}%` }}
+              />
             </div>
-            <ProgressBar
-              label={`${scheme.completedLessons}/${scheme.totalLessons} lessons complete`}
-              value={scheme.completedLessons}
-              max={scheme.totalLessons || 1}
-              fractionLabel={
-                scheme.remainingLessons > 0
-                  ? `${scheme.remainingLessons} remaining`
-                  : undefined
-              }
-              showPercent={false}
-              variant={scheme.deliveryPercent >= 80 ? "green" : "teal"}
-            />
-          </li>
+            <Link href={scheme.continueHref} className="mt-3 inline-block">
+              <Button variant="secondary" className="text-xs">
+                Open
+              </Button>
+            </Link>
+          </div>
         ))}
-      </ul>
+      </div>
     </Card>
   );
 }

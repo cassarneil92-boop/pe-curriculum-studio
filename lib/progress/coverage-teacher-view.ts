@@ -2,7 +2,7 @@ import type { CurriculumCoverageDashboard } from "@/src/lib/curriculum/coverage/
 import type { CurriculumAnalyticsReport } from "@/src/lib/intelligence/analytics/coverage-analytics";
 import type { TopicCoverageRow } from "@/lib/progress/teaching-progress-ui";
 
-export type CoverageAttentionStatus = "attention" | "strong" | "neutral";
+export type CoverageAttentionStatus = "attention" | "strong";
 
 export interface CoverageAttentionCard {
   id: string;
@@ -11,46 +11,54 @@ export interface CoverageAttentionCard {
   action: string;
   actionHref: string;
   status: CoverageAttentionStatus;
-}
-
-export interface CoverageTermFocusRow {
-  area: string;
-  planned: number;
-  taught: number;
-  remaining: number;
-  status: string;
+  outcomesAvailable?: number;
 }
 
 export interface CoverageRecommendation {
   id: string;
   message: string;
+  actionLabel: string;
+  actionHref: string;
 }
 
 export interface CoverageTeacherReport {
   health: {
     visibleOutcomes: number;
     plannedOutcomes: number;
-    taughtOutcomes: number;
-    remainingOutcomes: number;
-    statusLabel: string;
-    percentage: number;
+    deliveredOutcomes: number;
+    coveragePercent: number;
   };
   attentionAreas: CoverageAttentionCard[];
   strongAreas: CoverageAttentionCard[];
-  termFocus: CoverageTermFocusRow[];
   recommendations: CoverageRecommendation[];
 }
 
-function healthStatusLabel(percent: number): string {
-  if (percent >= 75) return "Strong";
-  if (percent >= 45) return "Developing";
-  if (percent >= 20) return "Needs attention";
-  return "Getting started";
+const SPORT_TOPIC_PATTERN =
+  /\b(archery|badminton|ultimate|frisbee|volleyball|football|basketball|handball|hockey|pickleball|tchoukball|rugby|tennis|netball|cricket)\b/i;
+
+const TEACHER_TOPIC_LABELS = new Set([
+  "healthy lifestyle",
+  "fitness",
+  "sport values",
+  "athletics",
+  "communication",
+  "team games",
+  "outdoor",
+  "holistic",
+  "fundamentals",
+  "gymnastics",
+  "dance",
+  "swimming",
+]);
+
+function isTeacherTopic(label: string): boolean {
+  const lower = label.toLowerCase();
+  if (SPORT_TOPIC_PATTERN.test(lower)) return false;
+  return [...TEACHER_TOPIC_LABELS].some((t) => lower.includes(t));
 }
 
-function topicActionHref(topic: string): string {
-  const slug = topic.toLowerCase().replace(/\s+/g, "-");
-  return `/schemes?topic=${encodeURIComponent(slug)}`;
+function planLessonHref(topicId: string): string {
+  return `/lesson-builder?topic=${encodeURIComponent(topicId)}`;
 }
 
 export function buildCoverageTeacherReport(
@@ -60,145 +68,123 @@ export function buildCoverageTeacherReport(
 ): CoverageTeacherReport {
   const visibleOutcomes = dashboard.layerTotals.planningCatalogue;
   const plannedOutcomes = taught.summary.plannedOutcomeIds;
-  const taughtOutcomes = taught.summary.taughtOutcomeIds;
-  const remainingOutcomes = taught.summary.remainingOutcomeIds;
-  const percentage =
-    visibleOutcomes > 0 ? Math.round((taughtOutcomes / visibleOutcomes) * 100) : 0;
-
-  const attentionFromGaps: CoverageAttentionCard[] = dashboard.catalogueGaps
-    .slice(0, 3)
-    .map((gap) => ({
-      id: gap.id,
-      title: gap.title,
-      reason: gap.detail,
-      action: "View outcomes",
-      actionHref: "/curriculum-coverage?view=advanced",
-      status: "attention" as const,
-    }));
+  const deliveredOutcomes = taught.summary.taughtOutcomeIds;
+  const coveragePercent =
+    visibleOutcomes > 0 ? Math.round((deliveredOutcomes / visibleOutcomes) * 100) : 0;
 
   const attentionFromTopics: CoverageAttentionCard[] = topicRows
-    .filter((row) => row.remaining > 0 && row.coveragePercent < 50)
-    .slice(0, 3)
+    .filter(
+      (row) =>
+        isTeacherTopic(row.topic) &&
+        row.remaining > 0 &&
+        row.coveragePercent < 55
+    )
+    .sort((a, b) => a.coveragePercent - b.coveragePercent)
+    .slice(0, 5)
     .map((row) => ({
       id: `topic-${row.id}`,
       title: row.topic,
-      reason: `${row.remaining} outcomes still to teach in this topic`,
-      action: "Plan lesson",
-      actionHref: `/lesson-builder?topic=${encodeURIComponent(row.id)}`,
-      status: "attention" as const,
-    }));
-
-  const attentionFromSports: CoverageAttentionCard[] = dashboard.sportCoverage
-    .filter((row) => row.status === "thin" || row.status === "missing" || row.status === "fallback-only")
-    .slice(0, 3)
-    .map((row) => ({
-      id: `sport-${row.topicId}`,
-      title: row.label,
       reason:
-        row.status === "fallback-only"
-          ? "Relies on fallback topic outcomes — consider a dedicated scheme"
-          : "Thin sport coverage in the catalogue",
-      action: "Create scheme",
-      actionHref: `/schemes?topic=${encodeURIComponent(row.topicId)}`,
+        row.delivered === 0
+          ? "Not yet in your teaching plans this term."
+          : "Still building coverage in this area.",
+      action: "Plan Lesson",
+      actionHref: planLessonHref(row.id),
       status: "attention" as const,
     }));
 
-  const attentionAreas = [...attentionFromTopics, ...attentionFromGaps, ...attentionFromSports]
-    .slice(0, 6);
-
-  const strongFromTopics: CoverageAttentionCard[] = topicRows
-    .filter((row) => row.coveragePercent >= 60 && row.delivered > 0)
-    .slice(0, 3)
+  const attentionFromPathways: CoverageAttentionCard[] = dashboard.pathwayCoverage
+    .filter((row) => row.status === "thin" || row.status === "needs-review")
+    .filter((row) => isTeacherTopic(row.label))
+    .slice(0, 2)
     .map((row) => ({
-      id: `strong-topic-${row.id}`,
-      title: row.topic,
-      reason: `${row.coveragePercent}% delivered — good progress`,
-      action: "View progress",
-      actionHref: "/curriculum-analytics",
-      status: "strong" as const,
-    }));
-
-  const strongFromCatalogue: CoverageAttentionCard[] = dashboard.topicCoverage
-    .filter((row) => row.status === "strong")
-    .slice(0, 3)
-    .map((row) => ({
-      id: `strong-cat-${row.topicId}`,
+      id: `pathway-${row.pathwayId}`,
       title: row.label,
-      reason: `${row.planningCount} outcomes available in catalogue`,
-      action: "Plan lesson",
-      actionHref: `/lesson-builder?topic=${encodeURIComponent(row.topicId)}`,
+      reason: "Limited outcomes planned in this pathway.",
+      action: "Plan Lesson",
+      actionHref: "/lesson-builder",
+      status: "attention" as const,
+    }));
+
+  const attentionAreas = [...attentionFromTopics, ...attentionFromPathways].slice(0, 5);
+
+  const strongFromTopics: CoverageAttentionCard[] = dashboard.topicCoverage
+    .filter((row) => row.status === "strong" && isTeacherTopic(row.label))
+    .slice(0, 3)
+    .map((row) => ({
+      id: `strong-${row.topicId}`,
+      title: row.label,
+      reason: `${row.planningCount} outcomes available`,
+      action: "Plan Lesson",
+      actionHref: planLessonHref(row.topicId),
+      status: "strong" as const,
+      outcomesAvailable: row.planningCount,
+    }));
+
+  const strongFromTeaching: CoverageAttentionCard[] = topicRows
+    .filter((row) => isTeacherTopic(row.topic) && row.coveragePercent >= 60 && row.delivered > 0)
+    .slice(0, 3 - strongFromTopics.length)
+    .map((row) => ({
+      id: `strong-taught-${row.id}`,
+      title: row.topic,
+      reason: `${row.delivered} outcomes delivered — good progress`,
+      action: "Plan Lesson",
+      actionHref: planLessonHref(row.id),
       status: "strong" as const,
     }));
 
-  const strongAreas = [...strongFromTopics, ...strongFromCatalogue].slice(0, 6);
-
-  const termFocus: CoverageTermFocusRow[] = topicRows.slice(0, 8).map((row) => ({
-    area: row.topic,
-    planned: row.planned,
-    taught: row.delivered,
-    remaining: row.remaining,
-    status:
-      row.coveragePercent >= 75
-        ? "On track"
-        : row.coveragePercent >= 40
-          ? "Developing"
-          : "Needs focus",
-  }));
+  const strongAreas = [...strongFromTopics, ...strongFromTeaching].slice(0, 3);
 
   const recommendations: CoverageRecommendation[] = [];
 
-  const athletics = dashboard.sportCoverage.find((s) => s.topicId === "athletics");
-  if (athletics && athletics.status !== "strong") {
-    recommendations.push({
-      id: "rec-athletics",
-      message: "Athletics appears under planned — consider building a term scheme.",
-    });
-  }
-
-  const outdoor = dashboard.topicCoverage.find(
-    (t) => t.topicId.includes("outdoor") || t.label.toLowerCase().includes("outdoor")
+  const inProgressScheme = topicRows.find(
+    (r) => r.topic.toLowerCase().includes("athletic") && r.planned > 0
   );
-  if (outdoor && outdoor.status === "thin") {
+  if (inProgressScheme) {
     recommendations.push({
-      id: "rec-outdoor",
-      message: "Outdoor Recreation has thin coverage — review available outcomes.",
+      id: "rec-continue-athletics",
+      message: "Continue Athletics scheme",
+      actionLabel: "Open Schemes",
+      actionHref: "/schemes",
     });
   }
 
-  const secPe = dashboard.pathwayCoverage.find((p) => p.pathwayId === "pe-option-sec");
-  if (secPe && secPe.status !== "strong") {
+  const fitness = attentionAreas.find((a) => a.title.toLowerCase().includes("fitness"));
+  if (fitness) {
     recommendations.push({
-      id: "rec-sec",
-      message: "SEC PE Option has limited outcome depth — explore specialist outcomes.",
+      id: "rec-fitness",
+      message: "Create Fitness lesson",
+      actionLabel: "Create Lesson",
+      actionHref: planLessonHref("fitness"),
     });
   }
 
-  if (attentionFromTopics.length > 0) {
+  const hl = attentionAreas.find((a) => a.title.toLowerCase().includes("healthy"));
+  if (hl) {
     recommendations.push({
-      id: "rec-scheme",
-      message: `Consider creating a scheme for ${attentionFromTopics[0].title}.`,
+      id: "rec-hl",
+      message: "Create Healthy Lifestyle lesson",
+      actionLabel: "Create Lesson",
+      actionHref: planLessonHref("healthy-lifestyle"),
     });
   }
 
-  if (remainingOutcomes > plannedOutcomes) {
-    recommendations.push({
-      id: "rec-planned",
-      message: "Several curriculum outcomes are visible but not yet in your plans.",
-    });
-  }
+  recommendations.push({
+    id: "rec-sport-values",
+    message: "Start Sport Values unit",
+    actionLabel: "Create Scheme",
+    actionHref: "/schemes?create=1&topic=sport-values",
+  });
 
   return {
     health: {
       visibleOutcomes,
       plannedOutcomes,
-      taughtOutcomes,
-      remainingOutcomes,
-      statusLabel: healthStatusLabel(percentage),
-      percentage,
+      deliveredOutcomes,
+      coveragePercent,
     },
     attentionAreas,
     strongAreas,
-    termFocus,
-    recommendations: recommendations.slice(0, 5),
+    recommendations: recommendations.slice(0, 4),
   };
 }

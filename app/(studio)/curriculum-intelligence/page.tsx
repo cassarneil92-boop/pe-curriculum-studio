@@ -3,12 +3,10 @@
 import Link from "next/link";
 import { useMemo } from "react";
 import {
-  CurriculumAlerts,
-  CurriculumBalanceBars,
-  CurriculumHealthHero,
   IntelligenceAdvancedAnalytics,
-  IntelligenceQuickActions,
-  RecommendedNextSteps,
+  SuggestedNextSteps,
+  TeachingBalanceSummary,
+  UpcomingOpportunities,
 } from "@/components/intelligence/curriculum-intelligence";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { useApp, useTeacherProfile } from "@/components/providers/AppProvider";
@@ -20,7 +18,7 @@ import {
   buildCurriculumIntelligenceReport,
   buildIntelligenceExportMeta,
 } from "@/lib/progress/curriculum-intelligence";
-import { buildIntelligenceTeacherView } from "@/lib/progress/intelligence-teacher-view";
+import { buildPlanningInsightsView } from "@/lib/progress/planning-insights-view";
 import { hasTeachingProgressData } from "@/lib/progress/teaching-progress-ui";
 import { getCollegeById, resolveSchoolDisplayName } from "@/src/lib/schools";
 import type { YearGroupId } from "@/lib/year-groups";
@@ -45,9 +43,9 @@ export default function CurriculumIntelligencePage() {
   const yearGroupId = (context.teacher.yearGroups[0] ?? DEFAULT_YEAR_GROUP_ID) as YearGroupId;
   const appPathways = context.visibleAppPathways;
 
-  const teacherView = useMemo(
+  const insights = useMemo(
     () =>
-      buildIntelligenceTeacherView(
+      buildPlanningInsightsView(
         report,
         data.lessons,
         data.schemes,
@@ -72,12 +70,12 @@ export default function CurriculumIntelligencePage() {
     return (
       <div className="space-y-6">
         <PageHeader
-          eyebrow="Curriculum intelligence"
-          title="Curriculum Intelligence"
-          description="What should you teach next and why?"
+          eyebrow="Planning insights"
+          title="Planning Insights"
+          description="What should you teach next?"
         />
         <EmptyState
-          title="No planning data yet"
+          title="Start planning to unlock insights"
           description="Start planning and delivering lessons to unlock curriculum intelligence."
           icon={<TeachingProgressIllustration />}
           action={
@@ -98,16 +96,19 @@ export default function CurriculumIntelligencePage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        eyebrow="Curriculum intelligence"
-        title="Curriculum Intelligence"
-        description="Am I on track? What am I missing? What should I teach next?"
+        eyebrow="Planning insights"
+        title="Planning Insights"
+        description="What should you teach next?"
+        action={
+          <Link href="/curriculum-analytics">
+            <Button variant="secondary">Teaching Progress →</Button>
+          </Link>
+        }
       />
 
-      <CurriculumHealthHero health={teacherView.health} />
-      <RecommendedNextSteps recommendations={teacherView.recommendations} />
-      <CurriculumBalanceBars items={teacherView.balance} />
-      <CurriculumAlerts alerts={teacherView.alerts} />
-      <IntelligenceQuickActions actions={teacherView.quickActions} />
+      <SuggestedNextSteps steps={insights.suggestedSteps} />
+      <TeachingBalanceSummary balance={insights.balance} />
+      <UpcomingOpportunities opportunities={insights.opportunities} />
       <IntelligenceAdvancedAnalytics report={report} exportContext={exportContext} />
     </div>
   );

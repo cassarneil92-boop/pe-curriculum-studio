@@ -4,13 +4,11 @@ import Link from "next/link";
 import { useMemo } from "react";
 import { useApp } from "@/components/providers/AppProvider";
 import {
-  AreasStillMissingPanel,
+  AttentionNeededPanel,
   CurrentSchemesPanel,
-  CurriculumAreaBars,
+  RecentDeliveryPanel,
   TeachingProgressAdvancedAnalytics,
   TeachingProgressOverview,
-  TeachingProgressQuickActions,
-  UpcomingTeachingPanel,
 } from "@/components/progress/teaching-progress";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -69,7 +67,7 @@ export default function CurriculumAnalyticsPage() {
         <PageHeader
           eyebrow="Teaching progress"
           title="Teaching Progress"
-          description="Track planned lessons, delivered lessons, and active schemes."
+          description="What have you already taught?"
         />
         <EmptyState
           title="No teaching data yet"
@@ -95,20 +93,18 @@ export default function CurriculumAnalyticsPage() {
       <PageHeader
         eyebrow="Teaching progress"
         title="Teaching Progress"
-        description="Track planned lessons, delivered lessons, active schemes, and upcoming teaching."
+        description="What have you already taught?"
         action={
           <Link href="/curriculum-intelligence">
-            <Button variant="secondary">What to teach next →</Button>
+            <Button variant="secondary">Planning Insights →</Button>
           </Link>
         }
       />
 
       <TeachingProgressOverview overview={teacherView.overview} />
       <CurrentSchemesPanel schemes={teacherView.activeSchemes} />
-      <UpcomingTeachingPanel lessons={teacherView.upcomingLessons} />
-      <CurriculumAreaBars items={teacherView.areasCovered} />
-      <AreasStillMissingPanel areas={teacherView.areasMissing} />
-      <TeachingProgressQuickActions actions={teacherView.quickActions} />
+      <RecentDeliveryPanel items={teacherView.recentDelivery} />
+      <AttentionNeededPanel items={teacherView.attentionItems} />
 
       <TeachingProgressAdvancedAnalytics
         taught={taught}

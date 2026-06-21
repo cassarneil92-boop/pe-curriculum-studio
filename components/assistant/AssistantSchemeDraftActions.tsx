@@ -34,7 +34,7 @@ export function AssistantSchemeDraftActions({ response }: AssistantSchemeDraftAc
 
   const handleSaveDraft = () => {
     addScheme(draftResult.draft);
-    toast("Scheme saved to your library");
+    toast("Scheme draft saved");
     if (draftResult.needsReview) {
       toast(schemeDraftReviewMessage(true) ?? "", "info");
     }
@@ -51,7 +51,12 @@ export function AssistantSchemeDraftActions({ response }: AssistantSchemeDraftAc
   const handleDuplicate = () => {
     const copy = duplicateAssistantSchemeDraft(draftResult.draft);
     addScheme(copy);
-    toast("Duplicate scheme saved to your library");
+    toast("Duplicate draft saved");
+  };
+
+  const handleContinueEditing = () => {
+    const saved = addScheme(draftResult.draft);
+    router.push(`/schemes?edit=${saved.id}`);
   };
 
   return (
@@ -63,13 +68,16 @@ export function AssistantSchemeDraftActions({ response }: AssistantSchemeDraftAc
       )}
       <div className="flex flex-wrap gap-2">
         <Button type="button" variant="secondary" onClick={handleSaveDraft}>
-          Save as editable scheme draft
+          Save Draft
         </Button>
         <Button type="button" variant="primary" onClick={handleSaveAndOpen}>
-          Save and open in Scheme Builder
+          Open in Scheme Builder
         </Button>
-        <Button type="button" variant="ghost" onClick={handleDuplicate}>
-          Duplicate as new scheme
+        <Button type="button" variant="secondary" onClick={handleDuplicate}>
+          Duplicate Draft
+        </Button>
+        <Button type="button" variant="ghost" onClick={handleContinueEditing}>
+          Continue Editing
         </Button>
       </div>
     </div>

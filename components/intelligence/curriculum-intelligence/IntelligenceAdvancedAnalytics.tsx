@@ -28,9 +28,9 @@ export function IntelligenceAdvancedAnalytics({
   return (
     <details className="rounded-[20px] border border-slate-200 bg-white">
       <summary className="cursor-pointer list-none px-6 py-4 text-sm font-semibold text-slate-900 marker:content-none [&::-webkit-details-marker]:hidden">
-        ▶ Show Advanced Analytics
+        ▶ Advanced Insights
         <span className="ml-2 text-xs font-normal text-slate-500">
-          Heatmap, KPIs, pathway snapshot, topic tables
+          Heatmaps, progress KPIs, pathway analysis, and detailed tables
         </span>
       </summary>
       <div className="space-y-6 border-t border-slate-100 px-6 py-4">

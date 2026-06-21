@@ -1,11 +1,5 @@
 import type { CalendarEntry, LessonPlan, SchemeOfWork } from "@/lib/types";
-import { buildUpcomingLessons, type UpcomingLesson } from "@/lib/dashboard/insights";
 import { buildSchemeProgressSummary } from "@/lib/progress/summary";
-import type { CurriculumAnalyticsReport } from "@/src/lib/intelligence/analytics/coverage-analytics";
-import {
-  getLearningAreaForTopic,
-  type LearningAreaId,
-} from "@/src/lib/intelligence/frameworks/learning-areas";
 import { lessonHasContent, schemeDisplayTitle } from "@/lib/scheme-builder/helpers";
 import { deriveSchemeStatus } from "@/lib/progress/delivery";
 
@@ -26,40 +20,27 @@ export interface ActiveSchemeProgress {
   continueHref: string;
 }
 
-export interface CurriculumAreaBar {
-  label: string;
-  barLength: number;
-}
-
-export interface MissingCurriculumArea {
-  id: LearningAreaId;
-  label: string;
-}
-
-export interface TeachingProgressQuickAction {
+export interface RecentDeliveryItem {
   id: string;
-  label: string;
-  href: string;
+  title: string;
+  date: string;
+  source: "lesson" | "scheme" | "calendar";
+}
+
+export interface AttentionItem {
+  id: string;
+  message: string;
+  actionLabel?: string;
+  actionHref?: string;
 }
 
 export interface TeachingProgressTeacherView {
   overview: TeachingProgressOverview;
   activeSchemes: ActiveSchemeProgress[];
-  upcomingLessons: UpcomingLesson[];
-  areasCovered: CurriculumAreaBar[];
-  areasMissing: MissingCurriculumArea[];
-  quickActions: TeachingProgressQuickAction[];
+  recentDelivery: RecentDeliveryItem[];
+  attentionItems: AttentionItem[];
   continueSchemeHref: string | null;
 }
-
-const TEACHER_FOCUS_AREAS: { id: LearningAreaId; label: string }[] = [
-  { id: "team-games", label: "Team Games" },
-  { id: "individual-activity", label: "Athletics" },
-  { id: "fitness", label: "Fitness" },
-  { id: "healthy-lifestyle", label: "Healthy Lifestyle" },
-  { id: "sport-values", label: "Sport Values" },
-  { id: "outdoor-recreation", label: "Outdoor & Recreation" },
-];
 
 function countLessonDelivery(lessons: LessonPlan[], schemes: SchemeOfWork[]) {
   let planned = 0;
@@ -71,32 +52,6 @@ function countLessonDelivery(lessons: LessonPlan[], schemes: SchemeOfWork[]) {
   }
 
   for (const scheme of schemes) {
-    for (const lesson of scheme.lessons ?? []) {
-      if (!lessonHasContent(lesson) && lesson.deliveryStatus !== "delivered") continue;
-      planned += 1;
-      if (lesson.deliveryStatus === "delivered") delivered += 1;
-    }
-  }
-
-  return { planned, delivered };
-}
-
-function countAreaActivity(
-  areaId: LearningAreaId,
-  lessons: LessonPlan[],
-  schemes: SchemeOfWork[]
-): { planned: number; delivered: number } {
-  let planned = 0;
-  let delivered = 0;
-
-  for (const lesson of lessons) {
-    if (getLearningAreaForTopic(lesson.topicId) !== areaId) continue;
-    planned += 1;
-    if (lesson.deliveryStatus === "delivered") delivered += 1;
-  }
-
-  for (const scheme of schemes) {
-    if (getLearningAreaForTopic(scheme.topicId) !== areaId) continue;
     for (const lesson of scheme.lessons ?? []) {
       if (!lessonHasContent(lesson) && lesson.deliveryStatus !== "delivered") continue;
       planned += 1;
@@ -148,84 +103,136 @@ function buildActiveSchemes(schemes: SchemeOfWork[]): ActiveSchemeProgress[] {
     .sort((a, b) => b.deliveryPercent - a.deliveryPercent);
 }
 
-function buildAreaBars(
+function buildRecentDelivery(
   lessons: LessonPlan[],
   schemes: SchemeOfWork[],
-  taught: CurriculumAnalyticsReport
-): CurriculumAreaBar[] {
-  const scores = TEACHER_FOCUS_AREAS.map((area) => {
-    const activity = countAreaActivity(area.id, lessons, schemes);
-    const deliveredOutcomes =
-      taught.byLearningArea.find((s) => s.id === area.id)?.modeCount ?? 0;
-    const score = activity.planned + activity.delivered * 2 + deliveredOutcomes * 0.5;
-    return { label: area.label, score };
-  });
+  calendar: CalendarEntry[],
+  limit = 6
+): RecentDeliveryItem[] {
+  const items: RecentDeliveryItem[] = [];
 
-  const holisticDelivered = taught.byHolisticDevelopment.reduce(
-    (n, slice) => n + (slice.modeCount ?? 0),
-    0
-  );
-  scores.push({
-    label: "Holistic Development",
-    score: holisticDelivered,
-  });
-
-  const maxScore = Math.max(...scores.map((s) => s.score), 1);
-
-  return scores.map(({ label, score }) => ({
-    label,
-    barLength: score === 0 ? 0 : Math.max(1, Math.round((score / maxScore) * 10)),
-  }));
-}
-
-function buildMissingAreas(
-  lessons: LessonPlan[],
-  schemes: SchemeOfWork[]
-): MissingCurriculumArea[] {
-  return TEACHER_FOCUS_AREAS.filter((area) => {
-    const activity = countAreaActivity(area.id, lessons, schemes);
-    return activity.planned === 0 && activity.delivered === 0;
-  });
-}
-
-function buildQuickActions(continueSchemeHref: string | null): TeachingProgressQuickAction[] {
-  const actions: TeachingProgressQuickAction[] = [
-    { id: "qa-lesson", label: "Create Lesson", href: "/lesson-builder" },
-    { id: "qa-scheme", label: "Create Scheme", href: "/schemes?create=1" },
-  ];
-
-  if (continueSchemeHref) {
-    actions.push({
-      id: "qa-continue",
-      label: "Continue Current Scheme",
-      href: continueSchemeHref,
+  for (const lesson of lessons) {
+    if (lesson.deliveryStatus !== "delivered") continue;
+    items.push({
+      id: `lesson-${lesson.id}`,
+      title: lesson.title || lesson.topicId,
+      date: lesson.deliveredDate ?? lesson.date ?? "",
+      source: "lesson",
     });
   }
 
-  return actions;
+  for (const scheme of schemes) {
+    for (const lesson of scheme.lessons ?? []) {
+      if (lesson.deliveryStatus !== "delivered") continue;
+      items.push({
+        id: `scheme-${scheme.id}-${lesson.lessonNumber}`,
+        title: `${schemeDisplayTitle(scheme)} — Lesson ${lesson.lessonNumber}`,
+        date: lesson.deliveredDate ?? "",
+        source: "scheme",
+      });
+    }
+  }
+
+  for (const entry of calendar) {
+    if (entry.deliveryStatus !== "delivered") continue;
+    items.push({
+      id: `cal-${entry.id}`,
+      title: entry.title,
+      date: entry.startDate,
+      source: "calendar",
+    });
+  }
+
+  return items
+    .filter((i) => i.date)
+    .sort((a, b) => b.date.localeCompare(a.date))
+    .slice(0, limit);
+}
+
+function daysSince(dateStr: string, today: string): number {
+  const a = new Date(dateStr);
+  const b = new Date(today);
+  return Math.floor((b.getTime() - a.getTime()) / (1000 * 60 * 60 * 24));
+}
+
+function buildAttentionItems(
+  schemes: SchemeOfWork[],
+  lessons: LessonPlan[],
+  calendar: CalendarEntry[],
+  today: string
+): AttentionItem[] {
+  const items: AttentionItem[] = [];
+
+  for (const scheme of schemes) {
+    if (deriveSchemeStatus(scheme) !== "in_progress") continue;
+    const summary = buildSchemeProgressSummary(scheme);
+    const lastUpdate = scheme.updatedAt ?? scheme.createdAt;
+    if (lastUpdate && daysSince(lastUpdate.slice(0, 10), today) >= 21) {
+      items.push({
+        id: `att-stale-${scheme.id}`,
+        message: `${schemeDisplayTitle(scheme)} has not been updated for 3 weeks.`,
+        actionLabel: "Open",
+        actionHref: `/schemes?edit=${scheme.id}`,
+      });
+    }
+    if (summary.remainingLessons > 0 && summary.remainingLessons <= 2) {
+      items.push({
+        id: `att-ending-${scheme.id}`,
+        message: `${schemeDisplayTitle(scheme)} is ending soon.`,
+        actionLabel: "Open",
+        actionHref: `/schemes?edit=${scheme.id}`,
+      });
+    }
+  }
+
+  const overdueCalendar = calendar.filter(
+    (e) =>
+      e.startDate &&
+      e.startDate < today &&
+      (!e.deliveryStatus || e.deliveryStatus === "planned")
+  );
+  if (overdueCalendar.length > 0) {
+    items.push({
+      id: "att-overdue",
+      message: "Lesson planned but not delivered.",
+      actionLabel: "Calendar",
+      actionHref: "/calendar",
+    });
+  }
+
+  const plannedNotDelivered = lessons.filter(
+    (l) => l.date && l.date < today && l.deliveryStatus !== "delivered"
+  );
+  if (plannedNotDelivered.length > 0 && !items.some((i) => i.id === "att-overdue")) {
+    items.push({
+      id: "att-lesson-planned",
+      message: "Lesson planned but not delivered.",
+      actionLabel: "Open Lessons",
+      actionHref: "/lessons",
+    });
+  }
+
+  return items.slice(0, 5);
 }
 
 export function buildTeachingProgressTeacherView(
   lessons: LessonPlan[],
   schemes: SchemeOfWork[],
   calendar: CalendarEntry[],
-  taught: CurriculumAnalyticsReport,
+  _taught: unknown,
   today: string
 ): TeachingProgressTeacherView {
   const overview = buildOverview(lessons, schemes);
   const activeSchemes = buildActiveSchemes(schemes);
-  const upcomingLessons = buildUpcomingLessons(calendar, today, 5);
-  const areasCovered = buildAreaBars(lessons, schemes, taught);
-  const areasMissing = buildMissingAreas(lessons, schemes);
+  const recentDelivery = buildRecentDelivery(lessons, schemes, calendar);
+  const attentionItems = buildAttentionItems(schemes, lessons, calendar, today);
   const continueSchemeHref = activeSchemes[0]?.continueHref ?? null;
 
   return {
     overview,
     activeSchemes,
-    upcomingLessons,
-    areasCovered,
-    areasMissing,
-    quickActions: buildQuickActions(continueSchemeHref),
+    recentDelivery,
+    attentionItems,
     continueSchemeHref,
   };
 }

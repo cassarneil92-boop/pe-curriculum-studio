@@ -22,12 +22,7 @@ export function TeachingProgressOverview({ overview }: TeachingProgressOverviewP
         <StatCard label="Lessons planned" value={lessonsPlanned} tone="blue" />
         <StatCard label="Lessons delivered" value={lessonsDelivered} tone="green" />
         <StatCard label="Active schemes" value={activeSchemes} tone="teal" />
-        <StatCard
-          label="Delivery progress"
-          value={`${deliveryPercent}%`}
-          hint="Delivered vs planned lessons"
-          tone="amber"
-        />
+        <StatCard label="Coverage" value={`${deliveryPercent}%`} hint="Delivered vs planned lessons" tone="teal" />
       </section>
       {lessonsPlanned > 0 && (
         <ProgressBar

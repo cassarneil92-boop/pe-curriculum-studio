@@ -40,8 +40,6 @@ import {
   buildTopicCoverageRows,
 } from "@/lib/progress/teaching-progress-ui";
 
-type CoverageViewMode = "teacher" | "advanced";
-
 const EMPTY_FILTERS: CoverageFilters = {
   pathwayId: "",
   yearGroup: "",
@@ -62,7 +60,6 @@ const MISSING_TABS: { id: CoverageMissingTab; label: string }[] = [
 export function CurriculumCoverageView() {
   const { data } = useApp();
   const { context } = useTeacherContext();
-  const [viewMode, setViewMode] = useState<CoverageViewMode>("teacher");
   const [filters, setFilters] = useState<CoverageFilters>(EMPTY_FILTERS);
   const [activeTab, setActiveTab] = useState<CoverageMissingTab>("all");
 
@@ -116,63 +113,44 @@ export function CurriculumCoverageView() {
     <div>
       <PageHeader
         title="Coverage Dashboard"
-        description={
-          viewMode === "teacher"
-            ? "See what needs attention in your curriculum and what to plan next."
-            : "Detailed catalogue diagnostics — pathways, topics, sports, and metadata quality."
-        }
+        description="What needs attention in your curriculum — and what to plan next."
         action={
-          <div className="flex flex-wrap items-center gap-2">
-            {viewMode === "advanced" && (
-              <Button variant="ghost" onClick={() => setViewMode("teacher")}>
-                ← Teacher view
-              </Button>
-            )}
-            {viewMode === "advanced" && (
-              <Button variant="secondary" onClick={exportReport}>
-                Export audit JSON
-              </Button>
-            )}
-          </div>
+          <Link href="/curriculum-intelligence">
+            <Button variant="secondary">Planning Insights →</Button>
+          </Link>
         }
       />
 
-      <div className="mb-6 flex flex-col gap-3 rounded-xl border border-teal-200 bg-teal-50/60 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <p className="text-sm font-medium text-teal-900">Catalogue coverage vs teaching progress</p>
-          <p className="mt-1 text-sm text-teal-800/90">
-            This page shows what is in the curriculum library. For what you have actually taught in
-            lessons and schemes, open Teaching Progress.
-          </p>
-        </div>
-        <Link
-          href="/curriculum-analytics"
-          className="inline-flex shrink-0 items-center justify-center rounded-lg bg-teal-700 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-teal-800"
-        >
-          Teaching Progress →
-        </Link>
-      </div>
+      <CoverageTeacherView report={teacherReport} />
 
-      {viewMode === "teacher" ? (
-        <CoverageTeacherView
-          report={teacherReport}
-          onOpenAdvanced={() => setViewMode("advanced")}
-        />
-      ) : (
-        <AdvancedAuditContent
-          dashboard={dashboard}
-          summary={summary}
-          visibility={visibility}
-          filterOptions={filterOptions}
-          filters={filters}
-          activeTab={activeTab}
-          results={results}
-          context={context}
-          onFilterChange={updateFilter}
-          onClearFilters={clearFilters}
-          onTabChange={setActiveTab}
-        />
-      )}
+      <details className="mt-8 rounded-[20px] border border-slate-200 bg-white">
+        <summary className="cursor-pointer list-none px-6 py-4 text-sm font-semibold text-slate-900 marker:content-none [&::-webkit-details-marker]:hidden">
+          ▶ Advanced Curriculum Audit
+          <span className="ml-2 text-xs font-normal text-slate-500">
+            Pathway tables, topic grids, and detailed coverage diagnostics
+          </span>
+        </summary>
+        <div className="border-t border-slate-100 px-6 py-4">
+          <div className="mb-4 flex justify-end">
+            <Button variant="secondary" onClick={exportReport}>
+              Export audit JSON
+            </Button>
+          </div>
+          <AdvancedAuditContent
+            dashboard={dashboard}
+            summary={summary}
+            visibility={visibility}
+            filterOptions={filterOptions}
+            filters={filters}
+            activeTab={activeTab}
+            results={results}
+            context={context}
+            onFilterChange={updateFilter}
+            onClearFilters={clearFilters}
+            onTabChange={setActiveTab}
+          />
+        </div>
+      </details>
     </div>
   );
 }

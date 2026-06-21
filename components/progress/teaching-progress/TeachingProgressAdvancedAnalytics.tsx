@@ -52,9 +52,9 @@ export function TeachingProgressAdvancedAnalytics({
   return (
     <details className="rounded-[20px] border border-slate-200 bg-white">
       <summary className="cursor-pointer list-none px-6 py-4 text-sm font-semibold text-slate-900 marker:content-none [&::-webkit-details-marker]:hidden">
-        ▶ Show Advanced Analytics
+        ▶ Advanced Delivery Analytics
         <span className="ml-2 text-xs font-normal text-slate-500">
-          Outcome tables, pathway stats, curriculum breakdowns
+          Outcome tables, coverage breakdowns, and detailed progress data
         </span>
       </summary>
       <div className="space-y-6 border-t border-slate-100 px-6 py-4">
@@ -196,9 +196,9 @@ export function TeachingProgressAdvancedAnalytics({
             <Link href="/schemes" className="font-medium text-teal-700 hover:text-teal-800">
               Schemes of Work
             </Link>
-            . For curriculum recommendations, open{" "}
+            . For planning recommendations, open{" "}
             <Link href="/curriculum-intelligence" className="font-medium text-teal-700 hover:text-teal-800">
-              Curriculum Intelligence
+              Planning Insights
             </Link>
             .
           </p>

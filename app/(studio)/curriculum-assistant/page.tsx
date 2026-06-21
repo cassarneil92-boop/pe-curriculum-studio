@@ -179,8 +179,8 @@ export default function CurriculumAssistantPage() {
       />
 
       <p className="rounded-[20px] border border-blue-100/80 bg-blue-50/50 px-4 py-3 text-sm leading-relaxed text-blue-900">
-        Rule-based curriculum intelligence only. Official learning outcomes always come from your
-        curriculum database — the assistant never invents syllabus wording.
+        Ask for a lesson or scheme and get an editable draft you can save and open in the builder.
+        Official curriculum wording always comes from your curriculum database.
       </p>
 
       <Card>

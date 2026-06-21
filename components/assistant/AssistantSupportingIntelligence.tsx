@@ -1,10 +1,9 @@
 "use client";
 
 import type { AssistantResponse } from "@/lib/assistant";
-import type { PEKnowledgeCardApplyTarget } from "@/components/pe-knowledge/PEKnowledgeCard";
-import { Card } from "@/components/ui/Card";
 import type { PEKnowledgeCardViewModel } from "@/src/lib/peKnowledge/coaching";
 import { OptionalTeachingRefinements } from "@/components/assistant/OptionalTeachingRefinements";
+import { Card } from "@/components/ui/Card";
 
 interface AssistantSupportingIntelligenceProps {
   response: AssistantResponse;
@@ -21,21 +20,16 @@ export function AssistantSupportingIntelligence({
   matchesSlot,
   contextSlot,
 }: AssistantSupportingIntelligenceProps) {
+  const hasDetails = Boolean(matchesSlot || contextSlot);
+
   return (
     <div className="space-y-4 border-t border-slate-200/80 pt-6">
-      <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-        Supporting intelligence
-      </h2>
-
-      {matchesSlot}
-      {contextSlot}
-
       <OptionalTeachingRefinements suggestions={specialistSuggestions} />
 
       {response.pedagogyRecommendations && response.pedagogyRecommendations.length > 0 && (
         <details className="rounded-[20px] border border-slate-200 bg-white">
           <summary className="cursor-pointer list-none px-5 py-4 text-sm font-semibold text-slate-900 marker:content-none">
-            Pedagogy notes
+            Teaching notes
           </summary>
           <div className="border-t border-slate-100 px-5 pb-5">
             <ul className="space-y-2 pt-3">
@@ -49,6 +43,18 @@ export function AssistantSupportingIntelligence({
                 </li>
               ))}
             </ul>
+          </div>
+        </details>
+      )}
+
+      {hasDetails && (
+        <details className="rounded-[20px] border border-slate-200 bg-white">
+          <summary className="cursor-pointer list-none px-5 py-4 text-sm font-semibold text-slate-900 marker:content-none">
+            Curriculum matches & context
+          </summary>
+          <div className="space-y-4 border-t border-slate-100 px-5 pb-5 pt-3">
+            {matchesSlot}
+            {contextSlot}
           </div>
         </details>
       )}

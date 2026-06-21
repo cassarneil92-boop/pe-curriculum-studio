@@ -400,7 +400,7 @@ export function buildAssistantResponse(
       relatedTopicIds: [],
       actions: [
         { label: "Open Teaching Progress", href: "/curriculum-analytics", variant: "primary" },
-        { label: "Curriculum Intelligence", href: "/curriculum-intelligence", variant: "secondary" },
+        { label: "Planning Insights", href: "/curriculum-intelligence", variant: "secondary" },
       ],
     };
   }

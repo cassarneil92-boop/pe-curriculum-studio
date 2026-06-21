@@ -355,6 +355,14 @@ function buildQuickActions(
   ];
 }
 
+export function buildAllAreaStatuses(
+  report: CurriculumIntelligenceReport,
+  lessons: LessonPlan[],
+  schemes: SchemeOfWork[]
+): CurriculumAreaStatus[] {
+  return buildAreaStatuses(lessons, schemes, report);
+}
+
 export function buildIntelligenceTeacherView(
   report: CurriculumIntelligenceReport,
   lessons: LessonPlan[],
