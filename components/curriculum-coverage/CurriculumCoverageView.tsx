@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useTeacherContext } from "@/hooks/useTeacherContext";
 import { Badge } from "@/components/ui/Badge";
@@ -8,8 +9,13 @@ import { Card, CardHeader } from "@/components/ui/Card";
 import { FieldGroup, Input, Select } from "@/components/ui/Input";
 import { PageHeader } from "@/components/layout/PageHeader";
 import {
+  CatalogueStatusBadge,
+  PathwayYearHeatmap,
+} from "@/components/curriculum-coverage/CatalogueHeatmap";
+import {
   buildCoverageFilterOptions,
   buildCoverageReport,
+  buildCurriculumCoverageDashboard,
   computeCoverageSummary,
   filterCoverageOutcomes,
   formatOutcomeSkills,
@@ -50,6 +56,7 @@ export function CurriculumCoverageView() {
   const [activeTab, setActiveTab] = useState<CoverageMissingTab>("all");
 
   const summary = useMemo(() => computeCoverageSummary(), []);
+  const dashboard = useMemo(() => buildCurriculumCoverageDashboard(), []);
   const visibility = useMemo(
     () => countImportedOutcomeVisibility(IMPORTED_LEARNING_OUTCOMES, context),
     [context]
@@ -85,14 +92,230 @@ export function CurriculumCoverageView() {
   return (
     <div>
       <PageHeader
-        title="Curriculum Coverage"
-        description="Verify imported learning outcomes are visible and searchable across pathways, years, topics and skills."
+        title="Coverage Dashboard"
+        description="See how complete the curriculum catalogue is — pathways, topics, sports, and metadata quality. This is not the same as what you have taught."
         action={
           <Button variant="secondary" onClick={exportReport}>
             Export audit JSON
           </Button>
         }
       />
+
+      <div className="mb-6 flex flex-col gap-3 rounded-xl border border-teal-200 bg-teal-50/60 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="text-sm font-medium text-teal-900">Catalogue coverage vs teaching progress</p>
+          <p className="mt-1 text-sm text-teal-800/90">
+            This page shows what is in the curriculum library. For what you have actually taught in
+            lessons and schemes, open Teaching Progress.
+          </p>
+        </div>
+        <Link
+          href="/curriculum-analytics"
+          className="inline-flex shrink-0 items-center justify-center rounded-lg bg-teal-700 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-teal-800"
+        >
+          Teaching Progress →
+        </Link>
+      </div>
+
+      <section className="mb-8 space-y-6">
+        <Card>
+          <CardHeader
+            title="Curriculum layers"
+            description="Three views of the same curriculum — raw imports, the planning catalogue teachers use, and strict knowledge-base alignment."
+          />
+          <div className="grid gap-3 sm:grid-cols-3">
+            <LayerCard
+              label="Raw import"
+              value={dashboard.layerTotals.rawImport}
+              detail="Records extracted from source documents"
+            />
+            <LayerCard
+              label="Planning catalogue"
+              value={dashboard.layerTotals.planningCatalogue}
+              detail="Unique outcomes available for planning"
+              highlight
+            />
+            <LayerCard
+              label="KB strict alignment"
+              value={dashboard.layerTotals.kbStrictAlignment}
+              detail="Hand-authored outcomes for alignment testing"
+            />
+          </div>
+        </Card>
+
+        <Card>
+          <CardHeader
+            title="Pathway coverage"
+            description="How well each curriculum pathway is populated in the catalogue."
+          />
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-sm">
+              <thead>
+                <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-500">
+                  <th className="pb-2 pr-4 font-medium">Pathway</th>
+                  <th className="pb-2 pr-4 font-medium">Raw</th>
+                  <th className="pb-2 pr-4 font-medium">Planning</th>
+                  <th className="pb-2 pr-4 font-medium">KB</th>
+                  <th className="pb-2 font-medium">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {dashboard.pathwayCoverage.map((row) => (
+                  <tr key={row.pathwayId} className="border-b border-slate-100 last:border-0">
+                    <td className="py-3 pr-4">
+                      <p className="font-medium text-slate-800">{row.label}</p>
+                      {row.note && <p className="mt-0.5 text-xs text-slate-500">{row.note}</p>}
+                    </td>
+                    <td className="py-3 pr-4 tabular-nums text-slate-700">{row.rawCount}</td>
+                    <td className="py-3 pr-4 tabular-nums text-slate-700">{row.planningCount}</td>
+                    <td className="py-3 pr-4 tabular-nums text-slate-700">{row.kbCount}</td>
+                    <td className="py-3">
+                      <CatalogueStatusBadge status={row.status} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+
+        <div className="grid gap-6 lg:grid-cols-2">
+          <Card>
+            <CardHeader title="Year group coverage" description="Outcomes tagged to each year group in the planning catalogue." />
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+              {dashboard.yearGroupCoverage.map((row) => (
+                <div
+                  key={row.yearGroup}
+                  className="rounded-lg border border-slate-200 bg-slate-50/50 px-3 py-2"
+                >
+                  <p className="text-xs font-medium text-slate-600">{row.label}</p>
+                  <p className="mt-0.5 text-lg font-semibold tabular-nums text-slate-800">
+                    {row.planningCount}
+                  </p>
+                  <div className="mt-1">
+                    <CatalogueStatusBadge status={row.status} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Card>
+
+          <Card>
+            <CardHeader
+              title="Pathway × year heatmap"
+              description="Imported outcome counts by pathway and year group. Darker cells mean more outcomes."
+            />
+            <PathwayYearHeatmap cells={dashboard.pathwayYearHeatmap} />
+          </Card>
+        </div>
+
+        <Card>
+          <CardHeader
+            title="Topic coverage"
+            description="All imported curriculum topics and how many planning outcomes reference each."
+          />
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
+            {dashboard.topicCoverage.map((row) => (
+              <div
+                key={row.topicId}
+                className="rounded-lg border border-slate-200 px-3 py-2 text-xs"
+              >
+                <p className="truncate font-medium text-slate-800">{row.label}</p>
+                <p className="mt-0.5 tabular-nums text-slate-600">{row.planningCount} outcomes</p>
+                <div className="mt-1">
+                  <CatalogueStatusBadge status={row.status} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+
+        <Card>
+          <CardHeader
+            title="Sport-specific coverage"
+            description="Individual sports and activities — including thin sports and those that rely on fallback topics."
+          />
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-sm">
+              <thead>
+                <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-500">
+                  <th className="pb-2 pr-4 font-medium">Sport / activity</th>
+                  <th className="pb-2 pr-4 font-medium">Outcomes</th>
+                  <th className="pb-2 font-medium">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {dashboard.sportCoverage.map((row) => (
+                  <tr key={row.topicId} className="border-b border-slate-100 last:border-0">
+                    <td className="py-2.5 pr-4">
+                      <p className="font-medium text-slate-800">{row.label}</p>
+                      {row.fallbackChain && row.fallbackChain.length > 0 && (
+                        <p className="mt-0.5 text-xs text-slate-500">
+                          Uses fallback: {row.fallbackChain.join(" → ")}
+                        </p>
+                      )}
+                    </td>
+                    <td className="py-2.5 pr-4 tabular-nums text-slate-700">{row.planningCount}</td>
+                    <td className="py-2.5">
+                      <CatalogueStatusBadge status={row.status} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+
+        <div className="grid gap-6 lg:grid-cols-2">
+          <Card>
+            <CardHeader
+              title="Metadata gaps"
+              description="Imported records missing year groups, skills, or values tags."
+            />
+            <div className="grid gap-3 sm:grid-cols-3">
+              <SummaryCard
+                label="Missing year group"
+                value={dashboard.metadataGaps.missingYearGroups}
+                tone="amber"
+              />
+              <SummaryCard
+                label="Missing skills"
+                value={dashboard.metadataGaps.missingSkills}
+                tone="amber"
+              />
+              <SummaryCard
+                label="Missing values"
+                value={dashboard.metadataGaps.missingValues}
+                tone="amber"
+              />
+            </div>
+            <p className="mt-3 text-xs text-slate-500">
+              Based on {dashboard.metadataGaps.totalOutcomes} raw imported records. Use the filters
+              below to review individual outcomes.
+            </p>
+          </Card>
+
+          <Card>
+            <CardHeader
+              title="Catalogue gaps"
+              description="Known gaps that need ministry review or further import work."
+            />
+            <ul className="space-y-3">
+              {dashboard.catalogueGaps.map((gap) => (
+                <li key={gap.id} className="rounded-lg border border-slate-200 px-3 py-3">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="font-medium text-slate-800">{gap.title}</p>
+                    <CatalogueStatusBadge status={gap.status} />
+                  </div>
+                  <p className="mt-1 text-sm text-slate-600">{gap.detail}</p>
+                </li>
+              ))}
+            </ul>
+          </Card>
+        </div>
+      </section>
+
+      <h2 className="mb-4 text-lg font-semibold text-slate-900">Outcome verification</h2>
 
       <p className="mb-6 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
         Imported curriculum data still needs human verification before being trusted for official
@@ -231,6 +454,32 @@ export function CurriculumCoverageView() {
           </div>
         )}
       </Card>
+    </div>
+  );
+}
+
+function LayerCard({
+  label,
+  value,
+  detail,
+  highlight = false,
+}: {
+  label: string;
+  value: number;
+  detail: string;
+  highlight?: boolean;
+}) {
+  return (
+    <div
+      className={`rounded-lg border px-4 py-3 ${
+        highlight ? "border-teal-200 bg-teal-50/40" : "border-slate-200 bg-white"
+      }`}
+    >
+      <p className="text-xs font-medium uppercase tracking-wide text-slate-500">{label}</p>
+      <p className={`mt-1 text-2xl font-semibold tabular-nums ${highlight ? "text-teal-800" : "text-slate-800"}`}>
+        {value}
+      </p>
+      <p className="mt-1 text-xs text-slate-500">{detail}</p>
     </div>
   );
 }

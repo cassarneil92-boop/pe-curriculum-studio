@@ -1,10 +1,20 @@
 export type {
+  CatalogueCoverageStatus,
+  CatalogueGapItem,
+  CatalogueLayerTotals,
   CoverageFilterOptions,
   CoverageFilters,
   CoverageMissingTab,
   CoverageReport,
   CoverageSummary,
+  CurriculumCoverageDashboard,
+  HeatmapCell,
   ImportedLearningOutcomeRecord,
+  MetadataGapSummary,
+  PathwayCoverageRow,
+  SportCoverageRow,
+  TopicCoverageRow,
+  YearGroupCoverageRow,
 } from "./types";
 
 export { IMPORTED_LEARNING_OUTCOMES } from "./coverage-engine";
@@ -25,3 +35,5 @@ export {
   isMissingYearGroup,
   matchesCoverageFilters,
 } from "./coverage-engine";
+
+export { buildCurriculumCoverageDashboard } from "./dashboard-engine";

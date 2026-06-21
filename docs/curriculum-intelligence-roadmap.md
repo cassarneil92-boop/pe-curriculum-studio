@@ -72,7 +72,7 @@ components/intelligence/
 ├── AlignmentScoreCard.tsx
 └── CoachingPanel.tsx
 
-components/curriculum-coverage/   # existing metadata audit UI
+components/curriculum-coverage/   # Coverage Dashboard + metadata audit UI
 components/curriculum-hub/        # browse imported outcomes
 components/planning/              # strict + additional outcome sections
 ```
@@ -87,7 +87,7 @@ components/planning/              # strict + additional outcome sections
 | `/curriculum` | Curriculum Hub (browse) |
 | `/curriculum-analytics` | **Phase 2** taught coverage dashboard |
 | `/curriculum-assistant` | **Phase 7** curriculum-aware assistant |
-| `/curriculum-coverage` | Imported metadata quality audit |
+| `/curriculum-coverage` | **Coverage Dashboard** — catalogue completeness (pathways, topics, metadata) |
 | `/curriculum-tester` | Strict + additional alignment tester |
 | `/curriculum-visibility-audit` | Teacher context visibility |
 | `/lesson-builder` | Lesson planning |
@@ -96,6 +96,15 @@ components/planning/              # strict + additional outcome sections
 | `/settings` | Teacher context |
 
 All existing routes preserved.
+
+### Coverage Dashboard vs Teaching Progress
+
+| View | Route | Question it answers |
+|------|-------|---------------------|
+| **Coverage Dashboard** | `/curriculum-coverage` | Is the curriculum catalogue complete? (imports, pathways, topics, metadata) |
+| **Teaching Progress** | `/curriculum-analytics` | What have I actually taught against that catalogue? |
+
+Engine: `src/lib/curriculum/coverage/dashboard-engine.ts` builds catalogue metrics from raw imports, `getPlanningOutcomes()`, and KB strict-alignment outcomes. The existing outcome verification filters and list remain below the dashboard sections.
 
 ---
 
