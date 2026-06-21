@@ -1,23 +1,21 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState, type ReactNode } from "react";
+import { useMemo } from "react";
 import { useApp } from "@/components/providers/AppProvider";
-import { CoverageBar } from "@/components/intelligence/CoverageBar";
 import {
-  CurriculumHealthHero,
-  CurriculumJourney,
-  ImmediatePriorities,
-  TopicCoverageTable,
+  AreasStillMissingPanel,
+  CurrentSchemesPanel,
+  CurriculumAreaBars,
+  TeachingProgressAdvancedAnalytics,
+  TeachingProgressOverview,
+  TeachingProgressQuickActions,
+  UpcomingTeachingPanel,
 } from "@/components/progress/teaching-progress";
 import { Button } from "@/components/ui/Button";
-import { Card, CardHeader } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { TeachingProgressIllustration } from "@/components/ui/EmptyIllustrations";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { ProgressBar } from "@/components/ui/ProgressBar";
-import { StatCard } from "@/components/ui/StatCard";
-import { buildSchemeProgressSummary } from "@/lib/progress/summary";
 import {
   buildImmediatePriorities,
   buildTeachingProgressReports,
@@ -26,19 +24,11 @@ import {
   getCurriculumHealthScore,
   hasTeachingProgressData,
 } from "@/lib/progress/teaching-progress-ui";
-import { schemeDisplayTitle } from "@/lib/scheme-builder/helpers";
-
-function KpiIcon({ children }: { children: ReactNode }) {
-  return (
-    <span className="text-teal-700" aria-hidden>
-      {children}
-    </span>
-  );
-}
+import { buildTeachingProgressTeacherView } from "@/lib/progress/teaching-progress-teacher-view";
 
 export default function CurriculumAnalyticsPage() {
   const { data } = useApp();
-  const [showAdvanced, setShowAdvanced] = useState(false);
+  const today = useMemo(() => new Date().toISOString().slice(0, 10), []);
 
   const reports = useMemo(
     () => buildTeachingProgressReports(data.lessons, data.schemes, data.calendar),
@@ -59,6 +49,18 @@ export default function CurriculumAnalyticsPage() {
 
   const priorities = useMemo(() => buildImmediatePriorities(topicRows), [topicRows]);
 
+  const teacherView = useMemo(
+    () =>
+      buildTeachingProgressTeacherView(
+        data.lessons,
+        data.schemes,
+        data.calendar,
+        taught,
+        today
+      ),
+    [data.lessons, data.schemes, data.calendar, taught, today]
+  );
+
   const hasData = hasTeachingProgressData(data.lessons, data.schemes);
 
   if (!hasData) {
@@ -67,16 +69,21 @@ export default function CurriculumAnalyticsPage() {
         <PageHeader
           eyebrow="Teaching progress"
           title="Teaching Progress"
-          description="What have you planned, delivered, and still need to teach?"
+          description="Track planned lessons, delivered lessons, and active schemes."
         />
         <EmptyState
-          title="Start tracking delivery"
-          description="Create a lesson or scheme, then mark delivery from Calendar to see your teaching progress."
+          title="No teaching data yet"
+          description="Create your first lesson or scheme to start tracking what you have planned and delivered."
           icon={<TeachingProgressIllustration />}
           action={
-            <Link href="/lesson-builder">
-              <Button>Create your first lesson</Button>
-            </Link>
+            <div className="flex flex-wrap items-center justify-center gap-3">
+              <Link href="/lesson-builder">
+                <Button>Create Lesson</Button>
+              </Link>
+              <Link href="/schemes?create=1">
+                <Button variant="secondary">Create Scheme</Button>
+              </Link>
+            </div>
           }
         />
       </div>
@@ -88,7 +95,7 @@ export default function CurriculumAnalyticsPage() {
       <PageHeader
         eyebrow="Teaching progress"
         title="Teaching Progress"
-        description="What have you planned, delivered, and still need to teach?"
+        description="Track planned lessons, delivered lessons, active schemes, and upcoming teaching."
         action={
           <Link href="/curriculum-intelligence">
             <Button variant="secondary">What to teach next →</Button>
@@ -96,176 +103,22 @@ export default function CurriculumAnalyticsPage() {
         }
       />
 
-      <CurriculumHealthHero health={health} />
+      <TeachingProgressOverview overview={teacherView.overview} />
+      <CurrentSchemesPanel schemes={teacherView.activeSchemes} />
+      <UpcomingTeachingPanel lessons={teacherView.upcomingLessons} />
+      <CurriculumAreaBars items={teacherView.areasCovered} />
+      <AreasStillMissingPanel areas={teacherView.areasMissing} />
+      <TeachingProgressQuickActions actions={teacherView.quickActions} />
 
-      <section className="grid gap-3 sm:grid-cols-3">
-        <StatCard
-          label="Planned"
-          value={taught.summary.plannedOutcomeIds}
-          hint="Outcomes in your lessons and schemes"
-          tone="blue"
-          icon={
-            <KpiIcon>
-              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-              </svg>
-            </KpiIcon>
-          }
-        />
-        <StatCard
-          label="Delivered"
-          value={taught.summary.taughtOutcomeIds}
-          hint="Outcomes from delivered lessons"
-          tone="green"
-          icon={
-            <KpiIcon>
-              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </KpiIcon>
-          }
-        />
-        <StatCard
-          label="Remaining"
-          value={taught.summary.remainingOutcomeIds}
-          hint="Still to deliver across curriculum"
-          tone="amber"
-          icon={
-            <KpiIcon>
-              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </KpiIcon>
-          }
-        />
-      </section>
-
-      <CurriculumJourney
-        planned={taught.summary.plannedOutcomeIds}
-        delivered={taught.summary.taughtOutcomeIds}
-        remaining={taught.summary.remainingOutcomeIds}
-        total={taught.summary.totalCurriculumOutcomes}
+      <TeachingProgressAdvancedAnalytics
+        taught={taught}
+        planned={planned}
+        health={health}
+        priorities={priorities}
+        topicRows={topicRows}
+        lessons={data.lessons}
+        schemes={data.schemes}
       />
-
-      <div className="grid gap-6 lg:grid-cols-5">
-        <div className="lg:col-span-3">
-          <ImmediatePriorities priorities={priorities} />
-        </div>
-        <div className="lg:col-span-2">
-          <Card>
-            <CardHeader title="Delivery focus" description="Track schemes and calendar delivery." />
-            <p className="text-sm text-slate-600">
-              Mark lessons as delivered from Calendar or Schemes to update your progress.
-            </p>
-            <div className="mt-4 flex flex-wrap gap-2">
-              <Link href="/calendar">
-                <Button variant="secondary">Calendar</Button>
-              </Link>
-              <Link href="/schemes">
-                <Button variant="ghost">Schemes</Button>
-              </Link>
-            </div>
-          </Card>
-        </div>
-      </div>
-
-      <TopicCoverageTable rows={topicRows} />
-
-      {data.schemes.length > 0 && (
-        <Card>
-          <CardHeader
-            title="Scheme delivery"
-            description="Lessons marked delivered within each scheme of work."
-          />
-          <div className="space-y-4">
-            {data.schemes.slice(0, 8).map((scheme) => {
-              const summary = buildSchemeProgressSummary(scheme);
-              const percent =
-                summary.totalLessons > 0
-                  ? Math.round((summary.deliveredLessons / summary.totalLessons) * 100)
-                  : 0;
-              return (
-                <ProgressBar
-                  key={scheme.id}
-                  label={schemeDisplayTitle(scheme)}
-                  value={summary.deliveredLessons}
-                  max={summary.totalLessons || 1}
-                  fractionLabel={`${summary.deliveredLessons} / ${summary.totalLessons} · ${percent}%`}
-                  showPercent={false}
-                  variant={percent >= 80 ? "green" : "teal"}
-                />
-              );
-            })}
-          </div>
-        </Card>
-      )}
-
-      <div className="border-t border-slate-200/80 pt-6">
-        <div className="mb-4 flex items-center justify-between gap-3">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
-            Detailed breakdown
-          </h2>
-          {!showAdvanced && (
-            <Button variant="ghost" className="text-xs" onClick={() => setShowAdvanced(true)}>
-              Show advanced view
-            </Button>
-          )}
-        </div>
-        {showAdvanced && (
-        <div className="grid gap-6 lg:grid-cols-2">
-          <Card>
-            <CardHeader title="Learning areas" description="Delivered coverage by learning area." />
-            <div className="space-y-4">
-              {taught.byLearningArea.map((slice) => (
-                <CoverageBar key={slice.id} slice={slice} />
-              ))}
-            </div>
-          </Card>
-
-          <Card>
-            <CardHeader title="Holistic development" description="Delivered coverage across holistic strands." />
-            <div className="space-y-4">
-              {taught.byHolisticDevelopment.map((slice) => (
-                <CoverageBar key={slice.id} slice={slice} />
-              ))}
-            </div>
-          </Card>
-
-          <Card>
-            <CardHeader title="Fitness strands" description="Health-related fitness coverage." />
-            <div className="space-y-4">
-              {taught.byFitnessStrand.length === 0 ? (
-                <p className="text-sm text-slate-500">No fitness-coded outcomes in current data.</p>
-              ) : (
-                taught.byFitnessStrand.map((slice) => (
-                  <CoverageBar key={slice.id} slice={slice} />
-                ))
-              )}
-            </div>
-          </Card>
-
-          <Card className="bg-slate-50/50">
-            <CardHeader title="How delivery is counted" />
-            <p className="text-sm leading-relaxed text-slate-600">
-              Only lessons marked <strong>delivered</strong> count as taught. Planned lessons and
-              schemes show intended coverage only. Mark delivery from{" "}
-              <Link href="/calendar" className="font-medium text-teal-700 hover:text-teal-800">
-                Calendar
-              </Link>
-              ,{" "}
-              <Link href="/lessons" className="font-medium text-teal-700 hover:text-teal-800">
-                Lesson Plans
-              </Link>
-              , or{" "}
-              <Link href="/schemes" className="font-medium text-teal-700 hover:text-teal-800">
-                Schemes of Work
-              </Link>
-              . Official curriculum wording is never modified.
-            </p>
-          </Card>
-        </div>
-        )}
-      </div>
     </div>
   );
 }
