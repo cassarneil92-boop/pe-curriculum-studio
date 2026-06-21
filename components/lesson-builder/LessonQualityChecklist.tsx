@@ -7,7 +7,15 @@ import { buildLessonCoachingReport } from "@/lib/lesson-builder/curriculum-coach
 import type { LessonBuilderFormData } from "@/lib/lesson-builder/types";
 import { PLANNING_COACH } from "@/lib/lesson-builder/planning-coach-labels";
 import type { LessonPlan } from "@/lib/types";
-import { buildKnowledgeQualityInsights } from "@/src/lib/peKnowledge/coaching";
+import {
+  buildKnowledgeQualityInsights,
+  type KnowledgeQualityInsight,
+} from "@/src/lib/peKnowledge/coaching";
+import {
+  applyQuestioningToLesson,
+  applyTextToLessonForm,
+  buildAppliedSuggestionMessage,
+} from "@/src/lib/peKnowledge/applySuggestions";
 
 type LessonQualityInput = Pick<
   LessonPlan,
@@ -34,14 +42,46 @@ type LessonQualityInput = Pick<
 interface LessonQualityChecklistProps {
   lesson: LessonQualityInput;
   compact?: boolean;
+  onApplyLesson?: (form: LessonBuilderFormData, message: string) => void;
 }
 
-export function LessonQualityChecklist({ lesson, compact = false }: LessonQualityChecklistProps) {
+export function LessonQualityChecklist({
+  lesson,
+  compact = false,
+  onApplyLesson,
+}: LessonQualityChecklistProps) {
   const report = buildLessonCoachingReport(lesson as LessonPlan);
   const knowledgeInsights = useMemo(
     () => buildKnowledgeQualityInsights(lesson as LessonBuilderFormData),
     [lesson]
   );
+
+  const handleApplyFix = (insight: KnowledgeQualityInsight) => {
+    if (!insight.fix || !onApplyLesson) return false;
+    const form = lesson as LessonBuilderFormData;
+
+    if (insight.fix.asQuestions) {
+      const questions = insight.fix.text.split("\n").filter(Boolean);
+      const { form: next, applied } = applyQuestioningToLesson(form, questions);
+      if (applied) {
+        onApplyLesson(next, buildAppliedSuggestionMessage("questioning"));
+        return true;
+      }
+      return false;
+    }
+
+    const { form: next, result } = applyTextToLessonForm(
+      form,
+      insight.fix.target,
+      insight.fix.text,
+      { appendOnly: insight.fix.target !== "walt" }
+    );
+    if (result.applied) {
+      onApplyLesson(next, buildAppliedSuggestionMessage(insight.area.toLowerCase()));
+      return true;
+    }
+    return false;
+  };
 
   if (compact) {
     return (
@@ -106,7 +146,10 @@ export function LessonQualityChecklist({ lesson, compact = false }: LessonQualit
       )}
 
       <div className="border-t border-slate-100 pt-4">
-        <LessonQualityInsight insights={knowledgeInsights} />
+        <LessonQualityInsight
+          insights={knowledgeInsights}
+          onApplyFix={onApplyLesson ? handleApplyFix : undefined}
+        />
       </div>
     </Card>
   );

@@ -928,7 +928,14 @@ export default function SchemesPage() {
           )}
 
           {draft.topicId && draft.lessons.length > 0 && (
-            <SchemeProgressionCoach scheme={draft} />
+            <SchemeProgressionCoach
+              scheme={draft}
+              activeLessonIndex={activeLessonIndex}
+              onApplyToLesson={(lessonIndex, lesson, message) => {
+                updateLesson(lessonIndex, lesson);
+                toast(message);
+              }}
+            />
           )}
 
           {displayMode === "table" ? (

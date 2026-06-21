@@ -333,6 +333,11 @@ export default function LessonBuilderPage() {
     });
   }, [validSuggestedOutcomeIdKey, form.topicId, form.skillId, form.selectedLearningOutcomeIds, outcomeSuggestions]);
 
+  function handleApplyLessonKnowledge(next: LessonBuilderFormData, message: string) {
+    setForm(next);
+    toast(message);
+  }
+
   function updateForm<K extends keyof LessonBuilderFormData>(
     key: K,
     value: LessonBuilderFormData[K]
@@ -534,7 +539,7 @@ export default function LessonBuilderPage() {
                 completionPercent={completion.percent}
               />
               <div className="hidden lg:block">
-                <LessonQualityChecklist lesson={form} />
+                <LessonQualityChecklist lesson={form} onApplyLesson={handleApplyLessonKnowledge} />
               </div>
             </div>
           </nav>
@@ -1005,7 +1010,7 @@ export default function LessonBuilderPage() {
             {activeSection === "review" && (
               <div className="space-y-4">
                 <LessonStructureCoach lesson={form} />
-                <PedagogyCoachPanel lesson={form} />
+                <PedagogyCoachPanel lesson={form} onApplyLesson={handleApplyLessonKnowledge} />
                 {form.topicId && (
                   <CurriculumMemoryPanel
                     savedLessons={data.lessons}
@@ -1015,7 +1020,7 @@ export default function LessonBuilderPage() {
                     skillId={form.skillId}
                   />
                 )}
-                <LessonQualityChecklist lesson={form} />
+                <LessonQualityChecklist lesson={form} onApplyLesson={handleApplyLessonKnowledge} />
                 <div className="flex justify-between">
                   <Button type="button" variant="ghost" onClick={() => setActiveSection("ending")}>
                     ← Back

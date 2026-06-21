@@ -1,13 +1,22 @@
 "use client";
 
+import { ApplySuggestionButton } from "@/components/pe-knowledge/ApplySuggestionButton";
 import type { PEKnowledgeCardViewModel } from "@/src/lib/peKnowledge/coaching";
+
+export type PEKnowledgeCardApplyTarget =
+  | "lessonAim"
+  | "successCriteria"
+  | "assessment"
+  | "differentiation"
+  | "teacherNotes";
 
 interface PEKnowledgeCardProps {
   card: PEKnowledgeCardViewModel;
   defaultOpen?: boolean;
+  onApply?: (target: PEKnowledgeCardApplyTarget, text: string) => boolean | void;
 }
 
-export function PEKnowledgeCard({ card, defaultOpen = false }: PEKnowledgeCardProps) {
+export function PEKnowledgeCard({ card, defaultOpen = false, onApply }: PEKnowledgeCardProps) {
   return (
     <details
       className="group rounded-xl border border-slate-100 bg-white/90"
@@ -27,21 +36,54 @@ export function PEKnowledgeCard({ card, defaultOpen = false }: PEKnowledgeCardPr
         {card.planningPrompts.length > 0 && (
           <div>
             <p className="font-semibold text-slate-500">Planning prompts</p>
-            <ul className="mt-1 space-y-0.5">
+            <ul className="mt-1 space-y-1">
               {card.planningPrompts.map((prompt) => (
-                <li key={prompt}>• {prompt}</li>
+                <li key={prompt} className="flex items-start justify-between gap-2">
+                  <span className="min-w-0 flex-1">• {prompt}</span>
+                  {onApply && (
+                    <ApplySuggestionButton
+                      label="Add to aim"
+                      onApply={() => onApply("lessonAim", prompt)}
+                    />
+                  )}
+                </li>
               ))}
             </ul>
           </div>
         )}
-        <p>
-          <span className="font-semibold text-slate-500">Assessment: </span>
-          {card.assessmentPrompt}
-        </p>
-        <p>
-          <span className="font-semibold text-slate-500">Differentiation: </span>
-          {card.differentiationPrompt}
-        </p>
+        <div className="flex items-start justify-between gap-2">
+          <p className="min-w-0 flex-1">
+            <span className="font-semibold text-slate-500">Assessment: </span>
+            {card.assessmentPrompt}
+          </p>
+          {onApply && (
+            <ApplySuggestionButton
+              label="Add"
+              onApply={() => onApply("assessment", card.assessmentPrompt)}
+            />
+          )}
+        </div>
+        <div className="flex items-start justify-between gap-2">
+          <p className="min-w-0 flex-1">
+            <span className="font-semibold text-slate-500">Differentiation: </span>
+            {card.differentiationPrompt}
+          </p>
+          {onApply && (
+            <ApplySuggestionButton
+              label="Add"
+              onApply={() => onApply("differentiation", card.differentiationPrompt)}
+            />
+          )}
+        </div>
+        {onApply && card.entry.practicalApplications[0] && (
+          <div className="flex items-start justify-between gap-2 border-t border-slate-50 pt-2">
+            <p className="min-w-0 flex-1 text-slate-600">{card.entry.practicalApplications[0]}</p>
+            <ApplySuggestionButton
+              label="Add note"
+              onApply={() => onApply("teacherNotes", card.entry.practicalApplications[0])}
+            />
+          </div>
+        )}
       </div>
     </details>
   );

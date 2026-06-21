@@ -229,6 +229,21 @@ export {
 };
 
 export {
+  appendUniqueText,
+  mergePromptList,
+  buildAppliedSuggestionMessage,
+  avoidDuplicateSuggestions,
+  safeApplyText,
+  applyTextToLessonForm,
+  applyQuestioningToLesson,
+  applyCommonMistakeNote,
+  applyToSchemeLesson,
+  buildImprovedWalt,
+  buildImprovedWilf,
+  buildMinimalLessonDraftFromContext,
+} from "./applySuggestions";
+
+export {
   buildKnowledgeContextFromPrompt,
   buildLessonPedagogyCoachReport,
   buildSchemeProgressionCoachReport,

@@ -1,13 +1,19 @@
 "use client";
 
+import { ApplySuggestionButton } from "@/components/pe-knowledge/ApplySuggestionButton";
 import type { KnowledgeQualityInsight } from "@/src/lib/peKnowledge/coaching";
 
 interface LessonQualityInsightProps {
   insights: KnowledgeQualityInsight[];
   compact?: boolean;
+  onApplyFix?: (insight: KnowledgeQualityInsight) => boolean | void;
 }
 
-export function LessonQualityInsight({ insights, compact = false }: LessonQualityInsightProps) {
+export function LessonQualityInsight({
+  insights,
+  compact = false,
+  onApplyFix,
+}: LessonQualityInsightProps) {
   if (insights.length === 0) {
     return compact ? null : (
       <p className="text-xs text-emerald-700">
@@ -35,14 +41,24 @@ export function LessonQualityInsight({ insights, compact = false }: LessonQualit
             key={insight.id}
             className="rounded-lg border border-amber-100 bg-amber-50/50 px-3 py-2 text-xs"
           >
-            <p className="font-medium text-amber-900">{insight.area}</p>
-            <p className="mt-0.5 text-slate-700">{insight.message}</p>
-            {insight.prompt && (
-              <p className="mt-1 text-slate-600">
-                <span className="font-medium">Try: </span>
-                {insight.prompt}
-              </p>
-            )}
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0 flex-1">
+                <p className="font-medium text-amber-900">{insight.area}</p>
+                <p className="mt-0.5 text-slate-700">{insight.message}</p>
+                {insight.prompt && (
+                  <p className="mt-1 text-slate-600">
+                    <span className="font-medium">Try: </span>
+                    {insight.prompt}
+                  </p>
+                )}
+              </div>
+              {insight.fix && onApplyFix && (
+                <ApplySuggestionButton
+                  label={insight.fix.actionLabel}
+                  onApply={() => onApplyFix(insight)}
+                />
+              )}
+            </div>
           </li>
         ))}
       </ul>

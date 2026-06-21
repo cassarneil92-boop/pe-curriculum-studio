@@ -1,13 +1,18 @@
 "use client";
 
 import { useMemo } from "react";
+import { ActionableCoachList } from "@/components/pe-knowledge/ActionableCoachList";
 import { PECoachPanel } from "@/components/pe-knowledge/PECoachPanel";
 import { PedagogySuggestionList } from "@/components/pe-knowledge/PedagogySuggestionList";
-import type { SchemeOfWork } from "@/lib/types";
+import type { SchemeOfWork, SOWLesson } from "@/lib/types";
 import {
   buildSchemeProgressionCoachReport,
   toPEKnowledgeCardViewModel,
 } from "@/src/lib/peKnowledge/coaching";
+import {
+  applyToSchemeLesson,
+  buildAppliedSuggestionMessage,
+} from "@/src/lib/peKnowledge/applySuggestions";
 
 type SchemeSlice = Pick<
   SchemeOfWork,
@@ -16,10 +21,29 @@ type SchemeSlice = Pick<
 
 interface SchemeProgressionCoachProps {
   scheme: SchemeSlice;
+  activeLessonIndex: number;
+  onApplyToLesson: (lessonIndex: number, lesson: SOWLesson, message: string) => void;
 }
 
-export function SchemeProgressionCoach({ scheme }: SchemeProgressionCoachProps) {
+export function SchemeProgressionCoach({
+  scheme,
+  activeLessonIndex,
+  onApplyToLesson,
+}: SchemeProgressionCoachProps) {
   const report = useMemo(() => buildSchemeProgressionCoachReport(scheme), [scheme]);
+  const activeLesson = scheme.lessons[activeLessonIndex];
+
+  const applyScheme = (text: string, target: "coachNote" | "wilf" | "walt", label: string) => {
+    if (!activeLesson) return false;
+    const { lesson: next, result } = applyToSchemeLesson(activeLesson, target, text, {
+      appendOnly: true,
+    });
+    if (result.applied) {
+      onApplyToLesson(activeLessonIndex, next, buildAppliedSuggestionMessage(label));
+      return true;
+    }
+    return false;
+  };
 
   if (!scheme.topicId) {
     return (
@@ -39,19 +63,75 @@ export function SchemeProgressionCoach({ scheme }: SchemeProgressionCoachProps) 
     .slice(0, 2)
     .map(toPEKnowledgeCardViewModel);
 
+  const lessonLabel = activeLesson
+    ? `Lesson ${activeLesson.lessonNumber}`
+    : "selected lesson";
+
   return (
     <div className="space-y-4">
       <PECoachPanel
         title="Progression Coach"
-        description="Scheme-level guidance from the PE knowledge base."
+        description={`Apply guidance to ${lessonLabel}. Select a lesson in the navigator first.`}
       >
-        <PECoachPanel.Section label="Lesson sequencing" items={report.sequencingTips} />
-        <PECoachPanel.Section label="Spacing & retrieval" items={report.spacingTips} />
-        <PECoachPanel.Section label="Simple → complex" items={report.progressionTips} />
-        <PECoachPanel.Section
-          label="Physical · cognitive · social · affective"
-          items={report.holisticBalanceTips}
+        <ActionableCoachList
+          label="Lesson sequencing"
+          items={report.sequencingTips.map((text, index) => ({
+            id: `seq-${index}`,
+            text,
+            actionLabel: "Add note",
+            onApply: () => applyScheme(text, "coachNote", `${lessonLabel} sequencing`),
+          }))}
         />
+        <ActionableCoachList
+          label="Spacing & retrieval"
+          items={report.spacingTips.map((text, index) => ({
+            id: `space-${index}`,
+            text,
+            actionLabel: "Add retrieval",
+            onApply: () => applyScheme(`Retrieval: ${text}`, "coachNote", `${lessonLabel} retrieval`),
+          }))}
+        />
+        <ActionableCoachList
+          label="Simple → complex"
+          items={report.progressionTips.map((text, index) => ({
+            id: `prog-${index}`,
+            text,
+            actionLabel: "Add progression",
+            onApply: () => applyScheme(text, "coachNote", `${lessonLabel} progression`),
+          }))}
+        />
+        <ActionableCoachList
+          label="Physical · cognitive · social · affective"
+          items={report.holisticBalanceTips.map((text, index) => ({
+            id: `holistic-${index}`,
+            text,
+            actionLabel: index === 0 ? "Add balance note" : "Add checkpoint",
+            onApply: () =>
+              applyScheme(
+                text,
+                index === 1 ? "wilf" : "coachNote",
+                index === 1 ? `${lessonLabel} assessment checkpoint` : `${lessonLabel} domain balance`
+              ),
+          }))}
+        />
+        {report.knowledgeSuggestions[0]?.entry.lessonPlanningPrompts[0] && (
+          <ActionableCoachList
+            label="Questioning focus"
+            items={[
+              {
+                id: "questioning-focus",
+                text: report.knowledgeSuggestions[0].entry.lessonPlanningPrompts[0],
+                actionLabel: "Add focus",
+                onApply: () =>
+                  applyScheme(
+                    `Questioning focus: ${report.knowledgeSuggestions[0].entry.lessonPlanningPrompts[0]}`,
+                    "coachNote",
+                    `${lessonLabel} questioning`
+                  ),
+              },
+            ]}
+          />
+        )}
       </PECoachPanel>
 
       {topSuggestions.length > 0 && (

@@ -4,9 +4,11 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { AssistantSchemeDraftActions } from "@/components/assistant/AssistantSchemeDraftActions";
 import { AssistantLessonDraftActions } from "@/components/assistant/AssistantLessonDraftActions";
+import type { PEKnowledgeCardApplyTarget } from "@/components/pe-knowledge/PEKnowledgeCard";
 import { PedagogySuggestionList } from "@/components/pe-knowledge/PedagogySuggestionList";
 import { PedagogySourcesList } from "@/components/education/PedagogyInsightCard";
 import { useApp } from "@/components/providers/AppProvider";
+import { useToast } from "@/components/providers/ToastProvider";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card, CardHeader } from "@/components/ui/Card";
@@ -16,9 +18,18 @@ import { useTeacherContext } from "@/hooks/useTeacherContext";
 import {
   SUGGESTED_PROMPT_CHIPS,
   type AssistantResponse,
+  buildAssistantLessonDraft,
 } from "@/lib/assistant";
+import { loadLessonDraft, saveLessonDraft } from "@/lib/lesson-builder/draft";
+import type { LessonBuilderFormData } from "@/lib/lesson-builder/types";
+import { migrateLegacyYearGroup } from "@/lib/year-groups";
 import { queryCurriculumAssistant } from "@/src/lib/intelligence/assistant/curriculum-assistant";
 import { getPlanningAssistantKnowledgeSuggestions } from "@/src/lib/peKnowledge/coaching";
+import {
+  applyTextToLessonForm,
+  buildAppliedSuggestionMessage,
+  buildMinimalLessonDraftFromContext,
+} from "@/src/lib/peKnowledge/applySuggestions";
 import type { PathwayId } from "@/lib/types";
 
 function ContextCard({ response }: { response: AssistantResponse }) {
@@ -248,6 +259,7 @@ function PartialMatchCard({ response }: { response: AssistantResponse }) {
 export default function CurriculumAssistantPage() {
   const { data } = useApp();
   const { context } = useTeacherContext();
+  const { toast } = useToast();
   const [prompt, setPrompt] = useState("");
   const [response, setResponse] = useState<AssistantResponse | null>(null);
 
@@ -260,6 +272,57 @@ export default function CurriculumAssistantPage() {
       pathway: context.visibleAppPathways[0] as PathwayId | undefined,
     }).slice(0, 5);
   }, [prompt, response, context.teacher.yearGroups, context.visibleAppPathways]);
+
+  function resolvePlanningLessonDraft(): LessonBuilderFormData {
+    const existing = loadLessonDraft()?.form;
+    if (existing) return existing;
+
+    if (response?.lessonDraftSource && response.lessonPreview) {
+      return buildAssistantLessonDraft(response.lessonDraftSource, response.lessonPreview);
+    }
+
+    const yearGroup =
+      migrateLegacyYearGroup(response?.detectedContext?.yearGroup ?? "") ??
+      context.teacher.yearGroups[0] ??
+      "year-9";
+
+    return buildMinimalLessonDraftFromContext({
+      yearGroup,
+      topicId: response?.relatedTopicIds?.[0],
+      pathwayId: context.visibleAppPathways[0] ?? "general-pe",
+      selectedPathways: context.visibleAppPathways,
+      walt: response?.lessonPreview?.walt,
+      successCriteria: response?.lessonPreview?.wilf,
+    });
+  }
+
+  function handlePlanningApply(target: PEKnowledgeCardApplyTarget, text: string) {
+    const lessonTarget =
+      target === "lessonAim"
+        ? "walt"
+        : target === "teacherNotes"
+          ? "reflectionNotes"
+          : target === "assessment"
+            ? "assessmentNotes"
+            : target;
+
+    const form = resolvePlanningLessonDraft();
+    const { form: next, result } = applyTextToLessonForm(form, lessonTarget, text, {
+      appendOnly: target !== "lessonAim",
+    });
+
+    if (!result.applied) return false;
+
+    saveLessonDraft({ form: next, editingId: null, activeSection: "design" });
+    const label =
+      target === "lessonAim"
+        ? "lesson aim"
+        : target === "teacherNotes"
+          ? "teacher notes"
+          : target;
+    toast(buildAppliedSuggestionMessage(label));
+    return true;
+  }
 
   function handleAsk(example?: string) {
     const q = example ?? prompt;
@@ -342,7 +405,10 @@ export default function CurriculumAssistantPage() {
           <ContextCard response={response} />
 
           {(specialistSuggestions.length > 0 || response) && (
-            <PedagogySuggestionList suggestions={specialistSuggestions} />
+            <PedagogySuggestionList
+              suggestions={specialistSuggestions}
+              onApply={handlePlanningApply}
+            />
           )}
 
           <PartialMatchCard response={response} />

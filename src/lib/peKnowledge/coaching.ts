@@ -11,6 +11,8 @@ import {
   suggestRelevantPEKnowledge,
   type SuggestedKnowledgeEntry,
 } from "./peKnowledgeIndex";
+import type { LessonApplyTarget } from "./applySuggestions";
+import { buildImprovedWalt, buildImprovedWilf, buildQuestioningFixPrompts } from "./applySuggestions";
 import type { LessonKnowledgeContext, PEKnowledgeEntry } from "./types";
 
 export interface PEKnowledgeCardViewModel {
@@ -45,6 +47,12 @@ export interface KnowledgeQualityInsight {
   message: string;
   prompt?: string;
   entryId?: string;
+  fix?: {
+    target: LessonApplyTarget;
+    text: string;
+    actionLabel: string;
+    asQuestions?: boolean;
+  };
 }
 
 const STUDENT_NEED_KEYWORDS = [
@@ -364,6 +372,8 @@ export function buildKnowledgeQualityInsights(
     a.progressions.some((p) => p.trim())
   );
 
+  const topicLabel = lesson.topicId ? getPlanningTopicDisplayName(lesson.topicId) : "this activity";
+
   if (!hasWalt || waltLooksLikeActivity(lesson.walt ?? lesson.learningIntention ?? "")) {
     insights.push({
       id: "learning-intention",
@@ -373,6 +383,11 @@ export function buildKnowledgeQualityInsights(
         : "Learning intention / WALT is missing or unclear.",
       prompt: waltEntry?.lessonPlanningPrompts[0],
       entryId: waltEntry?.id,
+      fix: {
+        target: "walt",
+        text: buildImprovedWalt(topicLabel, lesson.skillId),
+        actionLabel: "Use this fix",
+      },
     });
   }
 
@@ -383,6 +398,11 @@ export function buildKnowledgeQualityInsights(
       message: "Activities are present but not clearly linked to a learning intention.",
       prompt: structureEntry?.lessonPlanningPrompts[0],
       entryId: structureEntry?.id,
+      fix: {
+        target: "walt",
+        text: buildImprovedWalt(topicLabel),
+        actionLabel: "Add WALT",
+      },
     });
   }
 
@@ -393,6 +413,11 @@ export function buildKnowledgeQualityInsights(
       message: "No WILF / success criteria for students to self-check.",
       prompt: wilfEntry?.lessonPlanningPrompts[0],
       entryId: wilfEntry?.id,
+      fix: {
+        target: "successCriteria",
+        text: buildImprovedWilf(wilfEntry?.assessmentPrompts ?? ["perform the skill with control"]),
+        actionLabel: "Use this fix",
+      },
     });
   }
 
@@ -403,6 +428,11 @@ export function buildKnowledgeQualityInsights(
       message: "No assessment opportunity or evidence plan noted.",
       prompt: aflEntry?.assessmentPrompts[0],
       entryId: aflEntry?.id,
+      fix: {
+        target: "assessmentNotes",
+        text: aflEntry?.assessmentPrompts[0] ?? "Observe students against WILF during main activity.",
+        actionLabel: "Add evidence",
+      },
     });
   }
 
@@ -413,16 +443,28 @@ export function buildKnowledgeQualityInsights(
       message: "No differentiation strategy documented for mixed ability.",
       prompt: udlEntry?.differentiationPrompts[0],
       entryId: udlEntry?.id,
+      fix: {
+        target: "differentiation",
+        text: udlEntry?.differentiationPrompts[0] ?? "Offer support, core, and extend task options.",
+        actionLabel: "Add differentiation",
+      },
     });
   }
 
   if (!hasReflection) {
+    const questions = buildQuestioningFixPrompts(guidedEntry?.lessonPlanningPrompts ?? []);
     insights.push({
       id: "questioning",
       area: "Questioning / reflection",
       message: "No reflection or questioning phase in the lesson ending.",
       prompt: guidedEntry?.lessonPlanningPrompts[0],
       entryId: guidedEntry?.id,
+      fix: {
+        target: "reflectionNotes",
+        text: questions.join("\n"),
+        actionLabel: "Add questions",
+        asQuestions: true,
+      },
     });
   }
 
@@ -433,6 +475,11 @@ export function buildKnowledgeQualityInsights(
       message: "Activities lack explicit progression within the lesson.",
       prompt: progressionEntry?.lessonPlanningPrompts[0],
       entryId: progressionEntry?.id,
+      fix: {
+        target: "teacherNotes",
+        text: progressionEntry?.lessonPlanningPrompts[0] ?? "Plan a clear progression within the main activity.",
+        actionLabel: "Add note",
+      },
     });
   }
 
@@ -443,6 +490,11 @@ export function buildKnowledgeQualityInsights(
       message: "Consider access and inclusion — no differentiation or safety notes yet.",
       prompt: udlEntry?.lessonPlanningPrompts[0],
       entryId: udlEntry?.id,
+      fix: {
+        target: "differentiation",
+        text: udlEntry?.differentiationPrompts[0] ?? "Same learning intention with varied task access.",
+        actionLabel: "Add inclusion idea",
+      },
     });
   }
 
@@ -453,6 +505,11 @@ export function buildKnowledgeQualityInsights(
       message: "Link official curriculum outcomes to strengthen alignment.",
       prompt: getPEKnowledgeEntryById("malta-curriculum-pathways")?.lessonPlanningPrompts[0],
       entryId: "malta-curriculum-pathways",
+      fix: {
+        target: "teacherNotes",
+        text: "Link curriculum outcomes in Curriculum Reference before saving.",
+        actionLabel: "Add reminder",
+      },
     });
   }
 
