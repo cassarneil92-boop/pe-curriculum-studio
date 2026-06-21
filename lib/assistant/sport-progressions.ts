@@ -5,6 +5,10 @@ import {
   pickLessonTypesForCount,
   type LessonTemplateType,
 } from "@/lib/assistant/lesson-structure-templates";
+import {
+  getSportDefinitionByTopicId,
+  resolveSportIdFromTopic,
+} from "@/src/lib/curriculum/sport-curriculum";
 
 export interface SportProgression {
   topicKey: string;
@@ -12,29 +16,6 @@ export interface SportProgression {
   phases: string[];
   lessonTypeHints?: Partial<Record<number, LessonTemplateType>>;
 }
-
-const SPORT_PROGRESSIONS: SportProgression[] = [
-  {
-    topicKey: "football",
-    label: "Football",
-    phases: ["Technique", "Opposed practice", "Small sided game", "Tactical application"],
-  },
-  {
-    topicKey: "basketball",
-    label: "Basketball",
-    phases: ["Ball mastery", "Skill execution", "Transition game", "Tactical game"],
-  },
-  {
-    topicKey: "handball",
-    label: "Handball",
-    phases: ["Technique", "Timing", "Shooting under pressure", "Decision making"],
-  },
-  {
-    topicKey: "volleyball",
-    label: "Volleyball",
-    phases: ["Individual technique", "Cooperative rally", "Structured game", "Match play"],
-  },
-];
 
 const GENERIC_PHASES = [
   "Introduction and baseline skills",
@@ -46,21 +27,28 @@ const GENERIC_PHASES = [
 ];
 
 function normalizeTopicKey(topicId: string): string {
+  const sportId = resolveSportIdFromTopic(topicId);
+  if (sportId) return sportId === "racket-sports" ? "badminton" : sportId;
   const key = topicId.toLowerCase();
-  for (const sport of SPORT_PROGRESSIONS) {
-    if (key.includes(sport.topicKey)) return sport.topicKey;
-  }
+  if (key.includes("football")) return "football";
+  if (key.includes("basketball")) return "basketball";
+  if (key.includes("handball")) return "handball";
+  if (key.includes("volleyball")) return "volleyball";
   return "generic";
 }
 
 export function getSportProgression(topicId: string): SportProgression | null {
-  const key = normalizeTopicKey(topicId);
-  if (key === "generic") return null;
-  return SPORT_PROGRESSIONS.find((sport) => sport.topicKey === key) ?? null;
+  const sport = getSportDefinitionByTopicId(topicId);
+  if (!sport) return null;
+  return {
+    topicKey: sport.id,
+    label: sport.label,
+    phases: sport.lessonPhases.map((p) => p.label),
+  };
 }
 
 export function isSportSpecificTopic(topicId: string): boolean {
-  return normalizeTopicKey(topicId) !== "generic";
+  return resolveSportIdFromTopic(topicId) !== null;
 }
 
 function expandPhasesToLessonCount(phases: string[], lessonCount: number): string[] {

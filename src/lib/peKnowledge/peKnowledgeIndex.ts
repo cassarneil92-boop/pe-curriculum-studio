@@ -16,6 +16,7 @@ import { TPSR_MASTER_PE_ENTRY, isTPSRRelevant } from "./tpsrMaster";
 import { PRIMARY_PE_MASTER_PE_ENTRY, isPrimaryPEYearGroup, isPrimaryPERelevant } from "./primaryPEMaster";
 import { FITNESS_CURRICULUM_MASTER_PE_ENTRY, isFitnessCurriculumRelevant } from "./fitnessCurriculumMaster";
 import { SEC_PE_OPTION_MASTER_PE_ENTRY, isSecPeOptionRelevant } from "./secPeOptionMaster";
+import { SPORT_CURRICULUM_MASTER_PE_ENTRY, isSportCurriculumRelevant } from "./sportCurriculumMaster";
 import { LEARNING_SCIENCE_MASTER_PE_ENTRY, isLearningScienceRelevant } from "./learningScienceMaster";
 import { EDUCATIONAL_PSYCHOLOGY_MASTER_PE_ENTRY, isEducationalPsychologyRelevant } from "./educationalPsychologyMaster";
 import { VISIBLE_LEARNING_MASTER_PE_ENTRY, isVisibleLearningRelevant } from "./visibleLearningMaster";
@@ -40,6 +41,7 @@ export const ALL_PE_KNOWLEDGE_ENTRIES: PEKnowledgeEntry[] = [
   PRIMARY_PE_MASTER_PE_ENTRY,
   FITNESS_CURRICULUM_MASTER_PE_ENTRY,
   SEC_PE_OPTION_MASTER_PE_ENTRY,
+  SPORT_CURRICULUM_MASTER_PE_ENTRY,
   LEARNING_SCIENCE_MASTER_PE_ENTRY,
   EDUCATIONAL_PSYCHOLOGY_MASTER_PE_ENTRY,
   VISIBLE_LEARNING_MASTER_PE_ENTRY,
@@ -218,6 +220,13 @@ function scoreEntryForContext(
     ) {
       score += 7;
       reasons.push("SEC PE Option examination and curriculum guidance");
+    }
+    if (
+      (entry.id === "sport-curriculum-master" || entry.tags.includes("sport-intelligence")) &&
+      (isSportCurriculumRelevant(`${context.lessonAim ?? ""} ${area}`, context.topicId))
+    ) {
+      score += 7;
+      reasons.push("Sport intelligence — skills, progressions, and pedagogy");
     }
     if (
       (entry.id === "learning-science-master" || entry.tags.includes("learning-science")) &&

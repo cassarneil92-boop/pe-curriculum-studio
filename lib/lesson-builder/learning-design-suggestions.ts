@@ -3,6 +3,8 @@ import type { LearningOutcome } from "@/src/lib/curriculum/types";
 import { getPlanningSkillDisplayName } from "@/src/lib/curriculum/planning";
 import { buildFitnessLessonDesignHints } from "@/src/lib/peKnowledge/fitnessCurriculumEngines";
 import { buildSecLessonDesignHints } from "@/src/lib/peKnowledge/secPeOptionEngines";
+import { buildSportLessonDesignHints } from "@/src/lib/peKnowledge/sportCurriculumEngines";
+import { resolveSportIdFromTopic } from "@/src/lib/curriculum/sport-curriculum";
 import type { SuggestionBadge } from "@/lib/lesson-builder/planning-coach-labels";
 
 export type LearningDesignField =
@@ -382,6 +384,60 @@ export function buildLearningDesignSuggestions(input: {
       sourceLabel: "SEC PE Option safety",
       badge: "SAFETY",
     });
+  }
+
+  if (input.topicId && resolveSportIdFromTopic(input.topicId)) {
+    const sportHints = buildSportLessonDesignHints({
+      selectedOutcomeIds: input.selectedOutcomeIds,
+      topicId: input.topicId,
+      skillId: input.skillId,
+    });
+
+    for (const text of sportHints.walt) {
+      walt.push({
+        id: `sport-walt-${walt.length}`,
+        field: "walt",
+        text: ensureSentence(text),
+        sourceLabel: "Sport intelligence",
+        badge: "SKILL",
+      });
+    }
+    for (const text of sportHints.wilf) {
+      successCriteria.push({
+        id: `sport-wilf-${successCriteria.length}`,
+        field: "successCriteria",
+        text: ensureSentence(text),
+        sourceLabel: "Sport intelligence",
+        badge: "CURRICULUM",
+      });
+    }
+    for (const text of sportHints.activities) {
+      learningIntentions.push({
+        id: `sport-activity-${learningIntentions.length}`,
+        field: "learningIntention",
+        text: ensureSentence(text),
+        sourceLabel: "Sport lesson phase",
+        badge: "SKILL",
+      });
+    }
+    for (const text of sportHints.assessment) {
+      assessment.push({
+        id: `sport-assess-${assessment.length}`,
+        field: "assessmentNotes",
+        text: ensureSentence(text),
+        sourceLabel: "Sport assessment",
+        badge: "ASSESSMENT",
+      });
+    }
+    for (const text of sportHints.reflection) {
+      learningIntentions.push({
+        id: `sport-reflect-${learningIntentions.length}`,
+        field: "learningIntention",
+        text: ensureSentence(text),
+        sourceLabel: "Sport reflection",
+        badge: "SKILL",
+      });
+    }
   }
 
   return {

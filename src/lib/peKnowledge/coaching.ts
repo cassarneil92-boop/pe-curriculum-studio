@@ -81,6 +81,12 @@ import {
   buildSchemeSecPETips,
 } from "./secPeOptionEngines";
 import { SEC_PE_OPTION_MASTER_PE_ENTRY } from "./secPeOptionMaster";
+import {
+  buildSportCurriculumPlanningInsights,
+  buildSportQualityInsights,
+  buildSchemeSportTips,
+} from "./sportCurriculumEngines";
+import { SPORT_CURRICULUM_MASTER_PE_ENTRY } from "./sportCurriculumMaster";
 import { LEARNING_SCIENCE_MASTER_PE_ENTRY } from "./learningScienceMaster";
 import {
   buildLearningSciencePlanningInsights,
@@ -342,6 +348,7 @@ export interface SchemeProgressionCoachReport {
   primaryPETips?: string[];
   fitnessTips?: string[];
   secPeTips?: string[];
+  sportPeTips?: string[];
   learningScienceTips?: string[];
   educationalPsychologyTips?: string[];
   visibleLearningTips?: string[];
@@ -571,6 +578,13 @@ export function getPlanningAssistantKnowledgeSuggestions(
     lessonAim: context.lessonAim ?? prompt,
     walt: context.lessonAim ?? prompt,
   });
+  const sportInsights = buildSportCurriculumPlanningInsights(prompt, {
+    yearGroup: context.yearGroup,
+    topicId: context.topicId,
+    skillId: context.skillId,
+    activityArea: context.activityArea,
+    lessonAim: context.lessonAim ?? prompt,
+  });
   const lsInsights = buildLearningSciencePlanningInsights(prompt, {
     yearGroup: context.yearGroup,
     topicId: context.topicId,
@@ -657,6 +671,16 @@ export function getPlanningAssistantKnowledgeSuggestions(
       differentiationPrompt: "Tiered exam questions — describe, explain, apply with scaffolds.",
     };
     return [secCard, ...cards].slice(0, limit);
+  }
+  if (sportInsights.length > 0) {
+    const sportCard: PEKnowledgeCardViewModel = {
+      entry: SPORT_CURRICULUM_MASTER_PE_ENTRY,
+      reason: sportInsights[0],
+      planningPrompts: sportInsights.slice(0, 3),
+      assessmentPrompt: "Assess technique and tactical decision-making in game phases.",
+      differentiationPrompt: "Adapt space, equipment, or rules — not just remove challenge.",
+    };
+    return [sportCard, ...cards].slice(0, limit);
   }
   if (primaryInsights.length > 0) {
     const primaryCard: PEKnowledgeCardViewModel = {
@@ -1003,6 +1027,7 @@ export function buildSchemeProgressionCoachReport(
   const primaryPETips = buildSchemePrimaryPETips(scheme);
   const fitnessTips = buildSchemeFitnessTips(scheme);
   const secPeTips = buildSchemeSecPETips(scheme);
+  const sportPeTips = buildSchemeSportTips(scheme);
   const learningScienceTips = buildSchemeLearningScienceTips(scheme, activeLessonIndex);
   const educationalPsychologyTips = buildSchemeEducationalPsychologyTips(scheme, activeLessonIndex);
   const visibleLearningTips = buildSchemeVisibleLearningTips(scheme, activeLessonIndex);
@@ -1022,6 +1047,7 @@ export function buildSchemeProgressionCoachReport(
     primaryPETips,
     fitnessTips,
     secPeTips,
+    sportPeTips,
     learningScienceTips,
     educationalPsychologyTips,
     visibleLearningTips,
@@ -1275,6 +1301,16 @@ export function buildKnowledgeQualityInsights(
       message: si.message,
       prompt: si.prompt,
       entryId: si.entryId,
+    });
+  }
+
+  for (const spi of buildSportQualityInsights(lesson)) {
+    insights.push({
+      id: spi.id,
+      area: spi.area,
+      message: spi.message,
+      prompt: spi.prompt,
+      entryId: spi.entryId,
     });
   }
 

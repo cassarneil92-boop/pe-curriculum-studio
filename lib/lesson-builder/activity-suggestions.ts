@@ -2,6 +2,8 @@ import { resolveLearningOutcomeById } from "@/src/lib/curriculum/metadata";
 import { generateId } from "@/lib/storage";
 import { buildFitnessActivityBlocks } from "@/src/lib/peKnowledge/fitnessCurriculumEngines";
 import { buildSecActivityBlocks } from "@/src/lib/peKnowledge/secPeOptionEngines";
+import { buildSportActivityBlocks } from "@/src/lib/peKnowledge/sportCurriculumEngines";
+import { resolveSportIdFromTopic } from "@/src/lib/curriculum/sport-curriculum";
 import type { SuggestionBadge } from "@/lib/lesson-builder/planning-coach-labels";
 import type { LessonActivity } from "@/lib/types";
 
@@ -70,6 +72,31 @@ export function buildActivitySuggestions(input: {
   const duration = Math.max(input.lessonDuration || 60, 30);
   const isFitnessTopic = input.topicId.toLowerCase() === "fitness";
   const isSecTheoryTopic = input.topicId.toLowerCase() === "pe-option-theory";
+  const isSportTopic = resolveSportIdFromTopic(input.topicId) !== null;
+
+  if (isSportTopic && !isFitnessTopic && !isSecTheoryTopic) {
+    const sportBlocks = buildSportActivityBlocks({
+      topicId: input.topicId,
+      skillName: input.skillName,
+      topicName: input.topicName,
+      duration,
+    });
+    if (sportBlocks.length > 0) {
+      return sportBlocks.map((block, index) => ({
+        id: `sport-activity-${index}`,
+        blockType: block.blockType,
+        name: block.name,
+        purpose: block.purpose,
+        durationMinutes: block.durationMinutes,
+        equipment: block.equipment,
+        progression: block.progression,
+        differentiationEasier: "Reduce space, slow tempo, or simplify rules",
+        differentiationHarder: "Add defenders, time pressure, or smaller targets",
+        studentsGroup: block.blockType === "small-sided-game" ? "Teams of 4–6" : "Pairs or groups",
+        badge: (index >= 2 ? "ASSESSMENT" : "SKILL") as SuggestionBadge,
+      }));
+    }
+  }
 
   if (isSecTheoryTopic) {
     const secBlocks = buildSecActivityBlocks({

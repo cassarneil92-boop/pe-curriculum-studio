@@ -25,6 +25,7 @@ import { buildCreateLessonAssistantResponse } from "@/lib/assistant/lesson-draft
 import { handlePrimaryPEAssistantQuery } from "@/lib/assistant/primary-pe-queries";
 import { handleFitnessAssistantQuery } from "@/lib/assistant/fitness-pe-queries";
 import { handleSecPeAssistantQuery } from "@/lib/assistant/sec-pe-queries";
+import { handleSportAssistantQuery } from "@/lib/assistant/sport-pe-queries";
 import { resolveOutcomesForTopic } from "@/lib/assistant/topic-fallback";
 import { isPlanningCreationIntent } from "@/lib/assistant/query-parser";
 import type { ParsedAssistantQuery } from "./query-parser";
@@ -342,6 +343,9 @@ export function buildAssistantResponse(
     const codeResponse = respondToOutcomeCode(parsed.outcomeCode);
     if (codeResponse) return codeResponse;
   }
+
+  const sportResponse = handleSportAssistantQuery(parsed, context);
+  if (sportResponse) return sportResponse;
 
   const secResponse = handleSecPeAssistantQuery(parsed, context);
   if (secResponse) return secResponse;

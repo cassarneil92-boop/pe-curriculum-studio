@@ -273,6 +273,66 @@ Strict curriculum alignment and official outcome wording are unchanged.
 
 ---
 
+## Phase 6D — Sport Intelligence Layer
+
+**Goal:** Teach PE Curriculum Studio how sports work — skills, progressions, pedagogy, resources, and realistic lesson sequences.
+
+### Module layout
+
+```
+src/lib/curriculum/sport-curriculum/
+├── types.ts                 # Sport definitions, dimensions, pedagogy models
+├── progression-framework.ts # 8 sports, skill chains, lesson phases, resources
+├── planning-bridge.ts       # isSportPlanningOutcome, topic matching
+├── outcome-metadata.ts      # Skill and dimension metadata overlays
+├── progression-engine.ts    # querySportProgression, dashboard, skill sequences
+└── index.ts
+
+src/lib/peKnowledge/
+├── sportCurriculumMaster.ts   # Knowledge layer entry
+└── sportCurriculumEngines.ts  # Lesson design, activity blocks, scheme tips
+
+lib/assistant/
+├── sport-pe-queries.ts        # Sport-specific assistant handler
+└── sport-progressions.ts      # Extended to use sport-curriculum definitions
+```
+
+### Sports tracked
+
+Football, Basketball, Volleyball, Handball, Athletics, Gymnastics, Dance, Racket Sports (badminton, tennis, etc.)
+
+Each sport includes dimensions: Technical, Tactical, Physical, Psychological, Social.
+
+### Skill progressions
+
+Per-sport skill chains with prerequisite relationships (e.g. football: passing → receiving → dribbling → finishing → defending → transition → pressing).
+
+### Pedagogy mapping
+
+| Sport | Recommended pedagogy |
+|-------|---------------------|
+| Football | TGfU + CLA + Cooperative Learning |
+| Basketball | TGfU + CLA + Sport Education |
+| Volleyball | TGfU + Whole-Part-Whole |
+| Handball | TGfU + CLA |
+| Athletics | Whole-Part-Whole + Whole-Analytical-Whole |
+| Gymnastics | Whole-Part-Whole |
+| Dance | Whole-Part-Whole + Cooperative Learning |
+| Racket Sports | Whole-Part-Whole + CLA + TGfU |
+
+### Assistant capabilities
+
+- Create sport-specific lessons (e.g. Year 8 football passing)
+- Create sport units (e.g. volleyball serving)
+- Progress skills across 6 lessons
+- Suggest TGfU activities with pedagogy recommendations
+
+### Dashboard metrics
+
+Coverage Dashboard **Sport intelligence coverage** section shows sport depth, skill coverage, progression completeness, and gap analysis.
+
+---
+
 ## Priority ranking
 
 1. **P0 (done):** Analytics dashboard, advisory alignment, implementation audit

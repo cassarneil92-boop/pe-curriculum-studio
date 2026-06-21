@@ -20,6 +20,7 @@ import type {
 import { buildPrimaryPEDashboardSummary } from "../primary-pe/progression-engine";
 import { buildFitnessCurriculumDashboardSummary } from "../fitness-curriculum/progression-engine";
 import { buildSecPeOptionDashboardSummary } from "../pe-option-sec/progression-engine";
+import { buildSportIntelligenceDashboardSummary } from "../sport-curriculum/progression-engine";
 import type { PrimaryPEDashboardSummary } from "../primary-pe/types";
 import type { FitnessCurriculumDashboardSummary } from "../fitness-curriculum/types";
 
@@ -420,5 +421,6 @@ export function buildCurriculumCoverageDashboard(): CurriculumCoverageDashboard 
     primaryPE: buildPrimaryPEDashboardSummary(),
     fitnessPE: buildFitnessCurriculumDashboardSummary(),
     secPE: buildSecPeOptionDashboardSummary(),
+    sportPE: buildSportIntelligenceDashboardSummary(),
   };
 }

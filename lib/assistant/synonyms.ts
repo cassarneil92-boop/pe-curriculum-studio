@@ -172,6 +172,10 @@ export const INTENT_PHRASES: Record<string, string[]> = {
 };
 
 export const SUGGESTED_PROMPT_CHIPS = [
+  "Create a Year 8 football passing lesson",
+  "Create a volleyball serving unit",
+  "Progress basketball dribbling across 6 lessons",
+  "Suggest TGfU activities for handball",
   "Create a SEC PE Option anatomy scheme",
   "Create a cardiovascular system lesson",
   "Explain principles of training",

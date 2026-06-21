@@ -178,6 +178,17 @@ export function SchemeProgressionCoach({
             }))}
           />
         )}
+        {(report.sportPeTips ?? []).length > 0 && (
+          <ActionableCoachList
+            label="Sport intelligence progression"
+            items={(report.sportPeTips ?? []).map((text, index) => ({
+              id: `sport-pe-${index}`,
+              text,
+              actionLabel: "Add sport note",
+              onApply: () => applyScheme(text, "coachNote", `${lessonLabel} sport intelligence`),
+            }))}
+          />
+        )}
         {(report.learningScienceTips ?? []).length > 0 && (
           <ActionableCoachList
             label="Learning Science memory map"
