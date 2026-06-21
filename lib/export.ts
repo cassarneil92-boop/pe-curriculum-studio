@@ -3,6 +3,7 @@ import {
   buildExportBrandHeaderHtml,
   EXPORT_BRAND_STYLES,
 } from "@/lib/brand/export-header";
+import { formatExportMetaBlock } from "@/lib/export/export-context";
 import type { ExportFormat, LessonPlan, SchemeOfWork } from "./types";
 import { buildLessonPreviewHtml } from "./lesson-plans/export";
 import { getPathwayLabel } from "./constants";
@@ -34,12 +35,21 @@ function baseStyles(): string {
   `;
 }
 
-export function buildLessonExportHtml(lesson: LessonPlan): string {
-  return buildLessonPreviewHtml(lesson);
+export { buildExportDocumentContext, formatExportMetaBlock, type ExportDocumentContext } from "@/lib/export/export-context";
+
+export function buildLessonExportHtml(
+  lesson: LessonPlan,
+  exportContext?: import("@/lib/export/export-context").ExportDocumentContext
+): string {
+  return buildLessonPreviewHtml(lesson, exportContext);
 }
 
-export function buildSchemeExportHtml(scheme: SchemeOfWork): string {
+export function buildSchemeExportHtml(
+  scheme: SchemeOfWork,
+  exportContext?: import("@/lib/export/export-context").ExportDocumentContext
+): string {
   const title = schemeDisplayTitle(scheme);
+  const metaBlock = exportContext ? formatExportMetaBlock(exportContext) : "";
   const lessonsHtml = scheme.lessons
     .map((lesson) => {
       const outcomes = resolveSchemeLearningOutcomes(lesson.learningOutcomeIds)
@@ -90,6 +100,7 @@ export function buildSchemeExportHtml(scheme: SchemeOfWork): string {
     ${scheme.topicId ? ` · ${getTopicName(scheme.topicId)}` : ""}
     ${scheme.skillId ? ` · ${getSkillName(scheme.skillId)}` : ""}
     ${scheme.plannedLessonCount ? ` · ${scheme.plannedLessonCount} lessons` : ""}
+    ${metaBlock ? `<br />${metaBlock}` : ""}
   </p>
   <div class="section">
     <table>

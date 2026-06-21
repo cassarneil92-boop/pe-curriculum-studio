@@ -1,6 +1,10 @@
 import { buildExportBrandFooterHtml, buildExportBrandHeaderHtml, EXPORT_BRAND_STYLES } from "@/lib/brand/export-header";
-import { buildLessonExportFilename } from "./helpers";
+import {
+  formatExportMetaBlock,
+  type ExportDocumentContext,
+} from "@/lib/export/export-context";
 import { buildLessonSectionsForExport } from "./preview-html";
+import { buildLessonExportFilename } from "./helpers";
 import { exportDocument } from "@/lib/export";
 import type { ExportFormat, LessonPlan } from "@/lib/types";
 
@@ -17,8 +21,12 @@ function sectionHtml(title: string, body: string): string {
   return `<div class="section"><h2>${escapeHtml(title)}</h2><div class="body">${body}</div></div>`;
 }
 
-export function buildLessonPreviewHtml(lesson: LessonPlan): string {
+export function buildLessonPreviewHtml(
+  lesson: LessonPlan,
+  exportContext?: ExportDocumentContext
+): string {
   const sections = buildLessonSectionsForExport(lesson);
+  const metaBlock = exportContext ? formatExportMetaBlock(exportContext) : "";
 
   return `<!DOCTYPE html>
 <html lang="en" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word">
@@ -53,6 +61,7 @@ export function buildLessonPreviewHtml(lesson: LessonPlan): string {
     Date: ${escapeHtml(sections.meta.date)} · Duration: ${sections.meta.duration} minutes
     <br />
     Topic: ${escapeHtml(sections.meta.topic)} · Skill: ${escapeHtml(sections.meta.skill)}
+    ${metaBlock ? `<br />${metaBlock}` : ""}
   </p>
   ${sectionHtml("Curriculum Reference — Learning Outcomes", sections.outcomesHtml)}
   ${sectionHtml("Learning Intentions", sections.learningIntention)}
@@ -66,8 +75,12 @@ export function buildLessonPreviewHtml(lesson: LessonPlan): string {
 </html>`;
 }
 
-export function exportLessonDocument(lesson: LessonPlan, format: ExportFormat): void {
-  const html = buildLessonPreviewHtml(lesson);
+export function exportLessonDocument(
+  lesson: LessonPlan,
+  format: ExportFormat,
+  exportContext?: ExportDocumentContext
+): void {
+  const html = buildLessonPreviewHtml(lesson, exportContext);
   const filename = buildLessonExportFilename(lesson);
   exportDocument(html, filename, format);
 }

@@ -18,8 +18,9 @@ interface SchemePlanningAssistantProps {
   lessons: SOWLesson[];
   selectedLessonIndex: number;
   alignmentReady: boolean;
-  advisoryAlignment: AdvisoryAlignmentReport | null;
-  coaching: SchemeCoachingFeedback | null;
+  advisoryAlignment?: AdvisoryAlignmentReport | null;
+  coaching?: SchemeCoachingFeedback | null;
+  showReviewContent?: boolean;
   onAddCard: (zone: SOWCardZone, payload: string) => void;
 }
 
@@ -33,6 +34,7 @@ export function SchemePlanningAssistant({
   alignmentReady,
   advisoryAlignment,
   coaching,
+  showReviewContent = false,
   onAddCard,
 }: SchemePlanningAssistantProps) {
   if (!alignmentReady) {
@@ -87,9 +89,11 @@ export function SchemePlanningAssistant({
         </Card>
       )}
 
-      {alignmentReady && advisoryAlignment && <AlignmentScoreCard report={advisoryAlignment} />}
+      {showReviewContent && alignmentReady && advisoryAlignment && (
+        <AlignmentScoreCard report={advisoryAlignment} />
+      )}
 
-      {alignmentReady && coaching && (
+      {showReviewContent && alignmentReady && coaching && (
         <CoachingPanel
           title="Curriculum coaching"
           strengths={coaching.strengths}

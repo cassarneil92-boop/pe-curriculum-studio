@@ -14,7 +14,10 @@ import type { PedagogicalModelId } from "@/src/lib/intelligence/frameworks/pedag
 import { SchemeLessonEditor } from "@/components/scheme-builder/SchemeLessonEditor";
 import { SchemeLessonNavigator } from "@/components/scheme-builder/SchemeLessonNavigator";
 import { SchemePlanningAssistant } from "@/components/scheme-builder/SchemePlanningAssistant";
+import { SchemeBuilderModeToggle, type SchemeBuilderMode } from "@/components/scheme-builder/SchemeBuilderModeToggle";
 import { SchemeViewToggle, type SchemeDisplayMode } from "@/components/scheme-builder/SchemeViewToggle";
+import { AlignmentScoreCard } from "@/components/intelligence/AlignmentScoreCard";
+import { CoachingPanel } from "@/components/intelligence/CoachingPanel";
 import { SOWPreviewTable } from "@/components/scheme-builder/SOWPreviewTable";
 import { SOWSchemeSetup } from "@/components/scheme-builder/SOWSchemeSetup";
 import { SOWScreenView } from "@/components/scheme-builder/SOWScreenView";
@@ -39,6 +42,7 @@ import { DEFAULT_YEAR_GROUP_ID, getPathwayLabel } from "@/lib/constants";
 import { getTopicTheme } from "@/lib/design/topic-theme";
 import { syncSchemeStatus } from "@/lib/progress/delivery";
 import { buildSchemeExportHtml } from "@/lib/export";
+import { buildExportDocumentContext } from "@/lib/export/export-context";
 import { parseHubPathwaysFromQuery } from "@/lib/curriculum-hub/planning-links";
 import { BrandLogoHorizontal } from "@/components/brand/BrandLogoHorizontal";
 import { SchemeHealthCard } from "@/components/progress/SchemeHealthCard";
@@ -161,6 +165,7 @@ export default function SchemesPage() {
   const [displayMode, setDisplayMode] = useState<SchemeDisplayMode>("screen");
   const [activeLessonIndex, setActiveLessonIndex] = useState(0);
   const [setupOpen, setSetupOpen] = useState(true);
+  const [builderMode, setBuilderMode] = useState<SchemeBuilderMode>("planning");
   const [scheduleSchemeId, setScheduleSchemeId] = useState<string | null>(null);
   const [scheduleLessonTarget, setScheduleLessonTarget] = useState<{
     schemeId: string;
@@ -251,6 +256,20 @@ export default function SchemesPage() {
     };
     return analyseSchemeCoaching(preview, context);
   }, [draft, alignmentReady, context, editingId]);
+
+  const reviewAvailable = Boolean(
+    draft?.topicId &&
+      (coaching?.suggestions.length || coaching?.strengths.length || advisoryAlignment)
+  );
+
+  function schemeExportContext(scheme: SchemeOfWork) {
+    return buildExportDocumentContext(data.teacher, {
+      pathwayId: scheme.pathway,
+      yearGroup: scheme.yearGroup,
+      term: scheme.term,
+      classGroup: scheme.classGroup,
+    });
+  }
 
   const planningTerms = useMemo(
     () => getPlanningTerms(data.academicCalendar),
@@ -771,7 +790,7 @@ export default function SchemesPage() {
     : null;
 
   if (liveViewingScheme) {
-    const exportHtml = buildSchemeExportHtml(liveViewingScheme);
+    const exportHtml = buildSchemeExportHtml(liveViewingScheme, schemeExportContext(liveViewingScheme));
     const exportFilename = buildSchemeExportFilename(liveViewingScheme);
 
     return (
@@ -831,7 +850,7 @@ export default function SchemesPage() {
       createdAt: "",
       updatedAt: "",
     };
-    const exportHtml = buildSchemeExportHtml(previewScheme);
+    const exportHtml = buildSchemeExportHtml(previewScheme, schemeExportContext(previewScheme));
     const exportFilename = buildSchemeExportFilename(previewScheme);
     const activeLesson = draft.lessons[activeLessonIndex];
 
@@ -848,6 +867,11 @@ export default function SchemesPage() {
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
+              <SchemeBuilderModeToggle
+                mode={builderMode}
+                onChange={setBuilderMode}
+                reviewAvailable={reviewAvailable}
+              />
               <SchemeViewToggle
                 mode={displayMode}
                 onChange={setDisplayMode}
@@ -903,44 +927,58 @@ export default function SchemesPage() {
             )}
           </Card>
 
-          {draft.topicId && (
-            <div className="grid gap-4 lg:grid-cols-2">
-              <PedagogicalLensPanel
-                selected={draft.pedagogicalModels ?? []}
-                topicId={draft.topicId}
-                skillId={draft.skillId}
-                yearGroupId={draft.yearGroup}
-                onChange={(models: PedagogicalModelId[]) =>
-                  updateDraft({ pedagogicalModels: models })
-                }
-              />
-              {(() => {
-                const quality = buildSchemePedagogicalQuality(draft);
-                return (
-                  <PedagogicalQualityPanel
-                    percentage={quality.percentage}
-                    strengths={quality.strengths}
-                    suggestions={quality.suggestions}
+          {builderMode === "review" && draft.topicId && (
+            <div className="space-y-4">
+              <div className="grid gap-4 lg:grid-cols-2">
+                <PedagogicalLensPanel
+                  selected={draft.pedagogicalModels ?? []}
+                  topicId={draft.topicId}
+                  skillId={draft.skillId}
+                  yearGroupId={draft.yearGroup}
+                  onChange={(models: PedagogicalModelId[]) =>
+                    updateDraft({ pedagogicalModels: models })
+                  }
+                />
+                {(() => {
+                  const quality = buildSchemePedagogicalQuality(draft);
+                  return (
+                    <PedagogicalQualityPanel
+                      percentage={quality.percentage}
+                      strengths={quality.strengths}
+                      suggestions={quality.suggestions}
+                    />
+                  );
+                })()}
+              </div>
+
+              {draft.lessons.length > 0 && (
+                <SchemeProgressionCoach
+                  scheme={draft}
+                  activeLessonIndex={activeLessonIndex}
+                  onApplyToLesson={(lessonIndex, lesson, message) => {
+                    updateLesson(lessonIndex, lesson);
+                    toast(message);
+                  }}
+                />
+              )}
+
+              <div className="grid gap-4 lg:grid-cols-2">
+                {advisoryAlignment && <AlignmentScoreCard report={advisoryAlignment} />}
+                {coaching && (
+                  <CoachingPanel
+                    title="Curriculum coaching"
+                    strengths={coaching.strengths}
+                    suggestions={coaching.suggestions}
+                    extra={coaching.strandBalance}
                   />
-                );
-              })()}
+                )}
+              </div>
             </div>
           )}
 
-          {draft.topicId && draft.lessons.length > 0 && (
-            <SchemeProgressionCoach
-              scheme={draft}
-              activeLessonIndex={activeLessonIndex}
-              onApplyToLesson={(lessonIndex, lesson, message) => {
-                updateLesson(lessonIndex, lesson);
-                toast(message);
-              }}
-            />
-          )}
-
-          {displayMode === "table" ? (
+          {builderMode === "planning" && displayMode === "table" ? (
             <SOWPreviewTable scheme={previewScheme} />
-          ) : (
+          ) : builderMode === "planning" ? (
             <div className="flex flex-col gap-6 xl:flex-row xl:items-start">
               <aside className="xl:w-52 xl:shrink-0">
                 <div className="xl:sticky xl:top-[4.5rem]">
@@ -1071,12 +1109,13 @@ export default function SchemesPage() {
                     alignmentReady={lessonPlanningReady}
                     advisoryAlignment={advisoryAlignment}
                     coaching={coaching}
+                    showReviewContent={false}
                     onAddCard={handleAddCard}
                   />
                 </div>
               </aside>
             </div>
-          )}
+          ) : null}
         </div>
       </div>
     );

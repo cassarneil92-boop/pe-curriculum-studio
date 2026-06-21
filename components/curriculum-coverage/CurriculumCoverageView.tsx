@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { CoverageTeacherView } from "@/components/curriculum-coverage/CoverageTeacherView";
+import { useApp } from "@/components/providers/AppProvider";
 import { useTeacherContext } from "@/hooks/useTeacherContext";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -32,6 +34,13 @@ import {
   IMPORTED_LEARNING_OUTCOMES,
 } from "@/src/lib/curriculum/coverage";
 import { countImportedOutcomeVisibility } from "@/lib/teacher-context";
+import { buildCoverageTeacherReport } from "@/lib/progress/coverage-teacher-view";
+import {
+  buildTeachingProgressReports,
+  buildTopicCoverageRows,
+} from "@/lib/progress/teaching-progress-ui";
+
+type CoverageViewMode = "teacher" | "advanced";
 
 const EMPTY_FILTERS: CoverageFilters = {
   pathwayId: "",
@@ -51,12 +60,26 @@ const MISSING_TABS: { id: CoverageMissingTab; label: string }[] = [
 ];
 
 export function CurriculumCoverageView() {
+  const { data } = useApp();
   const { context } = useTeacherContext();
+  const [viewMode, setViewMode] = useState<CoverageViewMode>("teacher");
   const [filters, setFilters] = useState<CoverageFilters>(EMPTY_FILTERS);
   const [activeTab, setActiveTab] = useState<CoverageMissingTab>("all");
 
   const summary = useMemo(() => computeCoverageSummary(), []);
   const dashboard = useMemo(() => buildCurriculumCoverageDashboard(), []);
+  const teachingReports = useMemo(
+    () => buildTeachingProgressReports(data.lessons, data.schemes, data.calendar),
+    [data.lessons, data.schemes, data.calendar]
+  );
+  const topicRows = useMemo(
+    () => buildTopicCoverageRows(teachingReports.taught, teachingReports.planned),
+    [teachingReports]
+  );
+  const teacherReport = useMemo(
+    () => buildCoverageTeacherReport(dashboard, teachingReports.taught, topicRows),
+    [dashboard, teachingReports, topicRows]
+  );
   const visibility = useMemo(
     () => countImportedOutcomeVisibility(IMPORTED_LEARNING_OUTCOMES, context),
     [context]
@@ -93,11 +116,24 @@ export function CurriculumCoverageView() {
     <div>
       <PageHeader
         title="Coverage Dashboard"
-        description="See how complete the curriculum catalogue is — pathways, topics, sports, and metadata quality. This is not the same as what you have taught."
+        description={
+          viewMode === "teacher"
+            ? "See what needs attention in your curriculum and what to plan next."
+            : "Detailed catalogue diagnostics — pathways, topics, sports, and metadata quality."
+        }
         action={
-          <Button variant="secondary" onClick={exportReport}>
-            Export audit JSON
-          </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            {viewMode === "advanced" && (
+              <Button variant="ghost" onClick={() => setViewMode("teacher")}>
+                ← Teacher view
+              </Button>
+            )}
+            {viewMode === "advanced" && (
+              <Button variant="secondary" onClick={exportReport}>
+                Export audit JSON
+              </Button>
+            )}
+          </div>
         }
       />
 
@@ -117,6 +153,57 @@ export function CurriculumCoverageView() {
         </Link>
       </div>
 
+      {viewMode === "teacher" ? (
+        <CoverageTeacherView
+          report={teacherReport}
+          onOpenAdvanced={() => setViewMode("advanced")}
+        />
+      ) : (
+        <AdvancedAuditContent
+          dashboard={dashboard}
+          summary={summary}
+          visibility={visibility}
+          filterOptions={filterOptions}
+          filters={filters}
+          activeTab={activeTab}
+          results={results}
+          context={context}
+          onFilterChange={updateFilter}
+          onClearFilters={clearFilters}
+          onTabChange={setActiveTab}
+        />
+      )}
+    </div>
+  );
+}
+
+function AdvancedAuditContent({
+  dashboard,
+  summary,
+  visibility,
+  filterOptions,
+  filters,
+  activeTab,
+  results,
+  context,
+  onFilterChange,
+  onClearFilters,
+  onTabChange,
+}: {
+  dashboard: ReturnType<typeof buildCurriculumCoverageDashboard>;
+  summary: ReturnType<typeof computeCoverageSummary>;
+  visibility: ReturnType<typeof countImportedOutcomeVisibility>;
+  filterOptions: ReturnType<typeof buildCoverageFilterOptions>;
+  filters: CoverageFilters;
+  activeTab: CoverageMissingTab;
+  results: ReturnType<typeof filterCoverageOutcomes>;
+  context: ReturnType<typeof useTeacherContext>["context"];
+  onFilterChange: <K extends keyof CoverageFilters>(key: K, value: CoverageFilters[K]) => void;
+  onClearFilters: () => void;
+  onTabChange: (tab: CoverageMissingTab) => void;
+}) {
+  return (
+    <>
       <section className="mb-8 space-y-6">
         <Card>
           <CardHeader
@@ -808,7 +895,7 @@ export function CurriculumCoverageView() {
           <FieldGroup label="Pathway">
             <Select
               value={filters.pathwayId}
-              onChange={(e) => updateFilter("pathwayId", e.target.value)}
+              onChange={(e) => onFilterChange("pathwayId", e.target.value)}
             >
               <option value="">All pathways</option>
               {filterOptions.pathways.map((pathway) => (
@@ -822,7 +909,7 @@ export function CurriculumCoverageView() {
           <FieldGroup label="Year group">
             <Select
               value={filters.yearGroup}
-              onChange={(e) => updateFilter("yearGroup", e.target.value)}
+              onChange={(e) => onFilterChange("yearGroup", e.target.value)}
             >
               <option value="">All year groups</option>
               {filterOptions.yearGroups.map((yearGroup) => (
@@ -834,7 +921,7 @@ export function CurriculumCoverageView() {
           </FieldGroup>
 
           <FieldGroup label="Topic">
-            <Select value={filters.topic} onChange={(e) => updateFilter("topic", e.target.value)}>
+            <Select value={filters.topic} onChange={(e) => onFilterChange("topic", e.target.value)}>
               <option value="">All topics</option>
               {filterOptions.topics.map((topic) => (
                 <option key={topic} value={topic}>
@@ -845,7 +932,7 @@ export function CurriculumCoverageView() {
           </FieldGroup>
 
           <FieldGroup label="Skill">
-            <Select value={filters.skill} onChange={(e) => updateFilter("skill", e.target.value)}>
+            <Select value={filters.skill} onChange={(e) => onFilterChange("skill", e.target.value)}>
               <option value="">All skills</option>
               {filterOptions.skills.map((skill) => (
                 <option key={skill} value={skill}>
@@ -858,7 +945,7 @@ export function CurriculumCoverageView() {
           <FieldGroup label="Source document">
             <Select
               value={filters.sourceDocument}
-              onChange={(e) => updateFilter("sourceDocument", e.target.value)}
+              onChange={(e) => onFilterChange("sourceDocument", e.target.value)}
             >
               <option value="">All sources</option>
               {filterOptions.sourceDocuments.map((source) => (
@@ -872,14 +959,14 @@ export function CurriculumCoverageView() {
           <FieldGroup label="Search text">
             <Input
               value={filters.search}
-              onChange={(e) => updateFilter("search", e.target.value)}
+              onChange={(e) => onFilterChange("search", e.target.value)}
               placeholder="Code, description, topic, skill, source…"
             />
           </FieldGroup>
         </div>
 
         <div className="mt-4">
-          <Button variant="ghost" onClick={clearFilters}>
+          <Button variant="ghost" onClick={onClearFilters}>
             Clear filters
           </Button>
         </div>
@@ -890,7 +977,7 @@ export function CurriculumCoverageView() {
           <Button
             key={tab.id}
             variant={activeTab === tab.id ? "primary" : "secondary"}
-            onClick={() => setActiveTab(tab.id)}
+            onClick={() => onTabChange(tab.id)}
           >
             {tab.label}
           </Button>
@@ -913,7 +1000,7 @@ export function CurriculumCoverageView() {
           </div>
         )}
       </Card>
-    </div>
+    </>
   );
 }
 

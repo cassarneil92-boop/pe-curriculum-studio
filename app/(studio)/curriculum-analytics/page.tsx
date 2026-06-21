@@ -1,14 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, type ReactNode } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { useApp } from "@/components/providers/AppProvider";
 import { CoverageBar } from "@/components/intelligence/CoverageBar";
 import {
   CurriculumHealthHero,
   CurriculumJourney,
   ImmediatePriorities,
-  TeachingInsightsPanel,
   TopicCoverageTable,
 } from "@/components/progress/teaching-progress";
 import { Button } from "@/components/ui/Button";
@@ -21,7 +20,6 @@ import { StatCard } from "@/components/ui/StatCard";
 import { buildSchemeProgressSummary } from "@/lib/progress/summary";
 import {
   buildImmediatePriorities,
-  buildTeachingInsights,
   buildTeachingProgressReports,
   buildTopicCoverageRows,
   computeDeliveredPercent,
@@ -40,6 +38,7 @@ function KpiIcon({ children }: { children: ReactNode }) {
 
 export default function CurriculumAnalyticsPage() {
   const { data } = useApp();
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
   const reports = useMemo(
     () => buildTeachingProgressReports(data.lessons, data.schemes, data.calendar),
@@ -60,34 +59,24 @@ export default function CurriculumAnalyticsPage() {
 
   const priorities = useMemo(() => buildImmediatePriorities(topicRows), [topicRows]);
 
-  const insights = useMemo(
-    () => buildTeachingInsights(taught, planned, data.lessons, data.schemes),
-    [taught, planned, data.lessons, data.schemes]
-  );
-
   const hasData = hasTeachingProgressData(data.lessons, data.schemes);
 
   if (!hasData) {
     return (
       <div className="space-y-6">
         <PageHeader
-          eyebrow="Curriculum intelligence"
+          eyebrow="Teaching progress"
           title="Teaching Progress"
-          description="Understand your curriculum health, delivery coverage, and what to teach next."
+          description="What have you planned, delivered, and still need to teach?"
         />
         <EmptyState
-          title="Start planning your curriculum"
-          description="Create lessons or schemes of work to begin tracking curriculum coverage."
+          title="Start tracking delivery"
+          description="Create a lesson or scheme, then mark delivery from Calendar to see your teaching progress."
           icon={<TeachingProgressIllustration />}
           action={
-            <div className="flex flex-wrap items-center justify-center gap-3">
-              <Link href="/lesson-builder">
-                <Button>Create lesson</Button>
-              </Link>
-              <Link href="/schemes">
-                <Button variant="secondary">Create scheme</Button>
-              </Link>
-            </div>
+            <Link href="/lesson-builder">
+              <Button>Create your first lesson</Button>
+            </Link>
           }
         />
       </div>
@@ -97,9 +86,14 @@ export default function CurriculumAnalyticsPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        eyebrow="Curriculum intelligence"
+        eyebrow="Teaching progress"
         title="Teaching Progress"
-        description="Am I doing well? What should I teach next? Your curriculum health at a glance."
+        description="What have you planned, delivered, and still need to teach?"
+        action={
+          <Link href="/curriculum-intelligence">
+            <Button variant="secondary">What to teach next →</Button>
+          </Link>
+        }
       />
 
       <CurriculumHealthHero health={health} />
@@ -158,7 +152,20 @@ export default function CurriculumAnalyticsPage() {
           <ImmediatePriorities priorities={priorities} />
         </div>
         <div className="lg:col-span-2">
-          <TeachingInsightsPanel insights={insights} />
+          <Card>
+            <CardHeader title="Delivery focus" description="Track schemes and calendar delivery." />
+            <p className="text-sm text-slate-600">
+              Mark lessons as delivered from Calendar or Schemes to update your progress.
+            </p>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <Link href="/calendar">
+                <Button variant="secondary">Calendar</Button>
+              </Link>
+              <Link href="/schemes">
+                <Button variant="ghost">Schemes</Button>
+              </Link>
+            </div>
+          </Card>
         </div>
       </div>
 
@@ -194,9 +201,17 @@ export default function CurriculumAnalyticsPage() {
       )}
 
       <div className="border-t border-slate-200/80 pt-6">
-        <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-500">
-          Detailed breakdown
-        </h2>
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+            Detailed breakdown
+          </h2>
+          {!showAdvanced && (
+            <Button variant="ghost" className="text-xs" onClick={() => setShowAdvanced(true)}>
+              Show advanced view
+            </Button>
+          )}
+        </div>
+        {showAdvanced && (
         <div className="grid gap-6 lg:grid-cols-2">
           <Card>
             <CardHeader title="Learning areas" description="Delivered coverage by learning area." />
@@ -249,6 +264,7 @@ export default function CurriculumAnalyticsPage() {
             </p>
           </Card>
         </div>
+        )}
       </div>
     </div>
   );

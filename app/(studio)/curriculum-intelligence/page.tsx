@@ -68,21 +68,16 @@ export default function CurriculumIntelligencePage() {
         <PageHeader
           eyebrow="Curriculum intelligence"
           title="Curriculum Intelligence Centre"
-          description="Visual analytics for taught coverage, curriculum gaps, and pathway balance."
+          description="What should you teach next and why?"
         />
         <EmptyState
-          title="Start building your intelligence profile"
-          description="Create lessons or schemes of work to unlock coverage analytics, heatmaps, and insights."
+          title="Unlock curriculum recommendations"
+          description="Plan a few lessons or schemes first — then we'll suggest what to teach next and where gaps exist."
           icon={<TeachingProgressIllustration />}
           action={
-            <div className="flex flex-wrap items-center justify-center gap-3">
-              <Link href="/lesson-builder">
-                <Button>Create lesson</Button>
-              </Link>
-              <Link href="/schemes">
-                <Button variant="secondary">Create scheme</Button>
-              </Link>
-            </div>
+            <Link href="/curriculum-assistant">
+              <Button>Ask Planning Assistant</Button>
+            </Link>
           }
         />
       </div>
@@ -96,12 +91,45 @@ export default function CurriculumIntelligencePage() {
       <PageHeader
         eyebrow="Curriculum intelligence"
         title="Curriculum Intelligence Centre"
-        description="What has been taught, what remains, and where to focus — data-driven curriculum analytics."
+        description="What should you teach next and why? Recommendations, gaps, and suggested next steps."
         action={
           <IntelligenceExportButton report={report} context={exportContext} />
         }
       />
 
+      <Card className="border-teal-100 bg-teal-50/20">
+        <CardHeader
+          title="Recommended next steps"
+          description="Based on your planned and delivered curriculum."
+        />
+        <TeachingInsightsPanel insights={report.insights} />
+        <div className="mt-4 flex flex-wrap gap-2">
+          <Link href="/schemes">
+            <Button variant="secondary">Create scheme</Button>
+          </Link>
+          <Link href="/lesson-builder">
+            <Button variant="ghost">Plan lesson</Button>
+          </Link>
+        </div>
+      </Card>
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        <CurriculumGapsPanel gaps={report.gaps} />
+        <Card>
+          <CardHeader
+            title="Coverage by topic"
+            description="Topics with the largest delivery gaps."
+          />
+          <TopicCoverageBars rows={topicBars} />
+        </Card>
+      </div>
+
+      <details className="group rounded-[20px] border border-slate-200 bg-white">
+        <summary className="cursor-pointer list-none px-6 py-4 text-sm font-semibold text-slate-900 marker:content-none">
+          Advanced analytics
+          <span className="ml-2 text-xs font-normal text-slate-500">Heatmap, KPIs, pathway snapshot</span>
+        </summary>
+        <div className="space-y-6 border-t border-slate-100 px-6 py-4">
       <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
         <StatCard
           label="Total outcomes"
@@ -179,20 +207,6 @@ export default function CurriculumIntelligencePage() {
         <LearningAreaTermHeatmap cells={report.heatmap} termNames={report.termNames} />
       </Card>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Card>
-          <CardHeader
-            title="Coverage by topic"
-            description="Delivered outcomes compared to the total available per topic."
-          />
-          <TopicCoverageBars rows={topicBars} />
-        </Card>
-
-        <CurriculumGapsPanel gaps={report.gaps} />
-      </div>
-
-      <TeachingInsightsPanel insights={report.insights} />
-
       <Card className="border-slate-200/80 bg-slate-50/50">
         <CardHeader
           title="Pathway & year group snapshot"
@@ -243,6 +257,8 @@ export default function CurriculumIntelligencePage() {
           </div>
         </div>
       </Card>
+        </div>
+      </details>
     </div>
   );
 }

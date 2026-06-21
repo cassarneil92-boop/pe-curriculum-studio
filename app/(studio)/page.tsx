@@ -17,6 +17,7 @@ import {
   buildDashboardCurrentScheme,
   buildDashboardWeekStats,
   buildQuickContinue,
+  buildRecommendedNextActions,
   buildSchemesNeedingAttention,
   buildTeachingSnapshot,
   buildTodaysLessons,
@@ -76,6 +77,11 @@ export default function DashboardPage() {
   const attentionItems = useMemo(
     () => buildDashboardAttention(lessons, schemes, calendar).slice(0, 3),
     [lessons, schemes, calendar]
+  );
+
+  const recommendedActions = useMemo(
+    () => buildRecommendedNextActions({ lessons, schemes, calendar }, today),
+    [lessons, schemes, calendar, today]
   );
 
   const coverageScore = getCoverageScore(teachingSnapshot.curriculumCoverage);
@@ -182,6 +188,25 @@ export default function DashboardPage() {
           </div>
         </Card>
       </section>
+
+      {recommendedActions.length > 0 && (
+        <Card className="border-teal-100/80 bg-gradient-to-br from-teal-50/25 to-white">
+          <CardHeader title="Recommended next actions" description="Three focused steps to keep moving." />
+          <ul className="space-y-3">
+            {recommendedActions.map((action) => (
+              <li
+                key={action.id}
+                className="flex flex-col gap-3 rounded-[14px] border border-slate-100 bg-white/80 px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
+              >
+                <p className="text-sm text-slate-700">{action.message}</p>
+                <Link href={action.href} className="shrink-0">
+                  <Button variant="secondary">{action.buttonLabel}</Button>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      )}
 
       {quickContinue && (
         <Card className="border-teal-100/80 bg-gradient-to-br from-teal-50/35 to-white">

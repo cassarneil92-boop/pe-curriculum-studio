@@ -37,6 +37,8 @@ export {
   type AssistantLessonDraftSource,
 } from "./responses";
 export {
+  DEFAULT_PROMPT_CHIPS,
+  MORE_PROMPT_CHIPS,
   SUGGESTED_PROMPT_CHIPS as PROMPT_CHIPS,
   TOPIC_SYNONYM_MAP,
   YEAR_GROUP_SYNONYMS,

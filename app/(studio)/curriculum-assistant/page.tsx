@@ -16,7 +16,8 @@ import { FieldGroup, Input } from "@/components/ui/Input";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { useTeacherContext } from "@/hooks/useTeacherContext";
 import {
-  SUGGESTED_PROMPT_CHIPS,
+  DEFAULT_PROMPT_CHIPS,
+  MORE_PROMPT_CHIPS,
   type AssistantResponse,
   buildAssistantLessonDraft,
 } from "@/lib/assistant";
@@ -262,6 +263,7 @@ export default function CurriculumAssistantPage() {
   const { toast } = useToast();
   const [prompt, setPrompt] = useState("");
   const [response, setResponse] = useState<AssistantResponse | null>(null);
+  const [showMoreExamples, setShowMoreExamples] = useState(false);
 
   const activeScheme = data.schemes[0];
 
@@ -364,11 +366,26 @@ export default function CurriculumAssistantPage() {
           </div>
         </FieldGroup>
         <div className="mt-4 flex flex-wrap gap-2">
-          {SUGGESTED_PROMPT_CHIPS.map((ex) => (
+          {DEFAULT_PROMPT_CHIPS.map((ex) => (
             <Button key={ex} variant="ghost" className="text-xs" onClick={() => handleAsk(ex)}>
               {ex}
             </Button>
           ))}
+          {!showMoreExamples ? (
+            <Button
+              variant="ghost"
+              className="text-xs text-slate-500"
+              onClick={() => setShowMoreExamples(true)}
+            >
+              More examples
+            </Button>
+          ) : (
+            MORE_PROMPT_CHIPS.map((ex) => (
+              <Button key={ex} variant="ghost" className="text-xs" onClick={() => handleAsk(ex)}>
+                {ex}
+              </Button>
+            ))
+          )}
         </div>
       </Card>
 

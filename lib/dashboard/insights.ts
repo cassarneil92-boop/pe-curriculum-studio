@@ -2,6 +2,7 @@ import { buildSchemeProgressSummary, buildSchemesDashboardSummary } from "@/lib/
 import { buildTeachingWarnings } from "@/lib/progress/warnings";
 import type { AppData, CalendarEntry, LessonPlan, ResourceItem, SchemeOfWork } from "@/lib/types";
 import { buildTermUnitBlocks, currentUnitBlock } from "@/lib/calendar/pacing";
+import { addDays, startOfWeek, toIso } from "@/lib/calendar/dates";
 
 export interface DashboardWeekStats {
   scheduled: number;
@@ -286,4 +287,50 @@ export function countUnplannedOutcomeWarnings(
   return buildTeachingWarnings(lessons, schemes, calendar).filter((w) =>
     w.message.toLowerCase().includes("not planned")
   ).length;
+}
+
+export interface RecommendedNextAction {
+  id: string;
+  message: string;
+  buttonLabel: string;
+  href: string;
+}
+
+export function buildRecommendedNextActions(
+  data: Pick<AppData, "lessons" | "schemes" | "calendar">,
+  today: string
+): RecommendedNextAction[] {
+  const actions: RecommendedNextAction[] = [];
+  const snapshot = buildTeachingSnapshot(data);
+  const weekStart = toIso(startOfWeek(new Date()));
+  const weekEnd = toIso(addDays(startOfWeek(new Date()), 6));
+  const weekStats = buildDashboardWeekStats(data.calendar, weekStart, weekEnd);
+
+  if (snapshot.curriculumCoverage < 50 && data.schemes.length > 0) {
+    actions.push({
+      id: "plan-under-covered",
+      message: "Plan one under-covered area to strengthen your curriculum balance.",
+      buttonLabel: "Open schemes",
+      href: "/schemes",
+    });
+  }
+
+  const upcoming = buildUpcomingLessons(data.calendar, today, 1);
+  if (weekStats.scheduled === 0 || upcoming.length === 0) {
+    actions.push({
+      id: "schedule-week",
+      message: "Schedule this week's lessons in your calendar.",
+      buttonLabel: "Open calendar",
+      href: "/calendar",
+    });
+  }
+
+  actions.push({
+    id: "review-progress",
+    message: "Review what you have planned, delivered, and still need to teach.",
+    buttonLabel: "Teaching progress",
+    href: "/curriculum-analytics",
+  });
+
+  return actions.slice(0, 3);
 }

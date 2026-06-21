@@ -149,6 +149,7 @@ export default function ResourcesPage() {
         <StatCard label="Linked to outcomes" value={String(summary.linkedOutcomes)} tone="green" />
       </section>
 
+      {data.resources.length > 0 && (
       <Card>
         <CardHeader title="Filters" />
         <div className="flex flex-wrap gap-3">
@@ -192,6 +193,7 @@ export default function ResourcesPage() {
           </Select>
         </div>
       </Card>
+      )}
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
@@ -342,7 +344,7 @@ export default function ResourcesPage() {
           {data.resources.length === 0 ? (
             <EmptyState
               title="Build your teaching library"
-              description="Upload lesson cards, assessment sheets and curriculum resources."
+              description="Upload lesson cards, rubrics, assessments and useful teaching resources."
               icon={<ResourcesEmptyIllustration />}
               action={
                 <Button type="button" onClick={() => fileRef.current?.click()}>

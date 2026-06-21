@@ -25,8 +25,8 @@ import { LessonActivityEditor } from "@/components/lesson-builder/LessonActivity
 import { LessonBuilderProgress } from "@/components/lesson-builder/LessonBuilderProgress";
 import { LessonEndingAssistant } from "@/components/lesson-builder/LessonEndingAssistant";
 import { LessonEndingBuilder } from "@/components/lesson-builder/LessonEndingBuilder";
-import { PedagogyCoachPanel } from "@/components/pe-knowledge/PedagogyCoachPanel";
 import { LessonQualityChecklist } from "@/components/lesson-builder/LessonQualityChecklist";
+import { TeacherLessonChecklist } from "@/components/lesson-builder/TeacherLessonChecklist";
 import { LessonStructureCoach } from "@/components/lesson-builder/LessonStructureCoach";
 import { useToast } from "@/components/providers/ToastProvider";
 import { BrandLogoHorizontal } from "@/components/brand/BrandLogoHorizontal";
@@ -539,7 +539,7 @@ export default function LessonBuilderPage() {
                 completionPercent={completion.percent}
               />
               <div className="hidden lg:block">
-                <LessonQualityChecklist lesson={form} onApplyLesson={handleApplyLessonKnowledge} />
+                <TeacherLessonChecklist lesson={form} />
               </div>
             </div>
           </nav>
@@ -1009,8 +1009,6 @@ export default function LessonBuilderPage() {
 
             {activeSection === "review" && (
               <div className="space-y-4">
-                <LessonStructureCoach lesson={form} />
-                <PedagogyCoachPanel lesson={form} onApplyLesson={handleApplyLessonKnowledge} />
                 {form.topicId && (
                   <CurriculumMemoryPanel
                     savedLessons={data.lessons}
@@ -1020,7 +1018,11 @@ export default function LessonBuilderPage() {
                     skillId={form.skillId}
                   />
                 )}
-                <LessonQualityChecklist lesson={form} onApplyLesson={handleApplyLessonKnowledge} />
+                <LessonQualityChecklist
+                  lesson={form}
+                  variant="review"
+                  onApplyLesson={handleApplyLessonKnowledge}
+                />
                 <div className="flex justify-between">
                   <Button type="button" variant="ghost" onClick={() => setActiveSection("ending")}>
                     ← Back
