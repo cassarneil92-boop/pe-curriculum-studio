@@ -75,6 +75,12 @@ import {
   buildSchemeFitnessTips,
 } from "./fitnessCurriculumEngines";
 import { FITNESS_CURRICULUM_MASTER_PE_ENTRY } from "./fitnessCurriculumMaster";
+import {
+  buildSecPeOptionPlanningInsights,
+  buildSecQualityInsights,
+  buildSchemeSecPETips,
+} from "./secPeOptionEngines";
+import { SEC_PE_OPTION_MASTER_PE_ENTRY } from "./secPeOptionMaster";
 import { LEARNING_SCIENCE_MASTER_PE_ENTRY } from "./learningScienceMaster";
 import {
   buildLearningSciencePlanningInsights,
@@ -335,6 +341,7 @@ export interface SchemeProgressionCoachReport {
   tpsrTips?: string[];
   primaryPETips?: string[];
   fitnessTips?: string[];
+  secPeTips?: string[];
   learningScienceTips?: string[];
   educationalPsychologyTips?: string[];
   visibleLearningTips?: string[];
@@ -557,6 +564,13 @@ export function getPlanningAssistantKnowledgeSuggestions(
     lessonAim: context.lessonAim ?? prompt,
     walt: context.lessonAim ?? prompt,
   });
+  const secInsights = buildSecPeOptionPlanningInsights(prompt, {
+    yearGroup: context.yearGroup,
+    topicId: context.topicId,
+    activityArea: context.activityArea,
+    lessonAim: context.lessonAim ?? prompt,
+    walt: context.lessonAim ?? prompt,
+  });
   const lsInsights = buildLearningSciencePlanningInsights(prompt, {
     yearGroup: context.yearGroup,
     topicId: context.topicId,
@@ -633,6 +647,16 @@ export function getPlanningAssistantKnowledgeSuggestions(
       differentiationPrompt: "Offer intensity choices within the same training method.",
     };
     return [fitnessCard, ...cards].slice(0, limit);
+  }
+  if (secInsights.length > 0) {
+    const secCard: PEKnowledgeCardViewModel = {
+      entry: SEC_PE_OPTION_MASTER_PE_ENTRY,
+      reason: secInsights[0],
+      planningPrompts: secInsights.slice(0, 3),
+      assessmentPrompt: "Include exam-style questions and retrieval practice for theory topics.",
+      differentiationPrompt: "Tiered exam questions — describe, explain, apply with scaffolds.",
+    };
+    return [secCard, ...cards].slice(0, limit);
   }
   if (primaryInsights.length > 0) {
     const primaryCard: PEKnowledgeCardViewModel = {
@@ -978,6 +1002,7 @@ export function buildSchemeProgressionCoachReport(
   const tpsrTips = buildSchemeTPSRTips(scheme);
   const primaryPETips = buildSchemePrimaryPETips(scheme);
   const fitnessTips = buildSchemeFitnessTips(scheme);
+  const secPeTips = buildSchemeSecPETips(scheme);
   const learningScienceTips = buildSchemeLearningScienceTips(scheme, activeLessonIndex);
   const educationalPsychologyTips = buildSchemeEducationalPsychologyTips(scheme, activeLessonIndex);
   const visibleLearningTips = buildSchemeVisibleLearningTips(scheme, activeLessonIndex);
@@ -996,6 +1021,7 @@ export function buildSchemeProgressionCoachReport(
     tpsrTips,
     primaryPETips,
     fitnessTips,
+    secPeTips,
     learningScienceTips,
     educationalPsychologyTips,
     visibleLearningTips,
@@ -1239,6 +1265,16 @@ export function buildKnowledgeQualityInsights(
       message: fi.message,
       prompt: fi.prompt,
       entryId: fi.entryId,
+    });
+  }
+
+  for (const si of buildSecQualityInsights(lesson)) {
+    insights.push({
+      id: si.id,
+      area: si.area,
+      message: si.message,
+      prompt: si.prompt,
+      entryId: si.entryId,
     });
   }
 

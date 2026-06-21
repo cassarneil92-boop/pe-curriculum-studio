@@ -2,6 +2,7 @@ import { resolveLearningOutcomeById } from "@/src/lib/curriculum/metadata";
 import type { LearningOutcome } from "@/src/lib/curriculum/types";
 import { getPlanningSkillDisplayName } from "@/src/lib/curriculum/planning";
 import { buildFitnessLessonDesignHints } from "@/src/lib/peKnowledge/fitnessCurriculumEngines";
+import { buildSecLessonDesignHints } from "@/src/lib/peKnowledge/secPeOptionEngines";
 import type { SuggestionBadge } from "@/lib/lesson-builder/planning-coach-labels";
 
 export type LearningDesignField =
@@ -316,6 +317,69 @@ export function buildLearningDesignSuggestions(input: {
       field: "safetyConsiderations",
       text: "Monitor intensity — students work at personal appropriate levels with hydration breaks.",
       sourceLabel: "Fitness Curriculum safety",
+      badge: "SAFETY",
+    });
+  }
+
+  const secHints = buildSecLessonDesignHints({
+    selectedOutcomeIds: input.selectedOutcomeIds,
+    topicId: input.topicId,
+    skillId: input.skillId,
+    pathwayId: outcomes.some((o) => o.pathwayId === "pe-option-sec") ? "pe-option-sec" : undefined,
+  });
+
+  for (const text of secHints.walt) {
+    walt.push({
+      id: `sec-walt-${walt.length}`,
+      field: "walt",
+      text: ensureSentence(text),
+      sourceLabel: "SEC PE Option intelligence",
+      badge: "SKILL",
+    });
+  }
+  for (const text of secHints.wilf) {
+    successCriteria.push({
+      id: `sec-wilf-${successCriteria.length}`,
+      field: "successCriteria",
+      text: ensureSentence(text),
+      sourceLabel: "SEC PE Option intelligence",
+      badge: "CURRICULUM",
+    });
+  }
+  for (const text of secHints.assessment) {
+    assessment.push({
+      id: `sec-assess-${assessment.length}`,
+      field: "assessmentNotes",
+      text: ensureSentence(text),
+      sourceLabel: "SEC assessment intelligence",
+      badge: "ASSESSMENT",
+    });
+  }
+  for (const text of [...secHints.revisionTasks, ...secHints.retrievalPrompts]) {
+    learningIntentions.push({
+      id: `sec-revision-${learningIntentions.length}`,
+      field: "learningIntention",
+      text: ensureSentence(text),
+      sourceLabel: "SEC revision task",
+      badge: "SKILL",
+    });
+  }
+  for (const text of secHints.examPrep) {
+    assessment.push({
+      id: `sec-exam-${assessment.length}`,
+      field: "assessmentNotes",
+      text: ensureSentence(text),
+      sourceLabel: "SEC exam preparation",
+      badge: "ASSESSMENT",
+    });
+  }
+
+  if (input.topicId === "pe-option-theory") {
+    safety.push({
+      id: "safety-sec-theory",
+      field: "safetyConsiderations",
+      text: "Theory lessons — ensure practical links are planned where outcomes require application.",
+      sourceLabel: "SEC PE Option safety",
       badge: "SAFETY",
     });
   }

@@ -543,6 +543,142 @@ export function CurriculumCoverageView() {
         </Card>
       </section>
 
+      <section className="mb-8">
+        <Card>
+          <CardHeader
+            title="SEC PE Option coverage"
+            description={`Examination and curriculum intelligence — ${dashboard.secPE.totalOutcomes} outcomes (${dashboard.secPE.importedOutcomes} imported syllabus + ${dashboard.secPE.kbOutcomes} KB samples).`}
+          />
+          <div className="mb-4 flex flex-wrap items-center gap-2">
+            <CatalogueStatusBadge
+              status={
+                dashboard.secPE.overallStatus === "strong"
+                  ? "strong"
+                  : dashboard.secPE.overallStatus === "thin"
+                    ? "thin"
+                    : "needs-review"
+              }
+            />
+            <span className="text-sm text-slate-600">Theory, practical, and revision readiness</span>
+          </div>
+
+          <div className="grid gap-4 lg:grid-cols-2">
+            <div>
+              <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Topic coverage
+              </h4>
+              <table className="w-full text-sm">
+                <tbody>
+                  {dashboard.secPE.categoryCoverage.map((row) => (
+                    <tr key={row.category} className="border-b border-slate-100">
+                      <td className="py-2 pr-4 text-slate-700">{row.label}</td>
+                      <td className="py-2 pr-4 tabular-nums text-slate-800">{row.outcomeCount}</td>
+                      <td className="py-2">
+                        <CatalogueStatusBadge status={row.status} />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div>
+              <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Assessment coverage
+              </h4>
+              <table className="w-full text-sm">
+                <tbody>
+                  {dashboard.secPE.assessmentCoverage.map((row) => (
+                    <tr key={row.relevance} className="border-b border-slate-100">
+                      <td className="py-2 pr-4 text-slate-700">{row.label}</td>
+                      <td className="py-2 pr-4 tabular-nums text-slate-800">{row.outcomeCount}</td>
+                      <td className="py-2">
+                        <CatalogueStatusBadge status={row.status} />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div className="mt-6 grid gap-4 lg:grid-cols-2">
+            <div>
+              <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Learning domains
+              </h4>
+              <table className="w-full text-sm">
+                <tbody>
+                  {dashboard.secPE.learningDomainCoverage.map((row) => (
+                    <tr key={row.domain} className="border-b border-slate-100">
+                      <td className="py-2 pr-4 text-slate-700">{row.label}</td>
+                      <td className="py-2 pr-4 tabular-nums text-slate-800">{row.outcomeCount}</td>
+                      <td className="py-2">
+                        <CatalogueStatusBadge status={row.status} />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div>
+              <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Revision readiness
+              </h4>
+              <table className="w-full text-sm">
+                <tbody>
+                  {dashboard.secPE.revisionReadiness.map((row) => (
+                    <tr key={row.category} className="border-b border-slate-100">
+                      <td className="py-2 pr-4 text-slate-700">{row.label}</td>
+                      <td className="py-2 pr-4 text-xs text-slate-600">
+                        {row.coveredCount} covered · {row.plannedCount} planned · {row.notPlannedCount} not planned
+                      </td>
+                      <td className="py-2">
+                        <CatalogueStatusBadge
+                          status={
+                            row.readiness === "ready"
+                              ? "strong"
+                              : row.readiness === "partial"
+                                ? "thin"
+                                : "missing"
+                          }
+                        />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {dashboard.secPE.gapAnalysis.length > 0 && (
+            <div className="mt-6">
+              <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                SEC gap analysis
+              </h4>
+              <ul className="space-y-2">
+                {dashboard.secPE.gapAnalysis.map((gap) => (
+                  <li key={gap.id} className="rounded-lg border border-slate-200 px-3 py-3 text-sm">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="font-medium text-slate-800">{gap.title}</span>
+                      <CatalogueStatusBadge
+                        status={
+                          gap.status === "needs-review"
+                            ? "needs-review"
+                            : gap.status === "missing"
+                              ? "missing"
+                              : "thin"
+                        }
+                      />
+                    </div>
+                    <p className="mt-1 text-slate-600">{gap.detail}</p>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </Card>
+      </section>
+
       <h2 className="mb-4 text-lg font-semibold text-slate-900">Outcome verification</h2>
 
       <p className="mb-6 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">

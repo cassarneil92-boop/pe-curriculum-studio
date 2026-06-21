@@ -15,6 +15,7 @@ import { COOPERATIVE_LEARNING_MASTER_PE_ENTRY, isCooperativeLearningRelevant } f
 import { TPSR_MASTER_PE_ENTRY, isTPSRRelevant } from "./tpsrMaster";
 import { PRIMARY_PE_MASTER_PE_ENTRY, isPrimaryPEYearGroup, isPrimaryPERelevant } from "./primaryPEMaster";
 import { FITNESS_CURRICULUM_MASTER_PE_ENTRY, isFitnessCurriculumRelevant } from "./fitnessCurriculumMaster";
+import { SEC_PE_OPTION_MASTER_PE_ENTRY, isSecPeOptionRelevant } from "./secPeOptionMaster";
 import { LEARNING_SCIENCE_MASTER_PE_ENTRY, isLearningScienceRelevant } from "./learningScienceMaster";
 import { EDUCATIONAL_PSYCHOLOGY_MASTER_PE_ENTRY, isEducationalPsychologyRelevant } from "./educationalPsychologyMaster";
 import { VISIBLE_LEARNING_MASTER_PE_ENTRY, isVisibleLearningRelevant } from "./visibleLearningMaster";
@@ -38,6 +39,7 @@ export const ALL_PE_KNOWLEDGE_ENTRIES: PEKnowledgeEntry[] = [
   TPSR_MASTER_PE_ENTRY,
   PRIMARY_PE_MASTER_PE_ENTRY,
   FITNESS_CURRICULUM_MASTER_PE_ENTRY,
+  SEC_PE_OPTION_MASTER_PE_ENTRY,
   LEARNING_SCIENCE_MASTER_PE_ENTRY,
   EDUCATIONAL_PSYCHOLOGY_MASTER_PE_ENTRY,
   VISIBLE_LEARNING_MASTER_PE_ENTRY,
@@ -208,6 +210,14 @@ function scoreEntryForContext(
     ) {
       score += 7;
       reasons.push("Primary PE and fundamental movement guidance");
+    }
+    if (
+      (entry.id === "sec-pe-option-master" || entry.tags.includes("sec-pe-option")) &&
+      (context.pathway === "pe-option-sec" ||
+        isSecPeOptionRelevant(`${context.lessonAim ?? ""} ${area}`, context.yearGroup))
+    ) {
+      score += 7;
+      reasons.push("SEC PE Option examination and curriculum guidance");
     }
     if (
       (entry.id === "learning-science-master" || entry.tags.includes("learning-science")) &&

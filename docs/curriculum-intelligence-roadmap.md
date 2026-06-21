@@ -214,6 +214,65 @@ Strict curriculum alignment and official outcome wording are unchanged.
 
 ---
 
+## Phase 6C — SEC PE Option Intelligence
+
+**Goal:** Transform SEC PE Option from imported syllabus LOs into a complete examination and curriculum intelligence layer for planning, revision, assessment, and coverage analysis.
+
+### Module layout
+
+```
+src/lib/curriculum/pe-option-sec/
+├── types.ts                 # Categories, subtopics, revision/assessment types
+├── progression-framework.ts # Theory categories, exam topics, thresholds
+├── planning-bridge.ts       # Native pe-option-sec outcome filtering
+├── outcome-metadata.ts      # Category / domain / PL / exam metadata overlays
+├── progression-engine.ts    # Revision engine, assessment suggestions, dashboard
+└── index.ts
+
+src/lib/peKnowledge/
+├── secPeOptionMaster.ts     # Knowledge layer entry
+└── secPeOptionEngines.ts    # Planning, scheme, lesson design, assessment engines
+```
+
+### Framework categories
+
+| Category | Includes |
+|----------|----------|
+| Anatomy & Physiology | Skeletal, muscular, cardiovascular, respiratory systems |
+| Fitness & Training | Components, principles, methods of training |
+| Skill Acquisition | Stages of learning, feedback, guidance, practice types |
+| Sport Psychology | Motivation, goal setting, confidence, anxiety, concentration |
+| Performance Analysis | Observation, evaluation, improvement planning |
+| Health & Lifestyle | Physical activity, nutrition, recovery, wellbeing |
+| Practical Sport | Team/individual sport, officiating, coursework |
+
+### Revision intelligence
+
+Utilities: `showRevisionTopics()`, `showExamTopicCoverage()`, `showWeakTopics()`, `showMissingTopics()`.
+
+Each topic reports **covered**, **planned**, or **not planned** status when teaching progress context is supplied.
+
+### Assessment intelligence
+
+`buildSecAssessmentSuggestions()` generates exam-style questions, revision prompts, coursework ideas, and assessment opportunities from selected outcomes.
+
+### Dashboard metrics
+
+Coverage Dashboard **SEC PE Option coverage** section shows topic coverage, assessment coverage, learning domains, revision readiness, and **SEC gap analysis**.
+
+### Assistant capabilities
+
+- Create SEC PE Option anatomy scheme
+- Create cardiovascular system lesson
+- Explain principles of training
+- Generate revision activities for motivation
+- Show fitness testing outcomes
+- Revision topic overview (exam coverage, missing topics)
+
+Strict curriculum alignment and official outcome wording are unchanged.
+
+---
+
 ## Priority ranking
 
 1. **P0 (done):** Analytics dashboard, advisory alignment, implementation audit

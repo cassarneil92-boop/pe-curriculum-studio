@@ -172,6 +172,10 @@ export const INTENT_PHRASES: Record<string, string[]> = {
 };
 
 export const SUGGESTED_PROMPT_CHIPS = [
+  "Create a SEC PE Option anatomy scheme",
+  "Create a cardiovascular system lesson",
+  "Explain principles of training",
+  "Generate revision activities for motivation",
   "Create a Form 4 fitness scheme",
   "Create a 6 lesson cardiovascular endurance unit",
   "Compare continuous and interval training",

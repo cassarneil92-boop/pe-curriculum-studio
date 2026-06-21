@@ -19,6 +19,7 @@ import type {
 } from "./types";
 import { buildPrimaryPEDashboardSummary } from "../primary-pe/progression-engine";
 import { buildFitnessCurriculumDashboardSummary } from "../fitness-curriculum/progression-engine";
+import { buildSecPeOptionDashboardSummary } from "../pe-option-sec/progression-engine";
 import type { PrimaryPEDashboardSummary } from "../primary-pe/types";
 import type { FitnessCurriculumDashboardSummary } from "../fitness-curriculum/types";
 
@@ -418,5 +419,6 @@ export function buildCurriculumCoverageDashboard(): CurriculumCoverageDashboard 
     catalogueGaps: buildCatalogueGaps(pathwayCoverage, fitnessTopicCount),
     primaryPE: buildPrimaryPEDashboardSummary(),
     fitnessPE: buildFitnessCurriculumDashboardSummary(),
+    secPE: buildSecPeOptionDashboardSummary(),
   };
 }

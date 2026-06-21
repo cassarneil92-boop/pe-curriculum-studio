@@ -13,6 +13,7 @@ import {
 } from "./matching";
 import { isPrimaryPlanningOutcome } from "../primary-pe/planning-bridge";
 import { isFitnessPlanningOutcome } from "../fitness-curriculum/planning-bridge";
+import { isSecPlanningOutcome } from "../pe-option-sec/planning-bridge";
 import {
   applyPlanningSkillCorrections,
   resetPlanningSkillCorrectionsLog,
@@ -116,6 +117,9 @@ function outcomeMatchesAppPathways(
     return true;
   }
   if (appPathways.includes("fitness-curriculum") && isFitnessPlanningOutcome(outcome, yearGroup)) {
+    return true;
+  }
+  if (appPathways.includes("pe-option-sec") && isSecPlanningOutcome(outcome, yearGroup)) {
     return true;
   }
 

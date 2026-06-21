@@ -167,6 +167,17 @@ export function SchemeProgressionCoach({
             }))}
           />
         )}
+        {(report.secPeTips ?? []).length > 0 && (
+          <ActionableCoachList
+            label="SEC PE Option progression"
+            items={(report.secPeTips ?? []).map((text, index) => ({
+              id: `sec-pe-${index}`,
+              text,
+              actionLabel: "Add SEC note",
+              onApply: () => applyScheme(text, "coachNote", `${lessonLabel} SEC PE Option`),
+            }))}
+          />
+        )}
         {(report.learningScienceTips ?? []).length > 0 && (
           <ActionableCoachList
             label="Learning Science memory map"

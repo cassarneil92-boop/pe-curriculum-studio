@@ -1,6 +1,7 @@
 import { resolveLearningOutcomeById } from "@/src/lib/curriculum/metadata";
 import { generateId } from "@/lib/storage";
 import { buildFitnessActivityBlocks } from "@/src/lib/peKnowledge/fitnessCurriculumEngines";
+import { buildSecActivityBlocks } from "@/src/lib/peKnowledge/secPeOptionEngines";
 import type { SuggestionBadge } from "@/lib/lesson-builder/planning-coach-labels";
 import type { LessonActivity } from "@/lib/types";
 
@@ -68,6 +69,29 @@ export function buildActivitySuggestions(input: {
   const primary = isPrimarySetting(input.roleLabel);
   const duration = Math.max(input.lessonDuration || 60, 30);
   const isFitnessTopic = input.topicId.toLowerCase() === "fitness";
+  const isSecTheoryTopic = input.topicId.toLowerCase() === "pe-option-theory";
+
+  if (isSecTheoryTopic) {
+    const secBlocks = buildSecActivityBlocks({
+      topicId: input.topicId,
+      skillName: input.skillName,
+      topicName: input.topicName,
+      duration,
+    });
+    return secBlocks.map((block, index) => ({
+      id: `sec-activity-${index}`,
+      blockType: block.blockType,
+      name: block.name,
+      purpose: block.purpose,
+      durationMinutes: block.durationMinutes,
+      equipment: "Whiteboard, revision books, exam-style question sheets",
+      progression: "Retrieval → input → application → exam practice → revision capture",
+      differentiationEasier: "Sentence starters and labelled diagrams for recall tasks",
+      differentiationHarder: "Extended exam answers requiring application to sport scenarios",
+      studentsGroup: index === 2 ? "Pairs" : "Whole class",
+      badge: (index >= 2 ? "ASSESSMENT" : "SKILL") as SuggestionBadge,
+    }));
+  }
 
   if (isFitnessTopic) {
     const fitnessBlocks = buildFitnessActivityBlocks(input.skillName, duration);

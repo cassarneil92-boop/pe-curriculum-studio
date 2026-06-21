@@ -24,6 +24,7 @@ import { PEDAGOGICAL_MODELS } from "@/src/lib/intelligence/frameworks/pedagogica
 import { buildCreateLessonAssistantResponse } from "@/lib/assistant/lesson-draft-builder";
 import { handlePrimaryPEAssistantQuery } from "@/lib/assistant/primary-pe-queries";
 import { handleFitnessAssistantQuery } from "@/lib/assistant/fitness-pe-queries";
+import { handleSecPeAssistantQuery } from "@/lib/assistant/sec-pe-queries";
 import { resolveOutcomesForTopic } from "@/lib/assistant/topic-fallback";
 import { isPlanningCreationIntent } from "@/lib/assistant/query-parser";
 import type { ParsedAssistantQuery } from "./query-parser";
@@ -341,6 +342,9 @@ export function buildAssistantResponse(
     const codeResponse = respondToOutcomeCode(parsed.outcomeCode);
     if (codeResponse) return codeResponse;
   }
+
+  const secResponse = handleSecPeAssistantQuery(parsed, context);
+  if (secResponse) return secResponse;
 
   const fitnessResponse = handleFitnessAssistantQuery(parsed, context);
   if (fitnessResponse) return fitnessResponse;
