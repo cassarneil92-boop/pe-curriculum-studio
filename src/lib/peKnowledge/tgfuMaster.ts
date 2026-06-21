@@ -1,5 +1,5 @@
 /**
- * TGfU Master Pack v1 — original practical guidance for PE Curriculum Studio.
+ * TGfU Master Pack v2 — original practical guidance for PE Curriculum Studio.
  * Not copied from copyrighted sources. No fabricated citations.
  */
 
@@ -78,6 +78,145 @@ export interface TGfUContext extends LessonKnowledgeContext {
 
 export const TGfU_CORE_DEFINITION =
   "TGfU is a learner-centred games teaching model where pupils develop tactical awareness, decision making, skill execution and performance through modified game forms before or alongside isolated technical practice.";
+
+export const GBA_CORE_MESSAGE =
+  "Game based teaching is broader than TGfU alone — it includes several related approaches that share game-centred, thinking-player principles.";
+
+export interface GBAApproach {
+  id: string;
+  name: string;
+  summary: string;
+  commonCharacteristics: string[];
+  uniqueFeatures: string[];
+  idealContexts: string[];
+  ageSuitability: string[];
+  lessonPlanningImplications: string[];
+}
+
+export const GBA_ECOSYSTEM: GBAApproach[] = [
+  {
+    id: "tgfu",
+    name: "Teaching Games for Understanding (TGfU)",
+    summary: "Modified games expose tactical problems; skills are taught to solve problems pupils discover in play.",
+    commonCharacteristics: ["Game before or alongside drill", "Guided questioning", "Tactical problem focus"],
+    uniqueFeatures: ["Six-phase lesson structure", "Strong emphasis on game appreciation and return to play"],
+    idealContexts: ["Invasion and net games in upper primary and secondary", "Decision-making priority units"],
+    ageSuitability: ["primary", "middle-school", "secondary"],
+    lessonPlanningImplications: ["Name the tactical problem in WALT", "Use freezes sparingly with open questions"],
+  },
+  {
+    id: "game-sense",
+    name: "Game Sense",
+    summary: "Play-centred approach where game situations drive learning through authentic constraints and coach questioning.",
+    commonCharacteristics: ["Authentic game feel", "Question-rich coaching", "Player ownership"],
+    uniqueFeatures: ["Strong alignment with Australian game sense traditions", "Emphasis on feel for the game"],
+    idealContexts: ["Net/wall and invasion when engagement through play is the priority"],
+    ageSuitability: ["primary", "middle-school", "secondary"],
+    lessonPlanningImplications: ["Keep activities recognisable as the sport", "Coach in the flow of play"],
+  },
+  {
+    id: "tactical-games-model",
+    name: "Tactical Games Model",
+    summary: "Organises games teaching by category — invasion, net/wall, striking/fielding, target — with shared tactical problems.",
+    commonCharacteristics: ["Category-based curriculum", "Transfer across sports within a category"],
+    uniqueFeatures: ["Explicit tactical problem taxonomy per game type"],
+    idealContexts: ["Scheme planning across multiple sports in one category"],
+    ageSuitability: ["middle-school", "secondary"],
+    lessonPlanningImplications: ["Plan outcomes at category level then select sport context"],
+  },
+  {
+    id: "tactical-decision-learning",
+    name: "Tactical Decision Learning",
+    summary: "Focuses on when and why to act — decisions are the primary learning outcome in game contexts.",
+    commonCharacteristics: ["Decision outcomes in WILF", "Opposition in practice", "Reflection on choices"],
+    uniqueFeatures: ["Decision rubrics alongside skill criteria"],
+    idealContexts: ["Mixed ability groups where choices differentiate challenge"],
+    ageSuitability: ["primary", "middle-school", "secondary"],
+    lessonPlanningImplications: ["Ask why before how", "Score decisions not just execution"],
+  },
+  {
+    id: "game-insight",
+    name: "Game Insight",
+    summary: "Develops perceptual and cognitive understanding — reading the game before acting.",
+    commonCharacteristics: ["Pattern recognition", "Anticipation", "Scanning and awareness"],
+    uniqueFeatures: ["Strong cognitive-perceptual focus in game observation tasks"],
+    idealContexts: ["Video or freeze-frame analysis combined with modified games"],
+    ageSuitability: ["middle-school", "secondary"],
+    lessonPlanningImplications: ["What did you see before you acted?", "Pause to predict next play"],
+  },
+  {
+    id: "play-with-purpose",
+    name: "Play With Purpose",
+    summary: "Structured play where every game element serves a stated learning intention — play is not unguided recreation.",
+    commonCharacteristics: ["Clear learning purpose", "Modified rules", "Teacher as designer"],
+    uniqueFeatures: ["Explicit link between rule constraints and WALT"],
+    idealContexts: ["Primary games units needing structure without losing fun"],
+    ageSuitability: ["primary", "middle-school"],
+    lessonPlanningImplications: ["Every rule change must serve the learning focus"],
+  },
+  {
+    id: "constraints-led",
+    name: "Constraints-Led (informed)",
+    summary: "Manipulates task, environment, and performer constraints to shape emergent solutions without prescribing one technique.",
+    commonCharacteristics: ["Constraint manipulation", "Emergent solutions", "Representative tasks"],
+    uniqueFeatures: ["Task constraints over explicit command coaching"],
+    idealContexts: ["Skill refinement within game-like tasks", "Hybrid units with TGfU"],
+    ageSuitability: ["middle-school", "secondary"],
+    lessonPlanningImplications: ["Change space, rules, or equipment — observe emergent solutions"],
+  },
+  {
+    id: "hybrid",
+    name: "Hybrid models",
+    summary: "Combines game based approaches — e.g. TGfU phases with constraints-led skill tasks and game sense questioning.",
+    commonCharacteristics: ["Flexible sequencing", "Best-fit methods per lesson phase"],
+    uniqueFeatures: ["Not locked to one model — uses what the lesson needs"],
+    idealContexts: ["Experienced teachers tailoring units to class needs"],
+    ageSuitability: ["primary", "middle-school", "secondary"],
+    lessonPlanningImplications: ["Pick the phase tool: game form, constraint, or question — not all three at once"],
+  },
+];
+
+export type QuestionAgeBand = "primary" | "lower-secondary" | "upper-secondary";
+
+export const TGfU_QUESTION_BANK_V2 = {
+  observation: {
+    primary: ["What did you see?", "Where was the space?", "What happened when someone moved?"],
+    "lower-secondary": ["What did you notice?", "Where was the space?", "What changed when the defender moved?"],
+    "upper-secondary": ["What patterns emerged?", "How did opponent movement affect options?", "What did you scan before acting?"],
+  },
+  tactical: {
+    primary: ["How can we keep the ball?", "How can we find space?", "How can we stop them scoring?"],
+    "lower-secondary": ["How can we create space?", "How can we stop the opponent progressing?", "What makes this option safer or riskier?"],
+    "upper-secondary": ["How can we manipulate tempo?", "How do we create numerical advantage?", "What tactical trade-off did you accept?"],
+  },
+  decisionMaking: {
+    primary: ["Why did you pass there?", "When should you pass?", "What helped you decide?"],
+    "lower-secondary": ["Why did you choose that pass?", "When should you dribble instead of pass?", "What told you that was the right moment?"],
+    "upper-secondary": ["What information triggered your decision?", "What alternative did you reject and why?", "How did risk influence your choice?"],
+  },
+  prediction: {
+    primary: ["What might happen next?", "Where might they go?", "What will you do if they press?"],
+    "lower-secondary": ["What is the opponent likely to do?", "Where will space open if we move the ball?", "What happens if we lose possession here?"],
+    "upper-secondary": ["Anticipate the next two phases of play", "How will this decision constrain future options?", "Predict opponent response to your movement"],
+  },
+  reflection: {
+    primary: ["What would you try next time?", "What worked well?", "What did your team do well?"],
+    "lower-secondary": ["What would you try differently next time?", "What helped your team solve the problem?", "What pattern did you start to recognise?"],
+    "upper-secondary": ["How did your strategy evolve during the game?", "What would you adapt against a stronger opponent?", "What evidence shows you improved?"],
+  },
+  transfer: {
+    primary: ["Where else could we use this idea?", "Does this work in another game?", "What is the same in other sports?"],
+    "lower-secondary": ["Where else might this tactical idea appear in another invasion game?", "How would this decision change in a net game?", "What transfers from this sport to another?"],
+    "upper-secondary": ["Compare this tactical solution across two game categories", "How would constraints change this decision in another sport?", "Which principles are category-wide vs sport-specific?"],
+  },
+};
+
+export interface GameClassification {
+  sport: string;
+  category: TGfUGameCategory;
+  categoryLabel: string;
+  gbaFamily: string;
+}
 
 export const TGfU_SIX_PHASES: TGfUPhase[] = [
   {
@@ -493,6 +632,35 @@ const TOPIC_CATEGORY_MAP: Record<string, TGfUGameCategory> = {
   games: "invasion",
 };
 
+export function classifyGame(topicOrSport: string): GameClassification | null {
+  const raw = topicOrSport.trim().toLowerCase();
+  if (!raw) return null;
+  const category = resolveTGfUGameCategory(topicOrSport, topicOrSport);
+  if (!category) return null;
+
+  const labels: Record<TGfUGameCategory, string> = {
+    invasion: "Invasion games",
+    "net-wall": "Net and wall games",
+    "striking-fielding": "Striking and fielding",
+    target: "Target games",
+  };
+
+  let sport = raw;
+  for (const key of Object.keys(TOPIC_CATEGORY_MAP)) {
+    if (raw.includes(key.replace(/-/g, " ")) || raw.includes(key)) {
+      sport = key;
+      break;
+    }
+  }
+
+  return {
+    sport,
+    category,
+    categoryLabel: labels[category],
+    gbaFamily: "Game Based Approaches",
+  };
+}
+
 const SKILL_TACTICAL_HINTS: Record<string, Partial<Record<TGfUGameCategory, string>>> = {
   passing: {
     invasion: "maintaining possession",
@@ -567,36 +735,34 @@ function pickModifiedGameIdea(category: TGfUGameCategory, index = 0): string {
   return ideas[index % ideas.length];
 }
 
-export function getTGfUQuestionsByGameCategory(category: TGfUGameCategory): string[] {
+export function yearGroupToQuestionBand(yearGroup?: string): QuestionAgeBand {
+  if (!yearGroup) return "lower-secondary";
+  const y = yearGroup.toLowerCase();
+  if (/year-[1-6]|primary|ks2/i.test(y)) return "primary";
+  if (/year-[7-9]|year-10|lower|ks3/i.test(y)) return "lower-secondary";
+  return "upper-secondary";
+}
+
+export function getTGfUQuestionsV2(
+  category: TGfUGameCategory,
+  ageBand: QuestionAgeBand = "lower-secondary"
+): string[] {
+  const bank = TGfU_QUESTION_BANK_V2;
   const base = [
-    ...TGfU_QUESTION_BANK.observation.slice(0, 1),
-    ...TGfU_QUESTION_BANK.tacticalAwareness.slice(0, 1),
-    ...TGfU_QUESTION_BANK.decisionMaking.slice(0, 1),
-    ...TGfU_QUESTION_BANK.skillExecution.slice(0, 1),
-    ...TGfU_QUESTION_BANK.reflection.slice(0, 1),
+    bank.observation[ageBand][0],
+    bank.tactical[ageBand][0],
+    bank.decisionMaking[ageBand][0],
+    bank.reflection[ageBand][0],
+    bank.transfer[ageBand][0],
   ];
   if (category === "net-wall") {
-    return [
-      "Where should you send the ball to make recovery harder?",
-      "How can we cover the court after sending?",
-      ...base.slice(0, 3),
-    ];
-  }
-  if (category === "striking-fielding") {
-    return [
-      "Where is the safest place to strike the ball?",
-      "When should we attempt an extra run?",
-      ...base.slice(0, 3),
-    ];
-  }
-  if (category === "target") {
-    return [
-      "What angle gives the best chance of scoring?",
-      "When is risk worth extra points?",
-      ...base.slice(0, 3),
-    ];
+    return [bank.tactical[ageBand][1], bank.prediction[ageBand][0], ...base.slice(0, 3)];
   }
   return base;
+}
+
+export function getTGfUQuestionsByGameCategory(category: TGfUGameCategory): string[] {
+  return getTGfUQuestionsV2(category, "lower-secondary");
 }
 
 export function getTGfUDifferentiationOptions(context: TGfUContext): {
@@ -624,7 +790,8 @@ export function suggestTGfUApproach(context: TGfUContext): TGfUApproachSuggestio
   const catDef = TGfU_GAME_CATEGORIES.find((c) => c.id === category)!;
   const tacticalProblem = pickTacticalProblem(category, context.skillId);
   const modifiedGameIdea = pickModifiedGameIdea(category);
-  const questions = getTGfUQuestionsByGameCategory(category).slice(0, 3);
+  const ageBand = yearGroupToQuestionBand(context.yearGroup);
+  const questions = getTGfUQuestionsV2(category, ageBand).slice(0, 3);
   const diff = getTGfUDifferentiationOptions(context);
   const assessment = [
     TGfU_ASSESSMENT_DOMAINS.cognitive[1],
@@ -752,16 +919,22 @@ export function getTGfUSchemeUnitProgressionTips(lessonCount: number): string[] 
   ];
 }
 
-/** Virtual knowledge entry for PE Specialist Suggestions — TGfU Master layer. */
+/** Virtual knowledge entry for PE Specialist Suggestions — TGfU Master v2 layer. */
 export const TGfU_MASTER_PE_ENTRY: PEKnowledgeEntry = {
   id: "tgfu-master",
-  title: "TGfU Master — Games teaching specialist",
+  title: "GBA & TGfU Master — Thinking player pedagogy",
   category: "pedagogy-model",
-  summary: TGfU_CORE_DEFINITION,
-  keyPrinciples: TGfU_PEDAGOGICAL_PRINCIPLES.map((p) => p.name),
+  summary: `${GBA_CORE_MESSAGE} ${TGfU_CORE_DEFINITION}`,
+  keyPrinciples: [
+    ...GBA_ECOSYSTEM.slice(0, 3).map((a) => a.name),
+    "Thinking player development",
+    "Representative learning",
+  ],
   whyItMattersInPE:
-    "TGfU develops tactical understanding before or alongside technique — essential for invasion, net/wall, striking and target games.",
-  whenToUse: TGfU_GAME_CATEGORIES.flatMap((c) => c.sports.slice(0, 2)).map((s) => `${s} units`),
+    "Intelligent game based pedagogy develops thinking players and self regulated learners — not just games before drills.",
+  whenToUse: GBA_ECOSYSTEM[0].idealContexts.concat(
+    TGfU_GAME_CATEGORIES.flatMap((c) => c.sports.slice(0, 2))
+  ),
   commonMistakes: TGfU_PLANNING_MISTAKES.slice(0, 5).map((m) => m.mistake),
   practicalApplications: TGfU_SIX_PHASES.map((p) => `${p.name}: ${p.teacherPurpose}`),
   lessonPlanningPrompts: TGfU_SIX_PHASES.flatMap((p) => p.planningPrompts).slice(0, 6),
@@ -770,7 +943,7 @@ export const TGfU_MASTER_PE_ENTRY: PEKnowledgeEntry = {
   agePhaseRelevance: ["primary", "middle-school", "secondary"],
   pathwayRelevance: ["all"],
   relatedModels: ["tgfu", "constraints-led", "guided-discovery"],
-  tags: ["tgfu", "games", "invasion-games", "net-games", "tactics", "decision-making"],
+  tags: ["tgfu", "gba", "game-sense", "games", "invasion-games", "net-games", "tactics", "decision-making", "thinking-player"],
 };
 
 export function buildTGfUMasterCardReason(context: TGfUContext): string {

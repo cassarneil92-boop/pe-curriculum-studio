@@ -63,6 +63,33 @@ export function PedagogyCoachPanel({ lesson, onApplyLesson }: PedagogyCoachPanel
         </div>
       )}
 
+      {report.tgfuMetrics && (
+        <div className="rounded-lg border border-emerald-100 bg-emerald-50/50 px-3 py-2 space-y-2">
+          <p className="text-xs font-semibold text-emerald-900">Game based pedagogy check</p>
+          <div className="flex gap-3 text-xs text-slate-700">
+            <span title={report.tgfuMetrics.thinkingPlayerLabel}>
+              Thinking player: <strong>{report.tgfuMetrics.thinkingPlayerScore}</strong>/100
+            </span>
+            <span title={report.tgfuMetrics.representativeLabel}>
+              Representative: <strong>{report.tgfuMetrics.representativeScore}</strong>/100
+            </span>
+          </div>
+          {report.tgfuMetrics.strengths.length > 0 && (
+            <p className="text-xs text-slate-600">
+              Strengths: {report.tgfuMetrics.strengths.join("; ")}
+            </p>
+          )}
+          {report.tgfuMetrics.risks.length > 0 && (
+            <p className="text-xs text-amber-800">
+              Risks: {report.tgfuMetrics.risks.join("; ")}
+            </p>
+          )}
+          <p className="text-xs text-slate-700">
+            Improve: {report.tgfuMetrics.suggestedImprovement}
+          </p>
+        </div>
+      )}
+
       <ActionableCoachList
         label="WALT / WILF"
         items={report.waltWilfTips.map((text, index) => ({

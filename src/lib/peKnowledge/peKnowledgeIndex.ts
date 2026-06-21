@@ -149,6 +149,13 @@ function scoreEntryForContext(
       score += 8;
       reasons.push("TGfU specialist guidance for this game category");
     }
+    if (
+      /\bgame.?based|\bgb[a]\b|\btgfu\b|\bgame sense/i.test(area) &&
+      (entry.id === "tgfu-master" || entry.tags.includes("gba"))
+    ) {
+      score += 5;
+      reasons.push("Game Based Approaches ecosystem match");
+    }
   }
 
   if (context.lessonAim) {
@@ -237,6 +244,12 @@ export {
   TGfU_SCHEME_UNIT_PROGRESSION,
   TGfU_LESSON_TEMPLATES_BY_CATEGORY,
   TGfU_MASTER_PE_ENTRY,
+  GBA_ECOSYSTEM,
+  GBA_CORE_MESSAGE,
+  TGfU_QUESTION_BANK_V2,
+  classifyGame,
+  getTGfUQuestionsV2,
+  yearGroupToQuestionBand,
   isTGfURelevantTopic,
   resolveTGfUGameCategory,
   suggestTGfUApproach,
@@ -250,7 +263,47 @@ export {
   type TGfUGameCategory,
   type TGfUApproachSuggestion,
   type TGfULessonTemplate,
+  type GBAApproach,
+  type GameClassification,
+  type QuestionAgeBand,
 } from "./tgfuMaster";
+
+export {
+  TACTICAL_COMPLEXITY_LADDERS,
+  getTacticalComplexityLevel,
+  getTacticalComplexityLadder,
+  suggestNextComplexityStep,
+  buildTGfUUnitProgression,
+  getSchemeProgressionV2Tips,
+  inferComplexityLevelFromLessonIndex,
+  type TGfUUnitProgression,
+  type TacticalComplexityLevel,
+} from "./tgfuProgressions";
+
+export {
+  CATEGORY_CURRICULUM,
+  getCategoryCurriculum,
+  getCurriculumForTopic,
+  getSharedOutcomesForSport,
+  buildPlanningAssistantCurriculumSummary,
+  type CategoryCurriculum,
+} from "./tgfuCurriculum";
+
+export {
+  evaluateThinkingPlayerScore,
+  evaluateRepresentativeness,
+  evaluateLearnerCentredQuality,
+  runTGfUQualityAudit,
+  buildTGfUQualityInsights,
+  buildPedagogyCoachTGfUMetrics,
+  getGamePerformanceEvidenceSuggestions,
+  GAME_PERFORMANCE_ASSESSMENT,
+  TGfU_QUALITY_WARNINGS,
+  THINKING_PLAYER_FRAMEWORK,
+  type ThinkingPlayerEvaluation,
+  type RepresentativenessEvaluation,
+  type LearnerCentredEvaluation,
+} from "./tgfuQualityChecks";
 
 export {
   LEARNING_SCIENCE_ENTRIES,

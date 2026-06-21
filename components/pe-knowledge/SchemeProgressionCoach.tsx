@@ -30,7 +30,10 @@ export function SchemeProgressionCoach({
   activeLessonIndex,
   onApplyToLesson,
 }: SchemeProgressionCoachProps) {
-  const report = useMemo(() => buildSchemeProgressionCoachReport(scheme), [scheme]);
+  const report = useMemo(
+    () => buildSchemeProgressionCoachReport(scheme, activeLessonIndex),
+    [scheme, activeLessonIndex]
+  );
   const activeLesson = scheme.lessons[activeLessonIndex];
 
   const applyScheme = (text: string, target: "coachNote" | "wilf" | "walt", label: string) => {
