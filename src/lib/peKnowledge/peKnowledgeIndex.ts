@@ -9,6 +9,7 @@ import { MALTA_CONTEXT_ENTRIES } from "./maltaContext";
 import { MOTIVATION_ENTRIES } from "./motivation";
 import { PEDAGOGY_MODEL_ENTRIES } from "./pedagogyModels";
 import { PHYSICAL_LITERACY_ENTRIES } from "./physicalLiteracy";
+import { isTGfURelevantTopic, TGfU_MASTER_PE_ENTRY } from "./tgfuMaster";
 import type {
   AgePhase,
   LessonKnowledgeContext,
@@ -20,6 +21,7 @@ import type {
 export const ALL_PE_KNOWLEDGE_ENTRIES: PEKnowledgeEntry[] = [
   ...LEARNING_SCIENCE_ENTRIES,
   ...PEDAGOGY_MODEL_ENTRIES,
+  TGfU_MASTER_PE_ENTRY,
   ...PHYSICAL_LITERACY_ENTRIES,
   ...MOTIVATION_ENTRIES,
   ...INCLUSION_ENTRIES,
@@ -131,14 +133,21 @@ function scoreEntryForContext(
     }
   }
 
-  if (context.activityArea) {
-    const area = normaliseText(context.activityArea);
+  if (context.activityArea || context.topicId) {
+    const area = normaliseText(`${context.topicId ?? ""} ${context.activityArea ?? ""}`);
     const areaMatches =
       entry.tags.some((tag) => area.includes(tag) || tag.includes(area)) ||
       textMatchesEntry(area, entry);
     if (areaMatches) {
       score += 4;
-      reasons.push(`Links to ${context.activityArea}`);
+      reasons.push(`Links to ${context.activityArea ?? context.topicId}`);
+    }
+    if (
+      isTGfURelevantTopic(context.topicId, context.activityArea) &&
+      (entry.id === "tgfu-master" || entry.id === "tgfu")
+    ) {
+      score += 8;
+      reasons.push("TGfU specialist guidance for this game category");
     }
   }
 
@@ -215,6 +224,33 @@ export function searchPEKnowledge(query: string): PEKnowledgeEntry[] {
       entry.keyPrinciples.some((p) => p.toLowerCase().includes(q))
   );
 }
+
+export {
+  TGfU_CORE_DEFINITION,
+  TGfU_SIX_PHASES,
+  TGfU_GAME_CATEGORIES,
+  TGfU_PEDAGOGICAL_PRINCIPLES,
+  TGfU_QUESTION_BANK,
+  TGfU_DIFFERENTIATION,
+  TGfU_ASSESSMENT_DOMAINS,
+  TGfU_PLANNING_MISTAKES,
+  TGfU_SCHEME_UNIT_PROGRESSION,
+  TGfU_LESSON_TEMPLATES_BY_CATEGORY,
+  TGfU_MASTER_PE_ENTRY,
+  isTGfURelevantTopic,
+  resolveTGfUGameCategory,
+  suggestTGfUApproach,
+  buildTGfULessonTemplate,
+  getTGfUQuestionsByGameCategory,
+  getTGfUDifferentiationOptions,
+  getTGfUSchemeUnitProgressionTips,
+  getTGfULessonTemplateByCategory,
+  enrichTGfUKnowledgeCard,
+  flagTGfUPlanningIssues,
+  type TGfUGameCategory,
+  type TGfUApproachSuggestion,
+  type TGfULessonTemplate,
+} from "./tgfuMaster";
 
 export {
   LEARNING_SCIENCE_ENTRIES,

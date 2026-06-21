@@ -61,7 +61,13 @@ export function SchemeProgressionCoach({
 
   const topSuggestions = report.knowledgeSuggestions
     .slice(0, 2)
-    .map(toPEKnowledgeCardViewModel);
+    .map((s) =>
+      toPEKnowledgeCardViewModel(s, {
+        topicId: scheme.topicId,
+        yearGroup: scheme.yearGroup,
+        pathway: scheme.selectedPathways?.[0] ?? scheme.pathway,
+      })
+    );
 
   const lessonLabel = activeLesson
     ? `Lesson ${activeLesson.lessonNumber}`

@@ -44,6 +44,8 @@ export interface PEKnowledgeEntry {
 export interface LessonKnowledgeContext {
   yearGroup?: YearGroupId | string;
   pathway?: PathwayId | string;
+  topicId?: string;
+  skillId?: string;
   activityArea?: string;
   lessonAim?: string;
   studentNeeds?: string[];

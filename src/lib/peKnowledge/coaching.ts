@@ -14,6 +14,14 @@ import {
 import type { LessonApplyTarget } from "./applySuggestions";
 import { buildImprovedWalt, buildImprovedWilf, buildQuestioningFixPrompts } from "./applySuggestions";
 import type { LessonKnowledgeContext, PEKnowledgeEntry } from "./types";
+import {
+  enrichTGfUKnowledgeCard,
+  flagTGfUPlanningIssues,
+  getTGfUSchemeUnitProgressionTips,
+  isTGfURelevantTopic,
+  suggestTGfUApproach,
+  TGfU_MASTER_PE_ENTRY,
+} from "./tgfuMaster";
 
 export interface PEKnowledgeCardViewModel {
   entry: PEKnowledgeEntry;
@@ -124,6 +132,7 @@ export function buildKnowledgeContextFromPrompt(
   return {
     yearGroup,
     pathway,
+    topicId,
     activityArea,
     lessonAim,
     studentNeeds: extractStudentNeeds(prompt),
@@ -132,16 +141,29 @@ export function buildKnowledgeContextFromPrompt(
 }
 
 export function toPEKnowledgeCardViewModel(
-  suggestion: SuggestedKnowledgeEntry
+  suggestion: SuggestedKnowledgeEntry,
+  context?: LessonKnowledgeContext
 ): PEKnowledgeCardViewModel {
   const { entry, reasons } = suggestion;
+  const tgfuEnrich =
+    context &&
+    (entry.id === "tgfu-master" || entry.id === "tgfu") &&
+    isTGfURelevantTopic(context.topicId, context.activityArea)
+      ? enrichTGfUKnowledgeCard(context)
+      : null;
+
   return {
-    entry,
-    reason: reasons[0] ?? entry.summary.slice(0, 120),
-    planningPrompts: entry.lessonPlanningPrompts.slice(0, 3),
-    assessmentPrompt: entry.assessmentPrompts[0] ?? "What evidence will show learning today?",
+    entry: entry.id === "tgfu" && tgfuEnrich ? TGfU_MASTER_PE_ENTRY : entry,
+    reason: tgfuEnrich?.reason ?? reasons[0] ?? entry.summary.slice(0, 120),
+    planningPrompts: tgfuEnrich?.planningPrompts ?? entry.lessonPlanningPrompts.slice(0, 3),
+    assessmentPrompt:
+      tgfuEnrich?.assessmentPrompt ??
+      entry.assessmentPrompts[0] ??
+      "What evidence will show learning today?",
     differentiationPrompt:
-      entry.differentiationPrompts[0] ?? "How will all learners access this task?",
+      tgfuEnrich?.differentiationPrompt ??
+      entry.differentiationPrompts[0] ??
+      "How will all learners access this task?",
   };
 }
 
@@ -152,7 +174,9 @@ export function getPlanningAssistantKnowledgeSuggestions(
   limit = 5
 ): PEKnowledgeCardViewModel[] {
   const context = buildKnowledgeContextFromPrompt(prompt, response, defaults);
-  return suggestRelevantPEKnowledge(context, limit).map(toPEKnowledgeCardViewModel);
+  return suggestRelevantPEKnowledge(context, limit).map((s) =>
+    toPEKnowledgeCardViewModel(s, context)
+  );
 }
 
 function lessonToKnowledgeContext(lesson: LessonBuilderFormData): LessonKnowledgeContext {
@@ -175,6 +199,8 @@ function lessonToKnowledgeContext(lesson: LessonBuilderFormData): LessonKnowledg
   return {
     yearGroup: lesson.yearGroup,
     pathway,
+    topicId: lesson.topicId,
+    skillId: lesson.skillId,
     activityArea,
     lessonAim: lesson.walt || lesson.learningIntention || undefined,
     studentNeeds,
@@ -203,14 +229,6 @@ export function buildLessonPedagogyCoachReport(
       : knowledgeSuggestions.find((s) => s.entry.category === "pedagogy-model")?.entry ??
         getPEKnowledgeEntryById("tgfu");
 
-  const teachingModel = pedagogyEntry
-    ? {
-        title: pedagogyEntry.title,
-        summary: pedagogyEntry.summary,
-        entryId: pedagogyEntry.id,
-      }
-    : null;
-
   const waltWilfTips: string[] = [];
   if (!lesson.walt?.trim() && !lesson.learningIntention?.trim()) {
     waltWilfTips.push(
@@ -232,32 +250,75 @@ export function buildLessonPedagogyCoachReport(
   const questioningPrompts: string[] = [];
   const tgfu = getPEKnowledgeEntryById("tgfu");
   const guided = getPEKnowledgeEntryById("guided-discovery");
+  const tgfuRelevant = isTGfURelevantTopic(lesson.topicId, context.activityArea);
+  const tgfuApproach = tgfuRelevant ? suggestTGfUApproach(context) : null;
+
   if (
     pedagogyEntry?.id === "tgfu" ||
+    pedagogyEntry?.id === "tgfu-master" ||
     pedagogyEntry?.id === "guided-discovery" ||
-    (lesson.topicId && /invasion|net|game|football|basketball|volleyball|handball/i.test(lesson.topicId))
+    tgfuRelevant
   ) {
-    questioningPrompts.push(
-      ...(tgfu?.lessonPlanningPrompts.slice(0, 2) ?? []),
-      ...(guided?.lessonPlanningPrompts.slice(0, 1) ?? [])
-    );
+    if (tgfuApproach) {
+      questioningPrompts.push(
+        ...tgfuApproach.questioningPrompts,
+        `Tactical focus: ${tgfuApproach.tacticalProblem.replace(/-/g, " ")}`
+      );
+    } else {
+      questioningPrompts.push(
+        ...(tgfu?.lessonPlanningPrompts.slice(0, 2) ?? []),
+        ...(guided?.lessonPlanningPrompts.slice(0, 1) ?? [])
+      );
+    }
   }
 
-  const differentiationIdeas = [
-    ...new Set(
-      knowledgeSuggestions.flatMap((s) => s.entry.differentiationPrompts.slice(0, 1))
-    ),
-  ].slice(0, 3);
+  const differentiationIdeas = tgfuApproach
+    ? [...new Set(tgfuApproach.differentiationIdeas)]
+    : [
+        ...new Set(
+          knowledgeSuggestions.flatMap((s) => s.entry.differentiationPrompts.slice(0, 1))
+        ),
+      ].slice(0, 3);
 
-  const assessmentEvidence = [
-    ...new Set(
-      knowledgeSuggestions.flatMap((s) => s.entry.assessmentPrompts.slice(0, 1))
-    ),
-  ].slice(0, 3);
+  const assessmentEvidence = tgfuApproach
+    ? tgfuApproach.assessmentEvidence
+    : [
+        ...new Set(
+          knowledgeSuggestions.flatMap((s) => s.entry.assessmentPrompts.slice(0, 1))
+        ),
+      ].slice(0, 3);
 
-  const commonMistakes = pedagogyEntry
+  let commonMistakes = pedagogyEntry
     ? pedagogyEntry.commonMistakes.slice(0, 3)
     : knowledgeSuggestions.flatMap((s) => s.entry.commonMistakes.slice(0, 1)).slice(0, 3);
+
+  if (tgfuApproach) {
+    commonMistakes = [
+      tgfuApproach.commonMistakeWarning,
+      ...commonMistakes,
+    ].slice(0, 3);
+  }
+
+  const lessonText = `${lesson.walt ?? ""} ${lesson.activities ?? ""} ${(lesson.structuredActivities ?? []).map((a) => a.taskDescription).join(" ")}`;
+  const tgfuFlags = tgfuRelevant ? flagTGfUPlanningIssues(lessonText) : [];
+  if (tgfuFlags.length > 0) {
+    commonMistakes = [...tgfuFlags, ...commonMistakes].slice(0, 3);
+  }
+
+  const teachingModel =
+    tgfuApproach && (pedagogyEntry?.id === "tgfu" || tgfuRelevant)
+      ? {
+          title: "TGfU — " + tgfuApproach.categoryLabel,
+          summary: `${tgfuApproach.modifiedGameIdea}. Problem: ${tgfuApproach.tacticalProblem.replace(/-/g, " ")}.`,
+          entryId: "tgfu-master",
+        }
+      : pedagogyEntry
+        ? {
+            title: pedagogyEntry.title,
+            summary: pedagogyEntry.summary,
+            entryId: pedagogyEntry.id,
+          }
+        : null;
 
   return {
     teachingModel,
@@ -287,11 +348,13 @@ export function buildSchemeProgressionCoachReport(
   const context: LessonKnowledgeContext = {
     yearGroup: scheme.yearGroup,
     pathway,
+    topicId: scheme.topicId,
     activityArea: scheme.topicId ? getPlanningTopicDisplayName(scheme.topicId) : undefined,
     lessonAim: scheme.lessons[0]?.walt,
   };
 
   const knowledgeSuggestions = suggestRelevantPEKnowledge(context, 5);
+  const tgfuUnit = isTGfURelevantTopic(scheme.topicId, context.activityArea);
   const schemeLogic = getPEKnowledgeEntryById("scheme-progression-logic");
   const spaced = getPEKnowledgeEntryById("spaced-practice");
   const holistic = getPEKnowledgeEntryById("holistic-pe-assessment");
@@ -299,8 +362,10 @@ export function buildSchemeProgressionCoachReport(
   const sequencingTips: string[] = [];
   if (scheme.lessons.length > 0) {
     sequencingTips.push(
-      schemeLogic?.practicalApplications[0] ??
-        "Aim for intro → develop → apply → assess across the scheme."
+      tgfuUnit
+        ? "TGfU unit: progress from simple tactical problem → modified game → decision under pressure → skill refinement → assessment game."
+        : schemeLogic?.practicalApplications[0] ??
+            "Aim for intro → develop → apply → assess across the scheme."
     );
     const emptyWalts = scheme.lessons.filter((l) => !l.walt.trim()).length;
     if (emptyWalts > 0) {
@@ -320,11 +385,13 @@ export function buildSchemeProgressionCoachReport(
       "When will this skill appear again in the next three lessons?",
   ];
 
-  const progressionTips = [
-    schemeLogic?.keyPrinciples[1] ?? "Spiral back to prior skills in new contexts.",
-    getPEKnowledgeEntryById("desirable-difficulties")?.practicalApplications[0] ??
-      "Increase challenge gradually — avoid jumping to full game rules too early.",
-  ];
+  const progressionTips = tgfuUnit
+    ? getTGfUSchemeUnitProgressionTips(scheme.lessons.length).slice(0, 3)
+    : [
+        schemeLogic?.keyPrinciples[1] ?? "Spiral back to prior skills in new contexts.",
+        getPEKnowledgeEntryById("desirable-difficulties")?.practicalApplications[0] ??
+          "Increase challenge gradually — avoid jumping to full game rules too early.",
+      ];
 
   const holisticBalanceTips = [
     holistic?.practicalApplications[0] ??
