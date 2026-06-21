@@ -82,6 +82,29 @@ export function PedagogyCoachPanel({ lesson, onApplyLesson }: PedagogyCoachPanel
         </div>
       )}
 
+      {report.teachingForLearningMetrics && (
+        <div className="rounded-lg border border-sky-100 bg-sky-50/50 px-3 py-2 space-y-2">
+          <p className="text-xs font-semibold text-sky-900">Teaching for Learning</p>
+          <p className="text-xs text-slate-700">
+            Learning experience: <strong>{report.teachingForLearningMetrics.learningExperienceScore}</strong>/100 (
+            {report.teachingForLearningMetrics.learningExperienceBand})
+          </p>
+          {report.teachingForLearningMetrics.taskDesignWarning && (
+            <p className="text-xs text-amber-800">{report.teachingForLearningMetrics.taskDesignWarning}</p>
+          )}
+          <p className="text-xs text-slate-600">{report.teachingForLearningMetrics.contentBalance}</p>
+          <p className="text-xs text-slate-700">
+            Feedback: {report.teachingForLearningMetrics.feedbackSuggestion}
+          </p>
+          <p className="text-xs text-slate-600">
+            Observe: {report.teachingForLearningMetrics.observationFocus[0]}
+          </p>
+          <p className="text-xs text-slate-700">
+            Assessment: {report.teachingForLearningMetrics.assessmentIdea}
+          </p>
+        </div>
+      )}
+
       {report.tgfuMetrics && (
         <div className="rounded-lg border border-emerald-100 bg-emerald-50/50 px-3 py-2 space-y-2">
           <p className="text-xs font-semibold text-emerald-900">Game based pedagogy check</p>

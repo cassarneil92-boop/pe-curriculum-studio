@@ -37,6 +37,14 @@ import {
   buildSchemePhysicalLiteracyTips,
 } from "./physicalLiteracyAudits";
 import { PHYSICAL_LITERACY_MASTER_PE_ENTRY } from "./physicalLiteracyMaster";
+import { TEACHING_FOR_LEARNING_MASTER_PE_ENTRY } from "./teachingForLearningMaster";
+import {
+  buildPedagogyCoachTFLMetrics,
+  buildTeachingForLearningPlanningInsights,
+  buildTeachingForLearningQualityInsights,
+  buildSchemeTeachingForLearningTips,
+  buildTeachingForLearningQualityReviewForLesson as buildTFLQualityReviewFromEngines,
+} from "./teachingForLearningEngines";
 
 export interface PEKnowledgeCardViewModel {
   entry: PEKnowledgeEntry;
@@ -71,6 +79,15 @@ export interface LessonPedagogyCoachReport {
     improvementRecommendation: string;
     dimensions: Record<string, number>;
   };
+  teachingForLearningMetrics?: {
+    learningExperienceScore: number;
+    learningExperienceBand: string;
+    taskDesignWarning: string | null;
+    contentBalance: string;
+    feedbackSuggestion: string;
+    observationFocus: string[];
+    assessmentIdea: string;
+  };
 }
 
 export interface PhysicalLiteracyQualityReview {
@@ -87,6 +104,14 @@ export interface PhysicalLiteracyQualityReview {
   recommendations: string[];
 }
 
+export interface TeachingForLearningQualityReview {
+  score: number;
+  band: string;
+  checks: { label: string; met: boolean }[];
+  warnings: string[];
+  recommendations: string[];
+}
+
 export interface SchemeProgressionCoachReport {
   sequencingTips: string[];
   spacingTips: string[];
@@ -94,6 +119,7 @@ export interface SchemeProgressionCoachReport {
   holisticBalanceTips: string[];
   knowledgeSuggestions: SuggestedKnowledgeEntry[];
   physicalLiteracyTips?: string[];
+  teachingForLearningTips?: string[];
 }
 
 export interface KnowledgeQualityInsight {
@@ -274,6 +300,23 @@ export function getPlanningAssistantKnowledgeSuggestions(
       reason: plInsights[0] ?? first.reason,
     };
   }
+  const tflInsights = buildTeachingForLearningPlanningInsights(prompt, {
+    yearGroup: context.yearGroup,
+    topicId: context.topicId,
+    activityArea: context.activityArea,
+    lessonAim: context.lessonAim ?? prompt,
+    walt: context.lessonAim ?? prompt,
+  });
+  if (tflInsights.length > 0) {
+    const tflCard: PEKnowledgeCardViewModel = {
+      entry: TEACHING_FOR_LEARNING_MASTER_PE_ENTRY,
+      reason: tflInsights[0],
+      planningPrompts: tflInsights.slice(0, 3),
+      assessmentPrompt: "Plan 30-second observation or exit reflection against WILF.",
+      differentiationPrompt: "Use stations to increase meaningful practice time.",
+    };
+    return [tflCard, ...cards].slice(0, limit);
+  }
   return cards;
 }
 
@@ -423,6 +466,7 @@ export function buildLessonPedagogyCoachReport(
 
   const tgfuMetrics = tgfuRelevant ? buildPedagogyCoachTGfUMetrics(lesson) ?? undefined : undefined;
   const physicalLiteracyMetrics = buildPedagogyCoachPhysicalLiteracyMetrics(lesson);
+  const teachingForLearningMetrics = buildPedagogyCoachTFLMetrics(lesson);
 
   return {
     teachingModel,
@@ -434,6 +478,7 @@ export function buildLessonPedagogyCoachReport(
     knowledgeSuggestions,
     tgfuMetrics,
     physicalLiteracyMetrics,
+    teachingForLearningMetrics,
   };
 }
 
@@ -535,6 +580,7 @@ export function buildSchemeProgressionCoachReport(
   ];
 
   const physicalLiteracyTips = buildSchemePhysicalLiteracyTips(scheme);
+  const teachingForLearningTips = buildSchemeTeachingForLearningTips(scheme);
 
   return {
     sequencingTips: sequencingTips.slice(0, 3),
@@ -543,7 +589,14 @@ export function buildSchemeProgressionCoachReport(
     holisticBalanceTips: holisticBalanceTips.slice(0, 2),
     knowledgeSuggestions,
     physicalLiteracyTips,
+    teachingForLearningTips,
   };
+}
+
+export function buildTeachingForLearningQualityReviewForLesson(
+  lesson: LessonBuilderFormData
+): TeachingForLearningQualityReview {
+  return buildTFLQualityReviewFromEngines(lesson);
 }
 
 export function buildPhysicalLiteracyQualityReviewForLesson(
@@ -744,7 +797,10 @@ export function buildKnowledgeQualityInsights(
   const plInsights = buildPhysicalLiteracyQualityInsights(lesson);
   insights.push(...plInsights);
 
-  return insights.slice(0, 10);
+  const tflInsights = buildTeachingForLearningQualityInsights(lesson);
+  insights.push(...tflInsights);
+
+  return insights.slice(0, 12);
 }
 
 export function formatYearGroupForContext(yearGroup?: string): string | undefined {

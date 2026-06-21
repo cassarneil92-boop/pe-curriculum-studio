@@ -123,6 +123,17 @@ export function SchemeProgressionCoach({
               ),
           }))}
         />
+        {(report.teachingForLearningTips ?? []).length > 0 && (
+          <ActionableCoachList
+            label="Teaching for Learning unit design"
+            items={(report.teachingForLearningTips ?? []).map((text, index) => ({
+              id: `tfl-${index}`,
+              text,
+              actionLabel: "Add note",
+              onApply: () => applyScheme(text, "coachNote", `${lessonLabel} teaching for learning`),
+            }))}
+          />
+        )}
         {(report.physicalLiteracyTips ?? []).length > 0 && (
           <ActionableCoachList
             label="Physical literacy progression"
