@@ -136,6 +136,34 @@ export function PedagogyCoachPanel({ lesson, onApplyLesson }: PedagogyCoachPanel
         </div>
       )}
 
+      {report.learningScienceMetrics && (
+        <div className="rounded-lg border border-indigo-100 bg-indigo-50/50 px-3 py-2 space-y-2">
+          <p className="text-xs font-semibold text-indigo-900">Learning Science Score</p>
+          <p className="text-xs text-slate-700">
+            Overall: <strong>{report.learningScienceMetrics.score}</strong>/100 (
+            {report.learningScienceMetrics.band})
+          </p>
+          <p className="text-xs text-slate-600">
+            Difficulty: {report.learningScienceMetrics.difficultyLevel}
+          </p>
+          <p className="text-xs text-slate-700">
+            Retrieve: {report.learningScienceMetrics.retrievalSuggestion}
+          </p>
+          <p className="text-xs text-slate-600">
+            Interleave: {report.learningScienceMetrics.interleavingSuggestion}
+          </p>
+          <p className="text-xs text-slate-700">
+            Transfer: {report.learningScienceMetrics.transferPrompt}
+          </p>
+          <p className="text-xs text-slate-600">
+            Calibrate: {report.learningScienceMetrics.calibrationCheck}
+          </p>
+          {report.learningScienceMetrics.warning && (
+            <p className="text-xs text-amber-800">⚠ {report.learningScienceMetrics.warning}</p>
+          )}
+        </div>
+      )}
+
       {report.physicalLiteracyMetrics && (
         <div className="rounded-lg border border-violet-100 bg-violet-50/50 px-3 py-2 space-y-2">
           <p className="text-xs font-semibold text-violet-900">Physical Literacy Score</p>

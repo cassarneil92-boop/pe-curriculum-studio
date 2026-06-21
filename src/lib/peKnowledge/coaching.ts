@@ -69,6 +69,14 @@ import {
   buildPedagogyCoachPrimaryPEMetrics,
   buildSchemePrimaryPETips,
 } from "./primaryPEEngines";
+import { LEARNING_SCIENCE_MASTER_PE_ENTRY } from "./learningScienceMaster";
+import {
+  buildLearningSciencePlanningInsights,
+  buildLearningScienceQualityInsights,
+  buildLearningScienceQualityReview,
+  buildPedagogyCoachLSMetrics,
+  buildSchemeLearningScienceTips,
+} from "./learningScienceEngines";
 
 export interface PEKnowledgeCardViewModel {
   entry: PEKnowledgeEntry;
@@ -142,6 +150,16 @@ export interface LessonPedagogyCoachReport {
     safetyNote: string;
     assessmentIdea: string;
   };
+  learningScienceMetrics?: {
+    score: number;
+    band: string;
+    retrievalSuggestion: string;
+    difficultyLevel: string;
+    interleavingSuggestion: string;
+    transferPrompt: string;
+    calibrationCheck: string;
+    warning: string | null;
+  };
 }
 
 export interface PhysicalLiteracyQualityReview {
@@ -190,6 +208,14 @@ export interface PrimaryPEQualityReview {
   recommendations: string[];
 }
 
+export interface LearningScienceQualityReview {
+  score: number;
+  band: string;
+  checks: { label: string; met: boolean }[];
+  warnings: string[];
+  recommendations: string[];
+}
+
 export interface SchemeProgressionCoachReport {
   sequencingTips: string[];
   spacingTips: string[];
@@ -201,6 +227,7 @@ export interface SchemeProgressionCoachReport {
   cooperativeLearningTips?: string[];
   tpsrTips?: string[];
   primaryPETips?: string[];
+  learningScienceTips?: string[];
 }
 
 export interface KnowledgeQualityInsight {
@@ -411,6 +438,13 @@ export function getPlanningAssistantKnowledgeSuggestions(
     lessonAim: context.lessonAim ?? prompt,
     walt: context.lessonAim ?? prompt,
   });
+  const lsInsights = buildLearningSciencePlanningInsights(prompt, {
+    yearGroup: context.yearGroup,
+    topicId: context.topicId,
+    activityArea: context.activityArea,
+    lessonAim: context.lessonAim ?? prompt,
+    walt: context.lessonAim ?? prompt,
+  });
   if (clInsights.length > 0) {
     const clCard: PEKnowledgeCardViewModel = {
       entry: COOPERATIVE_LEARNING_MASTER_PE_ENTRY,
@@ -440,6 +474,16 @@ export function getPlanningAssistantKnowledgeSuggestions(
       differentiationPrompt: "Match responsibility level to pupil readiness — respect before leadership.",
     };
     return [tpsrCard, ...cards].slice(0, limit);
+  }
+  if (lsInsights.length > 0) {
+    const lsCard: PEKnowledgeCardViewModel = {
+      entry: LEARNING_SCIENCE_MASTER_PE_ENTRY,
+      reason: lsInsights[0],
+      planningPrompts: lsInsights.slice(0, 3),
+      assessmentPrompt: "Plan retrieval check and delayed evidence against WILF.",
+      differentiationPrompt: "Calibrate difficulty — scaffold or extend without public ranking.",
+    };
+    return [lsCard, ...cards].slice(0, limit);
   }
   if (tflInsights.length > 0) {
     const tflCard: PEKnowledgeCardViewModel = {
@@ -604,6 +648,7 @@ export function buildLessonPedagogyCoachReport(
   const cooperativeLearningMetrics = buildPedagogyCoachCLMetrics(lesson) ?? undefined;
   const tpsrMetrics = buildPedagogyCoachTPSRMetrics(lesson);
   const primaryPEMetrics = buildPedagogyCoachPrimaryPEMetrics(lesson) ?? undefined;
+  const learningScienceMetrics = buildPedagogyCoachLSMetrics(lesson);
 
   return {
     teachingModel,
@@ -619,6 +664,7 @@ export function buildLessonPedagogyCoachReport(
     cooperativeLearningMetrics,
     tpsrMetrics,
     primaryPEMetrics,
+    learningScienceMetrics,
   };
 }
 
@@ -724,6 +770,7 @@ export function buildSchemeProgressionCoachReport(
   const cooperativeLearningTips = buildSchemeCooperativeLearningTips(scheme);
   const tpsrTips = buildSchemeTPSRTips(scheme);
   const primaryPETips = buildSchemePrimaryPETips(scheme);
+  const learningScienceTips = buildSchemeLearningScienceTips(scheme, activeLessonIndex);
 
   return {
     sequencingTips: sequencingTips.slice(0, 3),
@@ -736,6 +783,7 @@ export function buildSchemeProgressionCoachReport(
     cooperativeLearningTips,
     tpsrTips,
     primaryPETips,
+    learningScienceTips,
   };
 }
 
@@ -967,6 +1015,15 @@ export function buildKnowledgeQualityInsights(
     insights.push(insight);
   }
 
+  const lsInsights = buildLearningScienceQualityInsights(lesson);
+  const tpsrTransferWarned = tpsrInsights.some((i) => i.message.includes("transfer"));
+  for (const insight of lsInsights) {
+    if (tpsrTransferWarned && insight.message.includes("transfer") && insight.id !== "ls-review") {
+      continue;
+    }
+    insights.push(insight);
+  }
+
   return insights.slice(0, 14);
 }
 
@@ -986,6 +1043,12 @@ export function buildPrimaryPEQualityReviewForLesson(
   lesson: LessonBuilderFormData
 ): PrimaryPEQualityReview {
   return buildPrimaryPEQualityReview(lesson);
+}
+
+export function buildLearningScienceQualityReviewForLesson(
+  lesson: LessonBuilderFormData
+): LearningScienceQualityReview {
+  return buildLearningScienceQualityReview(lesson);
 }
 
 export function formatYearGroupForContext(yearGroup?: string): string | undefined {

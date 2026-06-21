@@ -14,6 +14,7 @@ import { TEACHING_FOR_LEARNING_MASTER_PE_ENTRY } from "./teachingForLearningMast
 import { COOPERATIVE_LEARNING_MASTER_PE_ENTRY, isCooperativeLearningRelevant } from "./cooperativeLearningMaster";
 import { TPSR_MASTER_PE_ENTRY, isTPSRRelevant } from "./tpsrMaster";
 import { PRIMARY_PE_MASTER_PE_ENTRY, isPrimaryPEYearGroup, isPrimaryPERelevant } from "./primaryPEMaster";
+import { LEARNING_SCIENCE_MASTER_PE_ENTRY, isLearningScienceRelevant } from "./learningScienceMaster";
 import { isTGfURelevantTopic, TGfU_MASTER_PE_ENTRY } from "./tgfuMaster";
 import type {
   AgePhase,
@@ -31,6 +32,7 @@ export const ALL_PE_KNOWLEDGE_ENTRIES: PEKnowledgeEntry[] = [
   COOPERATIVE_LEARNING_MASTER_PE_ENTRY,
   TPSR_MASTER_PE_ENTRY,
   PRIMARY_PE_MASTER_PE_ENTRY,
+  LEARNING_SCIENCE_MASTER_PE_ENTRY,
   ...PHYSICAL_LITERACY_ENTRIES,
   PHYSICAL_LITERACY_MASTER_PE_ENTRY,
   ...MOTIVATION_ENTRIES,
@@ -196,6 +198,13 @@ function scoreEntryForContext(
     ) {
       score += 7;
       reasons.push("Primary PE and fundamental movement guidance");
+    }
+    if (
+      (entry.id === "learning-science-master" || entry.tags.includes("learning-science")) &&
+      (context.lessonAim || context.activityArea || isLearningScienceRelevant(`${context.lessonAim ?? ""} ${area}`))
+    ) {
+      score += 6;
+      reasons.push("Learning Science — durable learning design");
     }
     if (
       (entry.id === "physical-literacy-master" ||
@@ -539,6 +548,47 @@ export {
 } from "./primaryPEEngines";
 
 export {
+  LEARNING_SCIENCE_FRAMEWORK,
+  LEARNING_SCIENCE_CORE_MESSAGE,
+  PE_RETRIEVAL_PROMPT_BANK,
+  LEARNING_SCIENCE_WARNINGS,
+  LEARNING_SCIENCE_MASTER_PE_ENTRY,
+  isLearningScienceRelevant,
+  yearGroupToLSAgeBand,
+  getRetrievalPrompts,
+  getLearningSciencePrinciple,
+  type LearningSciencePrinciple,
+  type LSAgeBand,
+} from "./learningScienceMaster";
+
+export {
+  evaluateRetrievalPractice,
+  suggestRetrievalPrompts,
+  evaluateSpacingAcrossScheme,
+  suggestSpacingPlan,
+  evaluateInterleaving,
+  suggestInterleavedPractice,
+  evaluatePracticeVariation,
+  evaluateDesirableDifficulty,
+  evaluateElaboration,
+  suggestElaborationQuestions,
+  evaluateLearningCalibration,
+  evaluateGenerationOpportunity,
+  evaluateTransferPotential,
+  evaluateLearningScienceQuality,
+  buildSchemeMemoryMap,
+  buildLearningSciencePlanningInsights,
+  buildPedagogyCoachLSMetrics,
+  buildLearningScienceQualityReview,
+  buildLearningScienceQualityInsights,
+  buildSchemeLearningScienceTips,
+  lessonToLSContext,
+  type LSQualityBand,
+  type DifficultyVerdict,
+  type TransferPotential,
+} from "./learningScienceEngines";
+
+export {
   LEARNING_SCIENCE_ENTRIES,
   PEDAGOGY_MODEL_ENTRIES,
   PHYSICAL_LITERACY_ENTRIES,
@@ -581,11 +631,13 @@ export {
   type CooperativeLearningQualityReview,
   type TPSRQualityReview,
   type PrimaryPEQualityReview,
+  type LearningScienceQualityReview,
   buildPhysicalLiteracyQualityReviewForLesson,
   buildTeachingForLearningQualityReviewForLesson,
   buildCooperativeLearningQualityReviewForLesson,
   buildTPSRQualityReviewForLesson,
   buildPrimaryPEQualityReviewForLesson,
+  buildLearningScienceQualityReviewForLesson,
 } from "./coaching";
 
 export type {

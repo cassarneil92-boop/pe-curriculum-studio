@@ -156,6 +156,17 @@ export function SchemeProgressionCoach({
             }))}
           />
         )}
+        {(report.learningScienceTips ?? []).length > 0 && (
+          <ActionableCoachList
+            label="Learning Science memory map"
+            items={(report.learningScienceTips ?? []).map((text, index) => ({
+              id: `ls-${index}`,
+              text,
+              actionLabel: "Add LS note",
+              onApply: () => applyScheme(text, "coachNote", `${lessonLabel} learning science`),
+            }))}
+          />
+        )}
         {(report.teachingForLearningTips ?? []).length > 0 && (
           <ActionableCoachList
             label="Teaching for Learning unit design"
