@@ -18,7 +18,9 @@ import type {
   YearGroupCoverageRow,
 } from "./types";
 import { buildPrimaryPEDashboardSummary } from "../primary-pe/progression-engine";
+import { buildFitnessCurriculumDashboardSummary } from "../fitness-curriculum/progression-engine";
 import type { PrimaryPEDashboardSummary } from "../primary-pe/types";
+import type { FitnessCurriculumDashboardSummary } from "../fitness-curriculum/types";
 
 const YEAR_GROUP_ORDER = [
   "Year 1",
@@ -141,6 +143,13 @@ function pathwayStatus(
       };
     }
     if (pathwayId === "fitness-curriculum") {
+      const fitnessSummary = buildFitnessCurriculumDashboardSummary();
+      if (fitnessSummary.totalOutcomes > kbCount) {
+        return {
+          status: fitnessSummary.overallStatus === "strong" ? "strong" : "thin",
+          note: `${fitnessSummary.totalOutcomes} outcomes available via embedded fitness syllabus (Years 7–11) plus KB samples.`,
+        };
+      }
       return {
         status: "needs-review",
         note: "No dedicated import — fitness outcomes often sit under Secondary PE topic fitness.",
@@ -408,5 +417,6 @@ export function buildCurriculumCoverageDashboard(): CurriculumCoverageDashboard 
     metadataGaps: countMissingMetadata(rawOutcomes),
     catalogueGaps: buildCatalogueGaps(pathwayCoverage, fitnessTopicCount),
     primaryPE: buildPrimaryPEDashboardSummary(),
+    fitnessPE: buildFitnessCurriculumDashboardSummary(),
   };
 }

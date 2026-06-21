@@ -8,6 +8,7 @@
 | 3 — Advisory Alignment | **Shipped** | Schemes builder, `src/lib/intelligence/advisory/` |
 | 4 — Resource Warehouse | **Foundation** | Extended `ResourceItem` types, `/resources` |
 | 5 — AI Curriculum Coach | **Rule-based** | `src/lib/intelligence/coach/` |
+| 6B — Fitness Curriculum Reconstruction | **Foundation** | `src/lib/curriculum/fitness-curriculum/` |
 | 6A — Primary PE Reconstruction | **Foundation** | `src/lib/curriculum/primary-pe/` |
 | 6 — Collaboration | **Architecture** | `src/lib/intelligence/collaboration/scopes.ts` |
 | 7 — Curriculum Assistant | **Rule-based** | `/curriculum-assistant` |
@@ -157,6 +158,59 @@ Optional tags: **Motivation**, **Confidence**, **Competence**, **Knowledge & Und
 > Show progression from Year 2 throwing to Year 4 invasion games.
 
 Uses `queryPrimaryProgression()` / `describeThrowingToInvasionProgression()` in the progression engine.
+
+---
+
+## Phase 6B — Fitness Curriculum Reconstruction
+
+**Goal:** Transform Fitness Curriculum from embedded secondary-pe outcomes into a structured Fitness Intelligence Layer for planning, assessment, coverage analysis, and assistant recommendations.
+
+### Module layout
+
+```
+src/lib/curriculum/fitness-curriculum/
+├── types.ts                 # Categories, components, progression stages
+├── progression-framework.ts # HRF, SRF, principles, methods, testing, lifestyle
+├── planning-bridge.ts       # Surfaces F7–F11 + fitness topic under fitness-curriculum
+├── outcome-metadata.ts      # Category / domain / PL metadata overlays
+├── progression-engine.ts      # queryFitnessProgression, dashboard summary, gaps
+└── index.ts
+
+src/lib/peKnowledge/
+├── fitnessCurriculumMaster.ts   # Knowledge layer entry
+└── fitnessCurriculumEngines.ts  # Planning, scheme, lesson design engines
+```
+
+### Framework categories
+
+| Category | Includes |
+|----------|----------|
+| Health Related Fitness | Cardiovascular endurance, muscular endurance/strength, flexibility, body composition |
+| Skill Related Fitness | Agility, balance, coordination, power, reaction time, speed |
+| Training Principles | Specificity, overload, progression, reversibility, variation, recovery |
+| Training Methods | Continuous, interval, circuit, fartlek, resistance, flexibility |
+| Fitness Testing | Aerobic, strength, endurance, flexibility, agility tests |
+| Health & Lifestyle | Nutrition, recovery, sleep, activity, sedentary behaviour, wellbeing |
+
+### Progression model
+
+`foundational-knowledge` → `training-methods` → `application` → `assessment-interpretation` → `programme-design`
+
+Utilities: `queryFitnessProgression()`, `getRelatedFitnessOutcomes()`, `getPreviousFitnessConcepts()`, `getNextFitnessConcepts()`.
+
+### Dashboard metrics
+
+Coverage Dashboard **Fitness Curriculum coverage** section shows category coverage, year groups (7–11), learning domains, physical literacy attributes, and **Fitness gap analysis**.
+
+### Assistant capabilities
+
+- Create Form 4 fitness scheme / 6-lesson cardiovascular unit
+- Explain and compare training methods
+- Muscular endurance and fitness testing queries
+- Progression from training methods to programme design
+- TGfU-informed fitness lesson guidance
+
+Strict curriculum alignment and official outcome wording are unchanged.
 
 ---
 

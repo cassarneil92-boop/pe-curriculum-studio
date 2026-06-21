@@ -414,6 +414,133 @@ export function CurriculumCoverageView() {
             ))}
           </div>
         </Card>
+
+        <Card>
+          <CardHeader
+            title="Fitness Curriculum coverage"
+            description={`Structured catalogue for Years 7–11 — ${dashboard.fitnessPE.totalOutcomes} outcomes (${dashboard.fitnessPE.embeddedOutcomes} embedded syllabus + ${dashboard.fitnessPE.kbOutcomes} KB samples).`}
+          />
+          <div className="mb-4 flex flex-wrap items-center gap-2">
+            <CatalogueStatusBadge
+              status={
+                dashboard.fitnessPE.overallStatus === "strong"
+                  ? "strong"
+                  : dashboard.fitnessPE.overallStatus === "thin"
+                    ? "thin"
+                    : "needs-review"
+              }
+            />
+            <span className="text-sm text-slate-600">
+              Health and skill related fitness, training principles, methods, testing, and lifestyle.
+            </span>
+          </div>
+
+          <div className="grid gap-6 lg:grid-cols-3">
+            <div>
+              <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Fitness categories
+              </h4>
+              <ul className="space-y-2">
+                {dashboard.fitnessPE.categoryCoverage.map((row) => (
+                  <li
+                    key={row.category}
+                    className="flex items-center justify-between rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                  >
+                    <span className="text-slate-800">{row.label}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="tabular-nums text-slate-600">{row.outcomeCount}</span>
+                      <CatalogueStatusBadge status={row.status} />
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div>
+              <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Learning domains
+              </h4>
+              <ul className="space-y-2">
+                {dashboard.fitnessPE.learningDomainCoverage.map((row) => (
+                  <li
+                    key={row.domain}
+                    className="flex items-center justify-between rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                  >
+                    <span className="text-slate-800">{row.label}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="tabular-nums text-slate-600">{row.outcomeCount}</span>
+                      <CatalogueStatusBadge status={row.status} />
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div>
+              <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Physical literacy
+              </h4>
+              <ul className="space-y-2">
+                {dashboard.fitnessPE.physicalLiteracyCoverage.map((row) => (
+                  <li
+                    key={row.attribute}
+                    className="flex items-center justify-between rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                  >
+                    <span className="text-slate-800">{row.label}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="tabular-nums text-slate-600">{row.outcomeCount}</span>
+                      <CatalogueStatusBadge status={row.status} />
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+
+          <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
+            {dashboard.fitnessPE.yearCoverage.map((row) => (
+              <div
+                key={row.yearLabel}
+                className="rounded-lg border border-slate-200 bg-slate-50/50 px-3 py-2 text-center text-xs"
+              >
+                <p className="font-medium text-slate-700">{row.yearLabel}</p>
+                <p className="mt-0.5 text-lg font-semibold tabular-nums text-slate-800">
+                  {row.outcomeCount}
+                </p>
+                <div className="mt-1 flex justify-center">
+                  <CatalogueStatusBadge status={row.status} />
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {dashboard.fitnessPE.gapAnalysis.length > 0 && (
+            <div className="mt-6">
+              <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Fitness gap analysis
+              </h4>
+              <ul className="space-y-2">
+                {dashboard.fitnessPE.gapAnalysis.map((gap) => (
+                  <li key={gap.id} className="rounded-lg border border-slate-200 px-3 py-3 text-sm">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="font-medium text-slate-800">{gap.title}</span>
+                      <CatalogueStatusBadge
+                        status={
+                          gap.status === "needs-review"
+                            ? "needs-review"
+                            : gap.status === "missing"
+                              ? "missing"
+                              : "thin"
+                        }
+                      />
+                    </div>
+                    <p className="mt-1 text-slate-600">{gap.detail}</p>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </Card>
       </section>
 
       <h2 className="mb-4 text-lg font-semibold text-slate-900">Outcome verification</h2>

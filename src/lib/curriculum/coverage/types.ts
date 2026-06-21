@@ -118,6 +118,7 @@ export interface CatalogueGapItem {
 }
 
 import type { PrimaryPEDashboardSummary } from "../primary-pe/types";
+import type { FitnessCurriculumDashboardSummary } from "../fitness-curriculum/types";
 
 export interface CurriculumCoverageDashboard {
   generatedAt: string;
@@ -130,6 +131,7 @@ export interface CurriculumCoverageDashboard {
   metadataGaps: MetadataGapSummary;
   catalogueGaps: CatalogueGapItem[];
   primaryPE: PrimaryPEDashboardSummary;
+  fitnessPE: FitnessCurriculumDashboardSummary;
 }
 
 /** @deprecated Dashboard filter alias — use CoverageFilters in audit UI. */

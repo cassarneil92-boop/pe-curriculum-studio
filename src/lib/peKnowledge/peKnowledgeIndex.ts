@@ -14,6 +14,7 @@ import { TEACHING_FOR_LEARNING_MASTER_PE_ENTRY } from "./teachingForLearningMast
 import { COOPERATIVE_LEARNING_MASTER_PE_ENTRY, isCooperativeLearningRelevant } from "./cooperativeLearningMaster";
 import { TPSR_MASTER_PE_ENTRY, isTPSRRelevant } from "./tpsrMaster";
 import { PRIMARY_PE_MASTER_PE_ENTRY, isPrimaryPEYearGroup, isPrimaryPERelevant } from "./primaryPEMaster";
+import { FITNESS_CURRICULUM_MASTER_PE_ENTRY, isFitnessCurriculumRelevant } from "./fitnessCurriculumMaster";
 import { LEARNING_SCIENCE_MASTER_PE_ENTRY, isLearningScienceRelevant } from "./learningScienceMaster";
 import { EDUCATIONAL_PSYCHOLOGY_MASTER_PE_ENTRY, isEducationalPsychologyRelevant } from "./educationalPsychologyMaster";
 import { VISIBLE_LEARNING_MASTER_PE_ENTRY, isVisibleLearningRelevant } from "./visibleLearningMaster";
@@ -36,6 +37,7 @@ export const ALL_PE_KNOWLEDGE_ENTRIES: PEKnowledgeEntry[] = [
   COOPERATIVE_LEARNING_MASTER_PE_ENTRY,
   TPSR_MASTER_PE_ENTRY,
   PRIMARY_PE_MASTER_PE_ENTRY,
+  FITNESS_CURRICULUM_MASTER_PE_ENTRY,
   LEARNING_SCIENCE_MASTER_PE_ENTRY,
   EDUCATIONAL_PSYCHOLOGY_MASTER_PE_ENTRY,
   VISIBLE_LEARNING_MASTER_PE_ENTRY,

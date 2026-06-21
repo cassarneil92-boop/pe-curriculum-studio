@@ -172,6 +172,10 @@ export const INTENT_PHRASES: Record<string, string[]> = {
 };
 
 export const SUGGESTED_PROMPT_CHIPS = [
+  "Create a Form 4 fitness scheme",
+  "Create a 6 lesson cardiovascular endurance unit",
+  "Compare continuous and interval training",
+  "Which outcomes teach muscular endurance?",
   "Create a Year 3 FMS scheme",
   "Show Year 4 balance outcomes",
   "What comes before invasion games?",

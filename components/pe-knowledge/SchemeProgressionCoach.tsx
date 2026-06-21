@@ -156,6 +156,17 @@ export function SchemeProgressionCoach({
             }))}
           />
         )}
+        {(report.fitnessTips ?? []).length > 0 && (
+          <ActionableCoachList
+            label="Fitness Curriculum progression"
+            items={(report.fitnessTips ?? []).map((text, index) => ({
+              id: `fitness-${index}`,
+              text,
+              actionLabel: "Add fitness note",
+              onApply: () => applyScheme(text, "coachNote", `${lessonLabel} fitness`),
+            }))}
+          />
+        )}
         {(report.learningScienceTips ?? []).length > 0 && (
           <ActionableCoachList
             label="Learning Science memory map"

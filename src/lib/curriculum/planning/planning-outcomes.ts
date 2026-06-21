@@ -12,6 +12,7 @@ import {
   getMatchingAppPathwaysForOutcome,
 } from "./matching";
 import { isPrimaryPlanningOutcome } from "../primary-pe/planning-bridge";
+import { isFitnessPlanningOutcome } from "../fitness-curriculum/planning-bridge";
 import {
   applyPlanningSkillCorrections,
   resetPlanningSkillCorrectionsLog,
@@ -112,6 +113,9 @@ function outcomeMatchesAppPathways(
   topicId?: string
 ): boolean {
   if (appPathways.includes("primary-pe") && isPrimaryPlanningOutcome(outcome, yearGroup)) {
+    return true;
+  }
+  if (appPathways.includes("fitness-curriculum") && isFitnessPlanningOutcome(outcome, yearGroup)) {
     return true;
   }
 

@@ -1,6 +1,7 @@
 import { resolveLearningOutcomeById } from "@/src/lib/curriculum/metadata";
 import type { LearningOutcome } from "@/src/lib/curriculum/types";
 import { getPlanningSkillDisplayName } from "@/src/lib/curriculum/planning";
+import { buildFitnessLessonDesignHints } from "@/src/lib/peKnowledge/fitnessCurriculumEngines";
 import type { SuggestionBadge } from "@/lib/lesson-builder/planning-coach-labels";
 
 export type LearningDesignField =
@@ -265,6 +266,59 @@ export function buildLearningDesignSuggestions(input: {
   const safety = input.topicId
     ? buildSafetySuggestions(input.topicId, skillName)
     : buildSafetySuggestions("", skillName);
+
+  const fitnessHints = buildFitnessLessonDesignHints({
+    selectedOutcomeIds: input.selectedOutcomeIds,
+    topicId: input.topicId,
+    skillId: input.skillId,
+  });
+
+  for (const text of fitnessHints.walt) {
+    walt.push({
+      id: `fitness-walt-${walt.length}`,
+      field: "walt",
+      text: ensureSentence(text),
+      sourceLabel: "Fitness Curriculum intelligence",
+      badge: "SKILL",
+    });
+  }
+  for (const text of fitnessHints.wilf) {
+    successCriteria.push({
+      id: `fitness-wilf-${successCriteria.length}`,
+      field: "successCriteria",
+      text: ensureSentence(text),
+      sourceLabel: "Fitness Curriculum intelligence",
+      badge: "CURRICULUM",
+    });
+  }
+  for (const text of fitnessHints.assessment) {
+    assessment.push({
+      id: `fitness-assess-${assessment.length}`,
+      field: "assessmentNotes",
+      text: ensureSentence(text),
+      sourceLabel: "Fitness Curriculum intelligence",
+      badge: "ASSESSMENT",
+    });
+  }
+  for (const text of fitnessHints.reflection) {
+    learningIntentions.push({
+      id: `fitness-reflect-${learningIntentions.length}`,
+      field: "learningIntention",
+      text: ensureSentence(text),
+      sourceLabel: "Fitness reflection prompt",
+      badge: "SKILL",
+    });
+  }
+
+  if (input.topicId === "fitness") {
+    safety.push({
+      id: "safety-fitness-intensity",
+      field: "safetyConsiderations",
+      text: "Monitor intensity — students work at personal appropriate levels with hydration breaks.",
+      sourceLabel: "Fitness Curriculum safety",
+      badge: "SAFETY",
+    });
+  }
 
   return {
     learningIntentions: dedupeSuggestions(learningIntentions),

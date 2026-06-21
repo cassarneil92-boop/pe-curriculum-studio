@@ -18,6 +18,7 @@ export type {
 } from "./types";
 
 export type { PrimaryPEDashboardSummary } from "../primary-pe/types";
+export type { FitnessCurriculumDashboardSummary } from "../fitness-curriculum/types";
 
 export { IMPORTED_LEARNING_OUTCOMES } from "./coverage-engine";
 

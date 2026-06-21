@@ -2,6 +2,7 @@ import type { PathwayId as AppPathwayId } from "@/lib/types";
 import type { LearningOutcome, PathwayId as CurriculumPathwayId } from "../types";
 import { getAlignmentPathways } from "@/lib/scheme-builder/alignment";
 import { outcomeMatchesAppPathwayForPrimary } from "../primary-pe/planning-bridge";
+import { outcomeMatchesAppPathwayForFitness } from "../fitness-curriculum/planning-bridge";
 
 export function getCurriculumPathwaysForAppPathways(
   appPathways: AppPathwayId[],
@@ -13,6 +14,9 @@ export function getCurriculumPathwaysForAppPathways(
       set.add(pathway);
     }
     if (appPathway === "primary-pe") {
+      set.add("secondary-pe");
+    }
+    if (appPathway === "fitness-curriculum") {
       set.add("secondary-pe");
     }
   }
@@ -27,6 +31,9 @@ export function getMatchingAppPathwaysForOutcome(
 ): AppPathwayId[] {
   return appPathways.filter((appPathway) => {
     if (outcomeMatchesAppPathwayForPrimary(outcome, appPathway, yearGroup)) {
+      return true;
+    }
+    if (outcomeMatchesAppPathwayForFitness(outcome, appPathway, yearGroup)) {
       return true;
     }
     return getAlignmentPathways(appPathway, topicId ?? outcome.topicIds[0] ?? "").includes(

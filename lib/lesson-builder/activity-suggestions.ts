@@ -1,5 +1,6 @@
 import { resolveLearningOutcomeById } from "@/src/lib/curriculum/metadata";
 import { generateId } from "@/lib/storage";
+import { buildFitnessActivityBlocks } from "@/src/lib/peKnowledge/fitnessCurriculumEngines";
 import type { SuggestionBadge } from "@/lib/lesson-builder/planning-coach-labels";
 import type { LessonActivity } from "@/lib/types";
 
@@ -65,8 +66,26 @@ export function buildActivitySuggestions(input: {
   const focus = skillPhrase(input.skillName, input.topicName);
   const equipment = defaultEquipment(input.topicId);
   const primary = isPrimarySetting(input.roleLabel);
-
   const duration = Math.max(input.lessonDuration || 60, 30);
+  const isFitnessTopic = input.topicId.toLowerCase() === "fitness";
+
+  if (isFitnessTopic) {
+    const fitnessBlocks = buildFitnessActivityBlocks(input.skillName, duration);
+    return fitnessBlocks.map((block, index) => ({
+      id: `fitness-activity-${index}`,
+      blockType: index === 0 ? "warm-up" : index === fitnessBlocks.length - 1 ? "reflection" : "skill-practice",
+      name: block.name,
+      purpose: block.purpose,
+      durationMinutes: block.durationMinutes,
+      equipment: defaultEquipment("fitness"),
+      progression: block.progression,
+      differentiationEasier: "Reduce intensity or work intervals — personal effort scale",
+      differentiationHarder: "Increase work time or resistance while maintaining form",
+      studentsGroup: index === 1 ? "Pairs or small groups" : "Whole class",
+      badge: (index === fitnessBlocks.length - 1 ? "ASSESSMENT" : "SKILL") as SuggestionBadge,
+    }));
+  }
+
   const warmUp = primary ? 6 : Math.round(duration * 0.12);
   const skillPractice = primary ? 12 : Math.round(duration * 0.22);
   const conditioned = primary ? 10 : Math.round(duration * 0.18);
