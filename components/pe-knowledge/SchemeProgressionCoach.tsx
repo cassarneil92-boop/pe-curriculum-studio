@@ -178,6 +178,17 @@ export function SchemeProgressionCoach({
             }))}
           />
         )}
+        {(report.visibleLearningTips ?? []).length > 0 && (
+          <ActionableCoachList
+            label="Visible Learning progression"
+            items={(report.visibleLearningTips ?? []).map((text, index) => ({
+              id: `vl-${index}`,
+              text,
+              actionLabel: "Add VL note",
+              onApply: () => applyScheme(text, "coachNote", `${lessonLabel} visible learning`),
+            }))}
+          />
+        )}
         {(report.teachingForLearningTips ?? []).length > 0 && (
           <ActionableCoachList
             label="Teaching for Learning unit design"

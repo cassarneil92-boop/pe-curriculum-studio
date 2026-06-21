@@ -85,6 +85,14 @@ import {
   buildPedagogyCoachEPMetrics,
   buildSchemeEducationalPsychologyTips,
 } from "./educationalPsychologyEngines";
+import { VISIBLE_LEARNING_MASTER_PE_ENTRY } from "./visibleLearningMaster";
+import {
+  buildVisibleLearningPlanningInsights,
+  buildVisibleLearningQualityInsights,
+  buildVisibleLearningQualityReview,
+  buildPedagogyCoachVLMetrics,
+  buildSchemeVisibleLearningTips,
+} from "./visibleLearningEngines";
 
 export interface PEKnowledgeCardViewModel {
   entry: PEKnowledgeEntry;
@@ -178,6 +186,15 @@ export interface LessonPedagogyCoachReport {
     transferSuggestion: string;
     warning: string | null;
   };
+  visibleLearningMetrics?: {
+    teacherClarityScore: number;
+    visibleLearningScore: number;
+    challengeLevel: string;
+    feedbackQuality: string;
+    impactEvidenceCheck: string;
+    progressVisibilityReview: string;
+    warning: string | null;
+  };
 }
 
 export interface PhysicalLiteracyQualityReview {
@@ -242,6 +259,14 @@ export interface EducationalPsychologyQualityReview {
   recommendations: string[];
 }
 
+export interface VisibleLearningQualityReview {
+  score: number;
+  band: string;
+  checks: { label: string; met: boolean }[];
+  warnings: string[];
+  recommendations: string[];
+}
+
 export interface SchemeProgressionCoachReport {
   sequencingTips: string[];
   spacingTips: string[];
@@ -255,6 +280,7 @@ export interface SchemeProgressionCoachReport {
   primaryPETips?: string[];
   learningScienceTips?: string[];
   educationalPsychologyTips?: string[];
+  visibleLearningTips?: string[];
 }
 
 export interface KnowledgeQualityInsight {
@@ -479,6 +505,13 @@ export function getPlanningAssistantKnowledgeSuggestions(
     lessonAim: context.lessonAim ?? prompt,
     walt: context.lessonAim ?? prompt,
   });
+  const vlInsights = buildVisibleLearningPlanningInsights(prompt, {
+    yearGroup: context.yearGroup,
+    topicId: context.topicId,
+    activityArea: context.activityArea,
+    lessonAim: context.lessonAim ?? prompt,
+    walt: context.lessonAim ?? prompt,
+  });
   if (clInsights.length > 0) {
     const clCard: PEKnowledgeCardViewModel = {
       entry: COOPERATIVE_LEARNING_MASTER_PE_ENTRY,
@@ -528,6 +561,16 @@ export function getPlanningAssistantKnowledgeSuggestions(
       differentiationPrompt: "Scaffold for novices — fade support as competence grows.",
     };
     return [epCard, ...cards].slice(0, limit);
+  }
+  if (vlInsights.length > 0) {
+    const vlCard: PEKnowledgeCardViewModel = {
+      entry: VISIBLE_LEARNING_MASTER_PE_ENTRY,
+      reason: vlInsights[0],
+      planningPrompts: vlInsights.slice(0, 3),
+      assessmentPrompt: "Collect observable WILF evidence during practice — not only at plenary.",
+      differentiationPrompt: "Make success criteria visible at every challenge level.",
+    };
+    return [vlCard, ...cards].slice(0, limit);
   }
   if (tflInsights.length > 0) {
     const tflCard: PEKnowledgeCardViewModel = {
@@ -694,6 +737,7 @@ export function buildLessonPedagogyCoachReport(
   const primaryPEMetrics = buildPedagogyCoachPrimaryPEMetrics(lesson) ?? undefined;
   const learningScienceMetrics = buildPedagogyCoachLSMetrics(lesson);
   const educationalPsychologyMetrics = buildPedagogyCoachEPMetrics(lesson);
+  const visibleLearningMetrics = buildPedagogyCoachVLMetrics(lesson);
 
   return {
     teachingModel,
@@ -711,6 +755,7 @@ export function buildLessonPedagogyCoachReport(
     primaryPEMetrics,
     learningScienceMetrics,
     educationalPsychologyMetrics,
+    visibleLearningMetrics,
   };
 }
 
@@ -818,6 +863,7 @@ export function buildSchemeProgressionCoachReport(
   const primaryPETips = buildSchemePrimaryPETips(scheme);
   const learningScienceTips = buildSchemeLearningScienceTips(scheme, activeLessonIndex);
   const educationalPsychologyTips = buildSchemeEducationalPsychologyTips(scheme, activeLessonIndex);
+  const visibleLearningTips = buildSchemeVisibleLearningTips(scheme, activeLessonIndex);
 
   return {
     sequencingTips: sequencingTips.slice(0, 3),
@@ -832,6 +878,7 @@ export function buildSchemeProgressionCoachReport(
     primaryPETips,
     learningScienceTips,
     educationalPsychologyTips,
+    visibleLearningTips,
   };
 }
 
@@ -1084,6 +1131,39 @@ export function buildKnowledgeQualityInsights(
     insights.push(insight);
   }
 
+  const vlInsights = buildVisibleLearningQualityInsights(lesson);
+  const tflWilfWarned = tflInsights.some(
+    (i) =>
+      i.message.includes("success") ||
+      i.message.includes("WILF") ||
+      i.message.includes("criteria") ||
+      i.message.includes("intention")
+  );
+  const tflFeedbackWarned = tflInsights.some((i) => i.message.toLowerCase().includes("feedback"));
+  const epFeedbackWarned = epInsights.some((i) => i.message.toLowerCase().includes("feedback"));
+  for (const insight of vlInsights) {
+    if (
+      (tflFeedbackWarned || epFeedbackWarned) &&
+      insight.message.toLowerCase().includes("feedback") &&
+      insight.id !== "vl-review"
+    ) {
+      continue;
+    }
+    if (
+      tflWilfWarned &&
+      (insight.message.includes("criteria") ||
+        insight.message.includes("Success") ||
+        insight.message.includes("intention")) &&
+      insight.id !== "vl-review"
+    ) {
+      continue;
+    }
+    if (lsRetrievalWarned && insight.message.includes("retrieval") && insight.id !== "vl-review") {
+      continue;
+    }
+    insights.push(insight);
+  }
+
   return insights.slice(0, 14);
 }
 
@@ -1115,6 +1195,12 @@ export function buildEducationalPsychologyQualityReviewForLesson(
   lesson: LessonBuilderFormData
 ): EducationalPsychologyQualityReview {
   return buildEducationalPsychologyQualityReview(lesson);
+}
+
+export function buildVisibleLearningQualityReviewForLesson(
+  lesson: LessonBuilderFormData
+): VisibleLearningQualityReview {
+  return buildVisibleLearningQualityReview(lesson);
 }
 
 export function formatYearGroupForContext(yearGroup?: string): string | undefined {

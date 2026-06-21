@@ -191,6 +191,31 @@ export function PedagogyCoachPanel({ lesson, onApplyLesson }: PedagogyCoachPanel
         </div>
       )}
 
+      {report.visibleLearningMetrics && (
+        <div className="rounded-lg border border-teal-100 bg-teal-50/50 px-3 py-2 space-y-2">
+          <p className="text-xs font-semibold text-teal-900">Visible Learning</p>
+          <p className="text-xs text-slate-700">
+            Teacher clarity: <strong>{report.visibleLearningMetrics.teacherClarityScore}</strong>/100 · Visible
+            learning: <strong>{report.visibleLearningMetrics.visibleLearningScore}</strong>/100
+          </p>
+          <p className="text-xs text-slate-600">
+            Challenge: {report.visibleLearningMetrics.challengeLevel}
+          </p>
+          <p className="text-xs text-slate-700">
+            Feedback: {report.visibleLearningMetrics.feedbackQuality}
+          </p>
+          <p className="text-xs text-slate-600">
+            Impact evidence: {report.visibleLearningMetrics.impactEvidenceCheck}
+          </p>
+          <p className="text-xs text-slate-700">
+            Progress visibility: {report.visibleLearningMetrics.progressVisibilityReview}
+          </p>
+          {report.visibleLearningMetrics.warning && (
+            <p className="text-xs text-amber-800">⚠ {report.visibleLearningMetrics.warning}</p>
+          )}
+        </div>
+      )}
+
       {report.physicalLiteracyMetrics && (
         <div className="rounded-lg border border-violet-100 bg-violet-50/50 px-3 py-2 space-y-2">
           <p className="text-xs font-semibold text-violet-900">Physical Literacy Score</p>

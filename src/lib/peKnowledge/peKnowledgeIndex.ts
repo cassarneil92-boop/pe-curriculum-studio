@@ -16,6 +16,7 @@ import { TPSR_MASTER_PE_ENTRY, isTPSRRelevant } from "./tpsrMaster";
 import { PRIMARY_PE_MASTER_PE_ENTRY, isPrimaryPEYearGroup, isPrimaryPERelevant } from "./primaryPEMaster";
 import { LEARNING_SCIENCE_MASTER_PE_ENTRY, isLearningScienceRelevant } from "./learningScienceMaster";
 import { EDUCATIONAL_PSYCHOLOGY_MASTER_PE_ENTRY, isEducationalPsychologyRelevant } from "./educationalPsychologyMaster";
+import { VISIBLE_LEARNING_MASTER_PE_ENTRY, isVisibleLearningRelevant } from "./visibleLearningMaster";
 import { isTGfURelevantTopic, TGfU_MASTER_PE_ENTRY } from "./tgfuMaster";
 import type {
   AgePhase,
@@ -35,6 +36,7 @@ export const ALL_PE_KNOWLEDGE_ENTRIES: PEKnowledgeEntry[] = [
   PRIMARY_PE_MASTER_PE_ENTRY,
   LEARNING_SCIENCE_MASTER_PE_ENTRY,
   EDUCATIONAL_PSYCHOLOGY_MASTER_PE_ENTRY,
+  VISIBLE_LEARNING_MASTER_PE_ENTRY,
   ...PHYSICAL_LITERACY_ENTRIES,
   PHYSICAL_LITERACY_MASTER_PE_ENTRY,
   ...MOTIVATION_ENTRIES,
@@ -214,6 +216,13 @@ function scoreEntryForContext(
     ) {
       score += 6;
       reasons.push("Educational Psychology — memory and load design");
+    }
+    if (
+      (entry.id === "visible-learning-master" || entry.tags.includes("visible-learning")) &&
+      (context.lessonAim || context.activityArea || isVisibleLearningRelevant(`${context.lessonAim ?? ""} ${area}`))
+    ) {
+      score += 6;
+      reasons.push("Visible Learning — clarity, impact, and evidence");
     }
     if (
       (entry.id === "physical-literacy-master" ||
@@ -634,6 +643,41 @@ export {
   type ExpertiseLevel,
   type EPTransferPotential,
 } from "./educationalPsychologyEngines";
+
+export {
+  VISIBLE_LEARNING_FRAMEWORK,
+  VISIBLE_LEARNING_CORE_MESSAGE,
+  VISIBLE_LEARNING_WARNINGS,
+  VISIBLE_LEARNING_MASTER_PE_ENTRY,
+  isVisibleLearningRelevant,
+  getVisibleLearningDomain,
+  type VisibleLearningDomain,
+} from "./visibleLearningMaster";
+
+export {
+  evaluateTeacherClarity,
+  evaluateLearningIntentions,
+  evaluateSuccessCriteria,
+  evaluateVisibleLearning,
+  evaluateChallengeLevel,
+  evaluateVisibleLearningFeedback,
+  evaluateProgressVisibility,
+  evaluateStudentSelfEvaluation,
+  evaluateTeacherImpactEvidence,
+  evaluateLessonEffectiveness,
+  suggestHighImpactPractices,
+  generateVisibleLearningReview,
+  evaluateVisibleLearningQuality,
+  buildVisibleLearningPlanningInsights,
+  buildPedagogyCoachVLMetrics,
+  buildVisibleLearningQualityReview,
+  buildVisibleLearningQualityInsights,
+  buildSchemeVisibleLearningTips,
+  lessonToVLContext,
+  type VLQualityBand,
+  type ChallengeVerdict,
+  type LearningWalkVerdict,
+} from "./visibleLearningEngines";
 
 export {
   LEARNING_SCIENCE_ENTRIES,
