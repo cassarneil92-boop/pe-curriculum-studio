@@ -123,6 +123,17 @@ export function SchemeProgressionCoach({
               ),
           }))}
         />
+        {(report.cooperativeLearningTips ?? []).length > 0 && (
+          <ActionableCoachList
+            label="Cooperative Learning progression"
+            items={(report.cooperativeLearningTips ?? []).map((text, index) => ({
+              id: `cl-${index}`,
+              text,
+              actionLabel: "Add CL note",
+              onApply: () => applyScheme(text, "coachNote", `${lessonLabel} cooperative learning`),
+            }))}
+          />
+        )}
         {(report.teachingForLearningTips ?? []).length > 0 && (
           <ActionableCoachList
             label="Teaching for Learning unit design"

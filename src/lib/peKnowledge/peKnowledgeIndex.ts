@@ -11,6 +11,7 @@ import { PEDAGOGY_MODEL_ENTRIES } from "./pedagogyModels";
 import { PHYSICAL_LITERACY_ENTRIES } from "./physicalLiteracy";
 import { PHYSICAL_LITERACY_MASTER_PE_ENTRY } from "./physicalLiteracyMaster";
 import { TEACHING_FOR_LEARNING_MASTER_PE_ENTRY } from "./teachingForLearningMaster";
+import { COOPERATIVE_LEARNING_MASTER_PE_ENTRY, isCooperativeLearningRelevant } from "./cooperativeLearningMaster";
 import { isTGfURelevantTopic, TGfU_MASTER_PE_ENTRY } from "./tgfuMaster";
 import type {
   AgePhase,
@@ -25,6 +26,7 @@ export const ALL_PE_KNOWLEDGE_ENTRIES: PEKnowledgeEntry[] = [
   ...PEDAGOGY_MODEL_ENTRIES,
   TGfU_MASTER_PE_ENTRY,
   TEACHING_FOR_LEARNING_MASTER_PE_ENTRY,
+  COOPERATIVE_LEARNING_MASTER_PE_ENTRY,
   ...PHYSICAL_LITERACY_ENTRIES,
   PHYSICAL_LITERACY_MASTER_PE_ENTRY,
   ...MOTIVATION_ENTRIES,
@@ -166,6 +168,15 @@ function scoreEntryForContext(
     ) {
       score += 5;
       reasons.push("Teaching for Learning design guidance");
+    }
+    if (
+      (entry.id === "cooperative-learning-master" ||
+        entry.id === "cooperative-learning" ||
+        entry.tags.includes("cooperative-learning")) &&
+      (context.lessonAim || context.activityArea || isCooperativeLearningRelevant(`${context.lessonAim ?? ""} ${area}`))
+    ) {
+      score += 6;
+      reasons.push("Cooperative Learning design guidance");
     }
     if (
       (entry.id === "physical-literacy-master" ||
@@ -397,6 +408,40 @@ export {
 } from "./teachingForLearningEngines";
 
 export {
+  COOPERATIVE_LEARNING_FRAMEWORK,
+  COOPERATIVE_LEARNING_CORE_MESSAGE,
+  COOPERATIVE_STRUCTURE_LIBRARY,
+  COOPERATIVE_ROLES,
+  GROUP_STRUCTURE_OPTIONS,
+  COOPERATIVE_LEARNING_WARNINGS,
+  COOPERATIVE_LEARNING_MASTER_PE_ENTRY,
+  generateGroupProcessingPrompts,
+  isCooperativeLearningRelevant,
+  type CLElement,
+  type CooperativeStructure,
+} from "./cooperativeLearningMaster";
+
+export {
+  evaluateCooperativeLearningQuality,
+  evaluatePositiveInterdependence,
+  evaluateIndividualAccountability,
+  evaluateInterpersonalSkillsDevelopment,
+  evaluateGroupProcessing,
+  suggestCooperativeRoles,
+  suggestGroupStructures,
+  evaluateCooperativeEquity,
+  suggestCooperativeAssessment,
+  buildCooperativeLearningLessonSupport,
+  buildCooperativeLearningPlanningInsights,
+  buildPedagogyCoachCLMetrics,
+  buildCooperativeLearningQualityReview,
+  buildCooperativeLearningQualityInsights,
+  buildSchemeCooperativeLearningTips,
+  lessonToCLContext,
+  type CLQualityBand,
+} from "./cooperativeLearningEngines";
+
+export {
   LEARNING_SCIENCE_ENTRIES,
   PEDAGOGY_MODEL_ENTRIES,
   PHYSICAL_LITERACY_ENTRIES,
@@ -436,8 +481,10 @@ export {
   type KnowledgeQualityInsight,
   type PhysicalLiteracyQualityReview,
   type TeachingForLearningQualityReview,
+  type CooperativeLearningQualityReview,
   buildPhysicalLiteracyQualityReviewForLesson,
   buildTeachingForLearningQualityReviewForLesson,
+  buildCooperativeLearningQualityReviewForLesson,
 } from "./coaching";
 
 export type {

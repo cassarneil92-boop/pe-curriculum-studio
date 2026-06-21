@@ -63,6 +63,29 @@ export function PedagogyCoachPanel({ lesson, onApplyLesson }: PedagogyCoachPanel
         </div>
       )}
 
+      {report.cooperativeLearningMetrics && (
+        <div className="rounded-lg border border-teal-100 bg-teal-50/50 px-3 py-2 space-y-2">
+          <p className="text-xs font-semibold text-teal-900">Cooperative Learning Score</p>
+          <p className="text-xs text-slate-700">
+            Overall: <strong>{report.cooperativeLearningMetrics.score}</strong>/100 (
+            {report.cooperativeLearningMetrics.band})
+          </p>
+          <p className="text-xs text-slate-600">
+            Strongest: {report.cooperativeLearningMetrics.strongestElement} · Weakest:{" "}
+            {report.cooperativeLearningMetrics.weakestElement}
+          </p>
+          <p className="text-xs text-slate-700">
+            Improve: {report.cooperativeLearningMetrics.improvementSuggestion}
+          </p>
+          <p className="text-xs text-slate-600">
+            Roles: {report.cooperativeLearningMetrics.roleSuggestion}
+          </p>
+          <p className="text-xs text-slate-700">
+            Reflect: {report.cooperativeLearningMetrics.reflectionSuggestion}
+          </p>
+        </div>
+      )}
+
       {report.physicalLiteracyMetrics && (
         <div className="rounded-lg border border-violet-100 bg-violet-50/50 px-3 py-2 space-y-2">
           <p className="text-xs font-semibold text-violet-900">Physical Literacy Score</p>

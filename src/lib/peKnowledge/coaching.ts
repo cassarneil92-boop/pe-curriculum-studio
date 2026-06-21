@@ -45,6 +45,14 @@ import {
   buildSchemeTeachingForLearningTips,
   buildTeachingForLearningQualityReviewForLesson as buildTFLQualityReviewFromEngines,
 } from "./teachingForLearningEngines";
+import { COOPERATIVE_LEARNING_MASTER_PE_ENTRY, isCooperativeLearningRelevant } from "./cooperativeLearningMaster";
+import {
+  buildCooperativeLearningPlanningInsights,
+  buildCooperativeLearningQualityInsights,
+  buildCooperativeLearningQualityReview,
+  buildPedagogyCoachCLMetrics,
+  buildSchemeCooperativeLearningTips,
+} from "./cooperativeLearningEngines";
 
 export interface PEKnowledgeCardViewModel {
   entry: PEKnowledgeEntry;
@@ -88,6 +96,15 @@ export interface LessonPedagogyCoachReport {
     observationFocus: string[];
     assessmentIdea: string;
   };
+  cooperativeLearningMetrics?: {
+    score: number;
+    band: string;
+    strongestElement: string;
+    weakestElement: string;
+    improvementSuggestion: string;
+    roleSuggestion: string;
+    reflectionSuggestion: string;
+  };
 }
 
 export interface PhysicalLiteracyQualityReview {
@@ -112,6 +129,14 @@ export interface TeachingForLearningQualityReview {
   recommendations: string[];
 }
 
+export interface CooperativeLearningQualityReview {
+  score: number;
+  band: string;
+  checks: { label: string; met: boolean }[];
+  warnings: string[];
+  recommendations: string[];
+}
+
 export interface SchemeProgressionCoachReport {
   sequencingTips: string[];
   spacingTips: string[];
@@ -120,6 +145,7 @@ export interface SchemeProgressionCoachReport {
   knowledgeSuggestions: SuggestedKnowledgeEntry[];
   physicalLiteracyTips?: string[];
   teachingForLearningTips?: string[];
+  cooperativeLearningTips?: string[];
 }
 
 export interface KnowledgeQualityInsight {
@@ -257,7 +283,9 @@ export function toPEKnowledgeCardViewModel(
         ? TGfU_MASTER_PE_ENTRY
         : entry.id === "physical-literacy-overview" && plEnrich
           ? PHYSICAL_LITERACY_MASTER_PE_ENTRY
-          : entry,
+          : entry.id === "cooperative-learning" && context && isCooperativeLearningRelevant(`${context.lessonAim ?? ""} ${context.activityArea ?? ""}`)
+            ? COOPERATIVE_LEARNING_MASTER_PE_ENTRY
+            : entry,
     reason:
       plEnrich?.[0] ??
       (curriculumSummary
@@ -307,6 +335,23 @@ export function getPlanningAssistantKnowledgeSuggestions(
     lessonAim: context.lessonAim ?? prompt,
     walt: context.lessonAim ?? prompt,
   });
+  const clInsights = buildCooperativeLearningPlanningInsights(prompt, {
+    yearGroup: context.yearGroup,
+    topicId: context.topicId,
+    activityArea: context.activityArea,
+    lessonAim: context.lessonAim ?? prompt,
+    walt: context.lessonAim ?? prompt,
+  });
+  if (clInsights.length > 0) {
+    const clCard: PEKnowledgeCardViewModel = {
+      entry: COOPERATIVE_LEARNING_MASTER_PE_ENTRY,
+      reason: clInsights[0],
+      planningPrompts: clInsights.slice(0, 3),
+      assessmentPrompt: "Peer or group assessment against shared and individual WILF.",
+      differentiationPrompt: "Roles matched to strengths — equal status for all roles.",
+    };
+    return [clCard, ...cards].slice(0, limit);
+  }
   if (tflInsights.length > 0) {
     const tflCard: PEKnowledgeCardViewModel = {
       entry: TEACHING_FOR_LEARNING_MASTER_PE_ENTRY,
@@ -467,6 +512,7 @@ export function buildLessonPedagogyCoachReport(
   const tgfuMetrics = tgfuRelevant ? buildPedagogyCoachTGfUMetrics(lesson) ?? undefined : undefined;
   const physicalLiteracyMetrics = buildPedagogyCoachPhysicalLiteracyMetrics(lesson);
   const teachingForLearningMetrics = buildPedagogyCoachTFLMetrics(lesson);
+  const cooperativeLearningMetrics = buildPedagogyCoachCLMetrics(lesson) ?? undefined;
 
   return {
     teachingModel,
@@ -479,6 +525,7 @@ export function buildLessonPedagogyCoachReport(
     tgfuMetrics,
     physicalLiteracyMetrics,
     teachingForLearningMetrics,
+    cooperativeLearningMetrics,
   };
 }
 
@@ -581,6 +628,7 @@ export function buildSchemeProgressionCoachReport(
 
   const physicalLiteracyTips = buildSchemePhysicalLiteracyTips(scheme);
   const teachingForLearningTips = buildSchemeTeachingForLearningTips(scheme);
+  const cooperativeLearningTips = buildSchemeCooperativeLearningTips(scheme);
 
   return {
     sequencingTips: sequencingTips.slice(0, 3),
@@ -590,6 +638,7 @@ export function buildSchemeProgressionCoachReport(
     knowledgeSuggestions,
     physicalLiteracyTips,
     teachingForLearningTips,
+    cooperativeLearningTips,
   };
 }
 
@@ -800,7 +849,16 @@ export function buildKnowledgeQualityInsights(
   const tflInsights = buildTeachingForLearningQualityInsights(lesson);
   insights.push(...tflInsights);
 
-  return insights.slice(0, 12);
+  const clInsights = buildCooperativeLearningQualityInsights(lesson);
+  insights.push(...clInsights);
+
+  return insights.slice(0, 14);
+}
+
+export function buildCooperativeLearningQualityReviewForLesson(
+  lesson: LessonBuilderFormData
+): CooperativeLearningQualityReview {
+  return buildCooperativeLearningQualityReview(lesson);
 }
 
 export function formatYearGroupForContext(yearGroup?: string): string | undefined {

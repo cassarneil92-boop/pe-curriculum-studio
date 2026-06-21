@@ -11,6 +11,7 @@ import {
   buildKnowledgeQualityInsights,
   buildPhysicalLiteracyQualityReviewForLesson,
   buildTeachingForLearningQualityReviewForLesson,
+  buildCooperativeLearningQualityReviewForLesson,
   type KnowledgeQualityInsight,
 } from "@/src/lib/peKnowledge/coaching";
 import {
@@ -63,6 +64,10 @@ export function LessonQualityChecklist({
   );
   const tflReview = useMemo(
     () => buildTeachingForLearningQualityReviewForLesson(lesson as LessonBuilderFormData),
+    [lesson]
+  );
+  const clReview = useMemo(
+    () => buildCooperativeLearningQualityReviewForLesson(lesson as LessonBuilderFormData),
     [lesson]
   );
 
@@ -204,6 +209,31 @@ export function LessonQualityChecklist({
           )}
           {tflReview.recommendations[0] && (
             <p className="mt-2 text-xs text-slate-700">{tflReview.recommendations[0]}</p>
+          )}
+        </div>
+        <div className="mb-4 rounded-lg border border-teal-100 bg-teal-50/40 px-3 py-3">
+          <p className="text-xs font-semibold uppercase tracking-wide text-teal-800">
+            Cooperative Learning Review
+          </p>
+          <p className="mt-1 text-sm font-medium text-slate-800">
+            {clReview.band} — {clReview.score}/100
+          </p>
+          <ul className="mt-2 space-y-1 text-xs text-slate-600">
+            {clReview.checks.map((c) => (
+              <li key={c.label}>
+                {c.met ? "✓" : "○"} {c.label}
+              </li>
+            ))}
+          </ul>
+          {clReview.warnings.length > 0 && (
+            <ul className="mt-2 space-y-1 text-xs text-amber-800">
+              {clReview.warnings.slice(0, 2).map((w) => (
+                <li key={w}>⚠ {w}</li>
+              ))}
+            </ul>
+          )}
+          {clReview.recommendations[0] && (
+            <p className="mt-2 text-xs text-slate-700">{clReview.recommendations[0]}</p>
           )}
         </div>
         <LessonQualityInsight
