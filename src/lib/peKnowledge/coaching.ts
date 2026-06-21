@@ -28,6 +28,15 @@ import {
   buildTGfUQualityInsights,
   getGamePerformanceEvidenceSuggestions,
 } from "./tgfuQualityChecks";
+import {
+  buildPedagogyCoachPhysicalLiteracyMetrics,
+  buildPhysicalLiteracyPlanningInsights,
+  buildPhysicalLiteracyQualityInsights,
+  buildPhysicalLiteracyQualityReview,
+  buildPlanningAssistantPhysicalLiteracyCard,
+  buildSchemePhysicalLiteracyTips,
+} from "./physicalLiteracyAudits";
+import { PHYSICAL_LITERACY_MASTER_PE_ENTRY } from "./physicalLiteracyMaster";
 
 export interface PEKnowledgeCardViewModel {
   entry: PEKnowledgeEntry;
@@ -54,6 +63,28 @@ export interface LessonPedagogyCoachReport {
     risks: string[];
     suggestedImprovement: string;
   };
+  physicalLiteracyMetrics?: {
+    score: number;
+    band: string;
+    strongestDimension: string;
+    weakestDimension: string;
+    improvementRecommendation: string;
+    dimensions: Record<string, number>;
+  };
+}
+
+export interface PhysicalLiteracyQualityReview {
+  score: number;
+  band: string;
+  dimensions: {
+    motivation: number;
+    confidence: number;
+    competence: number;
+    knowledge: number;
+    understanding: number;
+  };
+  warnings: { warning: string; explanation: string; suggestedFix: string }[];
+  recommendations: string[];
 }
 
 export interface SchemeProgressionCoachReport {
@@ -62,6 +93,7 @@ export interface SchemeProgressionCoachReport {
   progressionTips: string[];
   holisticBalanceTips: string[];
   knowledgeSuggestions: SuggestedKnowledgeEntry[];
+  physicalLiteracyTips?: string[];
 }
 
 export interface KnowledgeQualityInsight {
@@ -172,20 +204,39 @@ export function toPEKnowledgeCardViewModel(
       ? buildPlanningAssistantCurriculumSummary(context.topicId, context.activityArea)
       : null;
 
+  const plEnrich =
+    context &&
+    (entry.id === "physical-literacy-master" ||
+      entry.id === "physical-literacy-overview" ||
+      entry.category === "physical-literacy")
+      ? buildPhysicalLiteracyPlanningInsights(
+          `${context.lessonAim ?? ""} ${context.activityArea ?? ""}`,
+          context.yearGroup
+        )
+      : null;
+
   const planningPrompts = curriculumSummary
     ? [
         `${curriculumSummary.category} — ${curriculumSummary.complexityLevel}`,
         `Tactical problem: ${curriculumSummary.tacticalProblem}`,
         curriculumSummary.crossSportNote,
       ]
-    : tgfuEnrich?.planningPrompts ?? entry.lessonPlanningPrompts.slice(0, 3);
+    : plEnrich
+      ? plEnrich.slice(0, 3)
+      : tgfuEnrich?.planningPrompts ?? entry.lessonPlanningPrompts.slice(0, 3);
 
   return {
-    entry: entry.id === "tgfu" && (tgfuEnrich || curriculumSummary) ? TGfU_MASTER_PE_ENTRY : entry,
+    entry:
+      entry.id === "tgfu" && (tgfuEnrich || curriculumSummary)
+        ? TGfU_MASTER_PE_ENTRY
+        : entry.id === "physical-literacy-overview" && plEnrich
+          ? PHYSICAL_LITERACY_MASTER_PE_ENTRY
+          : entry,
     reason:
-      curriculumSummary
+      plEnrich?.[0] ??
+      (curriculumSummary
         ? `${curriculumSummary.category}: ${curriculumSummary.tacticalProblem}`
-        : tgfuEnrich?.reason ?? reasons[0] ?? entry.summary.slice(0, 120),
+        : tgfuEnrich?.reason ?? reasons[0] ?? entry.summary.slice(0, 120)),
     planningPrompts,
     assessmentPrompt:
       curriculumSummary?.assessment[0] ??
@@ -207,9 +258,23 @@ export function getPlanningAssistantKnowledgeSuggestions(
   limit = 5
 ): PEKnowledgeCardViewModel[] {
   const context = buildKnowledgeContextFromPrompt(prompt, response, defaults);
-  return suggestRelevantPEKnowledge(context, limit).map((s) =>
+  const cards = suggestRelevantPEKnowledge(context, limit).map((s) =>
     toPEKnowledgeCardViewModel(s, context)
   );
+  const plInsights = buildPlanningAssistantPhysicalLiteracyCard(prompt, context.yearGroup);
+  if (plInsights.length > 0 && cards.length > 0) {
+    const first = cards[0];
+    cards[0] = {
+      ...first,
+      entry:
+        first.entry.category === "physical-literacy"
+          ? PHYSICAL_LITERACY_MASTER_PE_ENTRY
+          : first.entry,
+      planningPrompts: [...plInsights.slice(0, 3), ...first.planningPrompts].slice(0, 3),
+      reason: plInsights[0] ?? first.reason,
+    };
+  }
+  return cards;
 }
 
 function lessonToKnowledgeContext(lesson: LessonBuilderFormData): LessonKnowledgeContext {
@@ -357,6 +422,7 @@ export function buildLessonPedagogyCoachReport(
         : null;
 
   const tgfuMetrics = tgfuRelevant ? buildPedagogyCoachTGfUMetrics(lesson) ?? undefined : undefined;
+  const physicalLiteracyMetrics = buildPedagogyCoachPhysicalLiteracyMetrics(lesson);
 
   return {
     teachingModel,
@@ -367,6 +433,7 @@ export function buildLessonPedagogyCoachReport(
     commonMistakes,
     knowledgeSuggestions,
     tgfuMetrics,
+    physicalLiteracyMetrics,
   };
 }
 
@@ -467,12 +534,34 @@ export function buildSchemeProgressionCoachReport(
       "Which non-physical outcomes are assessable this week?",
   ];
 
+  const physicalLiteracyTips = buildSchemePhysicalLiteracyTips(scheme);
+
   return {
     sequencingTips: sequencingTips.slice(0, 3),
     spacingTips: spacingTips.slice(0, 2),
     progressionTips: progressionTips.slice(0, 2),
     holisticBalanceTips: holisticBalanceTips.slice(0, 2),
     knowledgeSuggestions,
+    physicalLiteracyTips,
+  };
+}
+
+export function buildPhysicalLiteracyQualityReviewForLesson(
+  lesson: LessonBuilderFormData
+): PhysicalLiteracyQualityReview {
+  const review = buildPhysicalLiteracyQualityReview(lesson);
+  return {
+    score: review.score,
+    band: review.band,
+    dimensions: {
+      motivation: review.profile.motivation,
+      confidence: review.profile.confidence,
+      competence: review.profile.competence,
+      knowledge: review.profile.knowledge,
+      understanding: review.profile.understanding,
+    },
+    warnings: review.warnings,
+    recommendations: review.profile.recommendations,
   };
 }
 
@@ -652,7 +741,10 @@ export function buildKnowledgeQualityInsights(
     insights.push(...tgfuInsights);
   }
 
-  return insights.slice(0, 8);
+  const plInsights = buildPhysicalLiteracyQualityInsights(lesson);
+  insights.push(...plInsights);
+
+  return insights.slice(0, 10);
 }
 
 export function formatYearGroupForContext(yearGroup?: string): string | undefined {

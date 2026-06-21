@@ -9,6 +9,7 @@ import { MALTA_CONTEXT_ENTRIES } from "./maltaContext";
 import { MOTIVATION_ENTRIES } from "./motivation";
 import { PEDAGOGY_MODEL_ENTRIES } from "./pedagogyModels";
 import { PHYSICAL_LITERACY_ENTRIES } from "./physicalLiteracy";
+import { PHYSICAL_LITERACY_MASTER_PE_ENTRY } from "./physicalLiteracyMaster";
 import { isTGfURelevantTopic, TGfU_MASTER_PE_ENTRY } from "./tgfuMaster";
 import type {
   AgePhase,
@@ -23,6 +24,7 @@ export const ALL_PE_KNOWLEDGE_ENTRIES: PEKnowledgeEntry[] = [
   ...PEDAGOGY_MODEL_ENTRIES,
   TGfU_MASTER_PE_ENTRY,
   ...PHYSICAL_LITERACY_ENTRIES,
+  PHYSICAL_LITERACY_MASTER_PE_ENTRY,
   ...MOTIVATION_ENTRIES,
   ...INCLUSION_ENTRIES,
   ...ASSESSMENT_ENTRIES,
@@ -155,6 +157,15 @@ function scoreEntryForContext(
     ) {
       score += 5;
       reasons.push("Game Based Approaches ecosystem match");
+    }
+    if (
+      (entry.id === "physical-literacy-master" ||
+        entry.id === "physical-literacy-overview" ||
+        entry.category === "physical-literacy") &&
+      (context.lessonAim || context.activityArea || context.yearGroup)
+    ) {
+      score += 4;
+      reasons.push("Physical literacy holistic development");
     }
   }
 
@@ -306,6 +317,39 @@ export {
 } from "./tgfuQualityChecks";
 
 export {
+  PHYSICAL_LITERACY_FRAMEWORK,
+  PHYSICAL_LITERACY_CORE_MESSAGE,
+  MOVEMENT_EXPERIENCE_FRAMEWORK,
+  PHYSICAL_LITERACY_QUESTION_BANK,
+  PHYSICAL_LITERACY_MASTER_PE_ENTRY,
+  getPhysicalLiteracyQuestions,
+  getPLAttributeById,
+  yearGroupToPLQuestionBand,
+  type PLAttribute,
+  type PLAttributeId,
+} from "./physicalLiteracyMaster";
+
+export {
+  evaluatePhysicalLiteracyProfile,
+  evaluateConfidenceBuilding,
+  evaluateMotivationSupport,
+  evaluatePhysicalLiteracyInclusion,
+  evaluateLifelongParticipationPotential,
+  evaluatePerformanceBias,
+  evaluatePhysicalLiteracyQuality,
+  evaluateCurriculumBalance,
+  buildPhysicalLiteracyPlanningInsights,
+  buildPedagogyCoachPhysicalLiteracyMetrics,
+  buildPhysicalLiteracyQualityReview,
+  buildPhysicalLiteracyQualityInsights,
+  buildSchemePhysicalLiteracyTips,
+  buildPlanningAssistantPhysicalLiteracyCard,
+  type PhysicalLiteracyProfile,
+  type PhysicalLiteracyQualityResult,
+  type CurriculumBalanceResult,
+} from "./physicalLiteracyAudits";
+
+export {
   LEARNING_SCIENCE_ENTRIES,
   PEDAGOGY_MODEL_ENTRIES,
   PHYSICAL_LITERACY_ENTRIES,
@@ -343,6 +387,8 @@ export {
   type LessonPedagogyCoachReport,
   type SchemeProgressionCoachReport,
   type KnowledgeQualityInsight,
+  type PhysicalLiteracyQualityReview,
+  buildPhysicalLiteracyQualityReviewForLesson,
 } from "./coaching";
 
 export type {

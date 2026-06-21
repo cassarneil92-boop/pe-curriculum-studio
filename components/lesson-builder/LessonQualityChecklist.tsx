@@ -9,6 +9,7 @@ import { PLANNING_COACH } from "@/lib/lesson-builder/planning-coach-labels";
 import type { LessonPlan } from "@/lib/types";
 import {
   buildKnowledgeQualityInsights,
+  buildPhysicalLiteracyQualityReviewForLesson,
   type KnowledgeQualityInsight,
 } from "@/src/lib/peKnowledge/coaching";
 import {
@@ -53,6 +54,10 @@ export function LessonQualityChecklist({
   const report = buildLessonCoachingReport(lesson as LessonPlan);
   const knowledgeInsights = useMemo(
     () => buildKnowledgeQualityInsights(lesson as LessonBuilderFormData),
+    [lesson]
+  );
+  const plReview = useMemo(
+    () => buildPhysicalLiteracyQualityReviewForLesson(lesson as LessonBuilderFormData),
     [lesson]
   );
 
@@ -146,6 +151,31 @@ export function LessonQualityChecklist({
       )}
 
       <div className="border-t border-slate-100 pt-4">
+        <div className="mb-4 rounded-lg border border-violet-100 bg-violet-50/40 px-3 py-3">
+          <p className="text-xs font-semibold uppercase tracking-wide text-violet-800">
+            Physical Literacy Review
+          </p>
+          <p className="mt-1 text-sm font-medium text-slate-800">
+            {plReview.band} — {plReview.score}/100
+          </p>
+          <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-slate-600 sm:grid-cols-5">
+            <span>Motivation: {plReview.dimensions.motivation}</span>
+            <span>Confidence: {plReview.dimensions.confidence}</span>
+            <span>Competence: {plReview.dimensions.competence}</span>
+            <span>Knowledge: {plReview.dimensions.knowledge}</span>
+            <span>Understanding: {plReview.dimensions.understanding}</span>
+          </div>
+          {plReview.warnings.length > 0 && (
+            <ul className="mt-2 space-y-1 text-xs text-amber-800">
+              {plReview.warnings.slice(0, 2).map((w) => (
+                <li key={w.warning}>⚠ {w.warning} — {w.suggestedFix}</li>
+              ))}
+            </ul>
+          )}
+          {plReview.recommendations[0] && (
+            <p className="mt-2 text-xs text-slate-700">{plReview.recommendations[0]}</p>
+          )}
+        </div>
         <LessonQualityInsight
           insights={knowledgeInsights}
           onApplyFix={onApplyLesson ? handleApplyFix : undefined}

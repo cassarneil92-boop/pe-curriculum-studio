@@ -123,6 +123,17 @@ export function SchemeProgressionCoach({
               ),
           }))}
         />
+        {(report.physicalLiteracyTips ?? []).length > 0 && (
+          <ActionableCoachList
+            label="Physical literacy progression"
+            items={(report.physicalLiteracyTips ?? []).map((text, index) => ({
+              id: `pl-${index}`,
+              text,
+              actionLabel: "Add PL note",
+              onApply: () => applyScheme(text, "coachNote", `${lessonLabel} physical literacy`),
+            }))}
+          />
+        )}
         {report.knowledgeSuggestions[0]?.entry.lessonPlanningPrompts[0] && (
           <ActionableCoachList
             label="Questioning focus"
