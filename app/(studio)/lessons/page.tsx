@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { LessonPreview } from "@/components/lesson-plans/LessonPreview";
+import { ExportMenu } from "@/components/shared/ExportMenu";
 import { TopicIcon } from "@/components/design/TopicIcon";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -17,7 +18,10 @@ import { LessonLibraryStatusBadge } from "@/components/progress/LessonLibrarySta
 import { useApp } from "@/components/providers/AppProvider";
 import { useDeliverySync } from "@/hooks/useDeliverySync";
 import { getTopicTheme } from "@/lib/design/topic-theme";
+import { buildExportDocumentContext } from "@/lib/export/export-context";
+import { buildLessonExportHtml } from "@/lib/export";
 import {
+  buildLessonExportFilename,
   duplicateLessonData,
   formatLessonDate,
   formatTimestamp,
@@ -25,7 +29,7 @@ import {
   getLessonTopicName,
   getLessonPathwayLabel,
 } from "@/lib/lesson-plans/helpers";
-import { exportLessonDocument, printLessonPreview } from "@/lib/lesson-plans/export";
+import { exportLessonDocument } from "@/lib/lesson-plans/export";
 import { getYearGroupLabel } from "@/lib/year-groups";
 import type { LessonDeliveryStatus, LessonPlan } from "@/lib/types";
 
@@ -38,7 +42,6 @@ export default function LessonsPage() {
   const { setLessonDelivery } = useDeliverySync();
   const [view, setView] = useState<LibraryView>("grid");
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [printOnLoad, setPrintOnLoad] = useState(false);
 
   const sortedLessons = useMemo(
     () =>
@@ -50,17 +53,18 @@ export default function LessonsPage() {
 
   const selectedLesson = sortedLessons.find((l) => l.id === selectedId) ?? null;
 
-  useEffect(() => {
-    if (printOnLoad && view === "preview" && selectedLesson) {
-      printLessonPreview();
-      setPrintOnLoad(false);
-    }
-  }, [printOnLoad, view, selectedLesson]);
+  const lessonExportContext = useMemo(() => {
+    if (!selectedLesson) return undefined;
+    return buildExportDocumentContext(data.teacher, {
+      pathwayId: selectedLesson.pathwayId,
+      yearGroup: selectedLesson.yearGroup,
+      classGroup: selectedLesson.classGroup,
+    });
+  }, [data.teacher, selectedLesson]);
 
-  const openPreview = (lesson: LessonPlan, triggerPrint = false) => {
+  const openPreview = (lesson: LessonPlan) => {
     setSelectedId(lesson.id);
     setView("preview");
-    if (triggerPrint) setPrintOnLoad(true);
   };
 
   const handleDuplicate = (lesson: LessonPlan) => {
@@ -77,7 +81,10 @@ export default function LessonsPage() {
     }
   };
 
-  if (view === "preview" && selectedLesson) {
+  if (view === "preview" && selectedLesson && lessonExportContext) {
+    const exportHtml = buildLessonExportHtml(selectedLesson, lessonExportContext);
+    const exportFilename = buildLessonExportFilename(selectedLesson);
+
     return (
       <div className="lesson-print-area">
         <div className="no-print mb-6 flex flex-wrap items-center justify-between gap-3">
@@ -91,15 +98,7 @@ export default function LessonsPage() {
             >
               Edit
             </Button>
-            <Button variant="secondary" onClick={() => printLessonPreview()}>
-              Export PDF
-            </Button>
-            <Button variant="secondary" onClick={() => exportLessonDocument(selectedLesson, "word")}>
-              Export Word (.doc)
-            </Button>
-            <Button variant="ghost" onClick={() => printLessonPreview()}>
-              Print
-            </Button>
+            <ExportMenu html={exportHtml} filename={exportFilename} />
           </div>
         </div>
 
@@ -113,7 +112,7 @@ export default function LessonsPage() {
           />
         </Card>
 
-        <LessonPreview lesson={selectedLesson} />
+        <LessonPreview lesson={selectedLesson} exportContext={lessonExportContext} />
       </div>
     );
   }
@@ -152,8 +151,18 @@ export default function LessonsPage() {
               onEdit={() => router.push(`/lesson-builder?edit=${lesson.id}`)}
               onDuplicate={() => handleDuplicate(lesson)}
               onDelete={() => handleDelete(lesson.id)}
-              onExportPdf={() => openPreview(lesson, true)}
-              onExportWord={() => exportLessonDocument(lesson, "word")}
+              onExportPdf={() => openPreview(lesson)}
+              onExportWord={() =>
+                exportLessonDocument(
+                  lesson,
+                  "word",
+                  buildExportDocumentContext(data.teacher, {
+                    pathwayId: lesson.pathwayId,
+                    yearGroup: lesson.yearGroup,
+                    classGroup: lesson.classGroup,
+                  })
+                )
+              }
             />
           ))}
         </div>

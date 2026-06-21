@@ -2,221 +2,255 @@
 
 import { BrandLogoHorizontal } from "@/components/brand/BrandLogoHorizontal";
 import { BRAND_FOOTER } from "@/lib/brand/constants";
-import { Badge } from "@/components/ui/Badge";
 import {
-  formatLessonDate,
-  getLessonOutcomes,
-  getLessonPathwayLabel,
-  getLessonSelectedPathwayLabels,
-  getLessonSkillName,
-  getLessonTopicName,
-} from "@/lib/lesson-plans/helpers";
-import type { LessonActivity, LessonPlan } from "@/lib/types";
-import { getYearGroupLabel } from "@/lib/year-groups";
+  buildLessonAssessmentExport,
+  buildLessonDifferentiationExport,
+  buildLessonExportMetadata,
+  buildLessonFlowRows,
+  buildLessonReflectionExport,
+} from "@/lib/lesson-plans/export-document";
+import { getLessonOutcomes } from "@/lib/lesson-plans/helpers";
+import type { ExportDocumentContext } from "@/lib/export/export-context";
+import type { LessonPlan } from "@/lib/types";
 
 interface LessonPreviewProps {
   lesson: LessonPlan;
+  exportContext?: ExportDocumentContext;
   showFooter?: boolean;
 }
 
-function PreviewSection({
+function DocSection({
   title,
   children,
+  className = "",
 }: {
   title: string;
   children: React.ReactNode;
+  className?: string;
 }) {
   return (
-    <section className="rounded-xl border border-slate-200 bg-white p-4">
-      <h3 className="text-xs font-semibold uppercase tracking-wide text-teal-700">{title}</h3>
-      <div className="mt-2 text-sm leading-relaxed text-slate-700">{children}</div>
+    <section className={`mb-3.5 print:mb-3 ${className}`}>
+      <h2 className="mb-1.5 border-b border-slate-300 pb-0.5 text-[0.72rem] font-bold uppercase tracking-widest text-slate-700">
+        {title}
+      </h2>
+      {children}
     </section>
   );
 }
 
-function TextBlock({ value }: { value: string }) {
-  if (!value.trim()) return <p className="text-slate-400">—</p>;
+function TextCell({ value }: { value: string }) {
+  if (!value.trim() || value.trim() === "—") {
+    return <span className="text-slate-400">—</span>;
+  }
   return (
-    <div className="space-y-1 whitespace-pre-wrap">
-      {value.split("\n").map((line, i) => (
-        <p key={i}>{line}</p>
+    <div className="whitespace-pre-wrap text-sm leading-relaxed text-slate-800">
+      {value.split("\n").map((line, index) => (
+        <p key={index} className={index > 0 ? "mt-1" : ""}>
+          {line}
+        </p>
       ))}
     </div>
   );
 }
 
-function ActivityPreview({ activity }: { activity: LessonActivity }) {
+function LabelBlock({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-xl border border-amber-100 bg-amber-50/30 p-4">
-      <p className="font-semibold text-slate-900">
-        Activity {activity.number}
-        {activity.name ? ` – ${activity.name}` : ""}
-      </p>
-      <dl className="mt-3 space-y-1 text-sm">
-        {activity.students && (
-          <>
-            <dt className="font-medium text-slate-600">Students</dt>
-            <dd>{activity.students}</dd>
-          </>
-        )}
-        {activity.time && (
-          <>
-            <dt className="mt-2 font-medium text-slate-600">Time</dt>
-            <dd>{activity.time}</dd>
-          </>
-        )}
-        {activity.spaceEquipment && (
-          <>
-            <dt className="mt-2 font-medium text-slate-600">Space &amp; equipment</dt>
-            <dd>{activity.spaceEquipment}</dd>
-          </>
-        )}
-        {activity.taskDescription && (
-          <>
-            <dt className="mt-2 font-medium text-slate-600">Task</dt>
-            <dd className="whitespace-pre-wrap">{activity.taskDescription}</dd>
-          </>
-        )}
-      </dl>
-      {activity.progressions.length > 0 && (
-        <div className="mt-3">
-          <p className="text-xs font-semibold uppercase text-slate-500">Progressions</p>
-          <ul className="mt-1 list-disc pl-4">
-            {activity.progressions.map((p) => (
-              <li key={p}>{p}</li>
-            ))}
-          </ul>
-        </div>
-      )}
-      {(activity.differentiationEasier || activity.differentiationHarder) && (
-        <div className="mt-3">
-          <p className="text-xs font-semibold uppercase text-slate-500">Differentiation</p>
-          <ul className="mt-1 list-disc pl-4">
-            {activity.differentiationEasier && <li>Easier: {activity.differentiationEasier}</li>}
-            {activity.differentiationHarder && <li>Harder: {activity.differentiationHarder}</li>}
-          </ul>
-        </div>
-      )}
-      {activity.teachingCues.length > 0 && (
-        <div className="mt-3">
-          <p className="text-xs font-semibold uppercase text-slate-500">Teaching cues</p>
-          <ul className="mt-1 flex flex-wrap gap-1.5">
-            {activity.teachingCues.map((cue) => (
-              <Badge key={cue} tone="teal">
-                {cue}
-              </Badge>
-            ))}
-          </ul>
-        </div>
-      )}
+    <div>
+      <p className="text-[0.72rem] font-bold uppercase tracking-wide text-slate-500">{label}</p>
+      <div className="mt-0.5">
+        <TextCell value={value} />
+      </div>
     </div>
   );
 }
 
-export function LessonPreview({ lesson, showFooter = true }: LessonPreviewProps) {
+const tableCell =
+  "border border-slate-300 px-2 py-1.5 align-top text-sm leading-relaxed text-slate-800";
+const tableHead =
+  "border border-slate-300 bg-teal-50 px-2 py-1.5 text-left text-[0.72rem] font-semibold uppercase tracking-wide text-teal-800";
+
+export function LessonPreview({
+  lesson,
+  exportContext,
+  showFooter = true,
+}: LessonPreviewProps) {
+  const meta = buildLessonExportMetadata(lesson, exportContext);
   const outcomes = getLessonOutcomes(lesson);
-  const pathwayLabels = getLessonSelectedPathwayLabels(lesson);
-  const activities = lesson.structuredActivities ?? [];
-  const endings = [...(lesson.lessonEndings ?? [])].sort((a, b) => a.order - b.order);
+  const flowRows = buildLessonFlowRows(lesson);
+  const differentiation = buildLessonDifferentiationExport(lesson);
+  const assessment = buildLessonAssessmentExport(lesson);
+  const reflection = buildLessonReflectionExport(lesson);
+
+  const metaRows: [string, string, string, string][] = [
+    ["School", meta.school, "College", meta.college],
+    ["Teacher", meta.teacher, "Year Group", meta.yearGroup],
+    ["Class", meta.classGroup, "Pathway", meta.pathway],
+    ["Topic", meta.topic, "Skill", meta.skill],
+    ["Date", meta.date, "Duration", meta.duration],
+  ];
 
   return (
-    <article className="lesson-print-root space-y-4">
-      <div className="lesson-print-brand mb-4 hidden print:block">
-        <BrandLogoHorizontal height={36} />
+    <article className="lesson-print-root mx-auto max-w-[210mm] bg-white text-[10.5pt] leading-snug text-slate-800">
+      <div className="lesson-print-brand mb-4 border-b border-slate-200 pb-3">
+        <BrandLogoHorizontal height={52} />
       </div>
-      <header className="rounded-2xl border border-teal-100 bg-gradient-to-br from-teal-50 to-white p-6">
-        <h1 className="text-2xl font-semibold text-slate-900">{lesson.title}</h1>
-        <p className="mt-2 text-sm text-slate-600">
-          {lesson.classGroup || "No class set"} · {getYearGroupLabel(lesson.yearGroup)} ·{" "}
-          {formatLessonDate(lesson.date)} · {lesson.duration} min
+
+      <h1 className="mb-3 border-b-2 border-teal-200 pb-1 text-xl font-bold text-teal-800">
+        {meta.title}
+      </h1>
+
+      <table className="mb-4 w-full border-collapse text-sm">
+        <tbody>
+          {metaRows.map(([l1, v1, l2, v2]) => (
+            <tr key={l1}>
+              <th className="w-[14%] border border-slate-300 bg-slate-50 px-2 py-1.5 text-left text-xs font-semibold text-slate-600">
+                {l1}
+              </th>
+              <td className={`w-[36%] ${tableCell}`}>{v1}</td>
+              <th className="w-[14%] border border-slate-300 bg-slate-50 px-2 py-1.5 text-left text-xs font-semibold text-slate-600">
+                {l2}
+              </th>
+              <td className={`w-[36%] ${tableCell}`}>{v2}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      <DocSection title="Curriculum alignment">
+        <p className="mb-1.5 text-[0.72rem] font-semibold uppercase tracking-wide text-slate-500">
+          Learning outcome codes
         </p>
-        <div className="mt-3 flex flex-wrap gap-1.5">
-          <Badge tone="teal">{getLessonPathwayLabel(lesson)}</Badge>
-          <Badge tone="slate">{getLessonTopicName(lesson)}</Badge>
-          <Badge tone="blue">{getLessonSkillName(lesson)}</Badge>
-          {pathwayLabels.length > 1 &&
-            pathwayLabels.map((label) => (
-              <Badge key={label} tone="amber">
-                {label}
-              </Badge>
-            ))}
-        </div>
-      </header>
-
-      <PreviewSection title="Curriculum Reference">
         {outcomes.length === 0 ? (
-          <p className="text-slate-400">No learning outcomes linked.</p>
+          <p className="text-sm italic text-slate-400">No learning outcomes linked.</p>
         ) : (
-          <ul className="space-y-2">
+          <div className="space-y-2">
             {outcomes.map((outcome) => (
-              <li key={outcome!.id} className="rounded-lg bg-slate-50 px-3 py-2">
-                <span className="text-xs font-semibold text-teal-700">{outcome!.code}</span>
-                <p className="mt-0.5">{outcome!.description}</p>
-              </li>
-            ))}
-          </ul>
-        )}
-      </PreviewSection>
-
-      <PreviewSection title="Learning Intentions">
-        <TextBlock value={lesson.learningIntention} />
-      </PreviewSection>
-
-      <PreviewSection title="WALT">
-        <TextBlock value={lesson.walt} />
-      </PreviewSection>
-
-      <PreviewSection title="Success Criteria / WILF">
-        <TextBlock value={lesson.successCriteria} />
-      </PreviewSection>
-
-      <PreviewSection title="PE Activities">
-        {activities.length > 0 ? (
-          <div className="space-y-3">
-            {activities.map((activity) => (
-              <ActivityPreview key={activity.id} activity={activity} />
-            ))}
-          </div>
-        ) : (
-          <TextBlock value={lesson.activities} />
-        )}
-      </PreviewSection>
-
-      {lesson.safetyConsiderations.trim() && (
-        <PreviewSection title="Safety Considerations">
-          <TextBlock value={lesson.safetyConsiderations} />
-        </PreviewSection>
-      )}
-
-      {endings.length > 0 ? (
-        <PreviewSection title="Lesson Ending">
-          <div className="space-y-3">
-            {endings.map((ending) => (
-              <div key={ending.id} className="rounded-lg bg-slate-50 px-3 py-2">
-                <p className="font-medium text-slate-900">{ending.title}</p>
-                <TextBlock value={ending.content} />
+              <div key={outcome!.id} className="border-b border-dotted border-slate-200 pb-1.5 last:border-0">
+                <p className="text-xs font-bold text-teal-700">{outcome!.code}</p>
+                <p className="text-sm text-slate-700">{outcome!.description}</p>
               </div>
             ))}
           </div>
-        </PreviewSection>
-      ) : (
-        <>
-          {lesson.assessmentNotes.trim() && (
-            <PreviewSection title="Assessment">
-              <TextBlock value={lesson.assessmentNotes} />
-            </PreviewSection>
-          )}
-          {lesson.reflectionNotes.trim() && (
-            <PreviewSection title="Reflection">
-              <TextBlock value={lesson.reflectionNotes} />
-            </PreviewSection>
-          )}
-        </>
-      )}
+        )}
+      </DocSection>
+
+      <DocSection title="Learning intentions">
+        <div className="grid gap-3 sm:grid-cols-2">
+          <LabelBlock label="Learning intentions" value={lesson.learningIntention} />
+          <LabelBlock label="WALT" value={lesson.walt} />
+        </div>
+        <div className="mt-3">
+          <LabelBlock label="WILF" value={lesson.successCriteria} />
+        </div>
+      </DocSection>
+
+      <DocSection title="Lesson flow" className="flow-section">
+        {flowRows.length === 0 ? (
+          <p className="text-sm italic text-slate-400">No lesson flow recorded.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[640px] border-collapse">
+              <thead>
+                <tr>
+                  <th className={`${tableHead} w-[16%]`}>Phase</th>
+                  <th className={`${tableHead} w-[8%]`}>Time</th>
+                  <th className={tableHead}>Activity</th>
+                  <th className={tableHead}>Organisation</th>
+                  <th className={tableHead}>Teaching Points</th>
+                </tr>
+              </thead>
+              <tbody>
+                {flowRows.map((row, index) => (
+                  <tr key={index} className="print:break-inside-avoid">
+                    <td className={`${tableCell} font-semibold`}>{row.phase}</td>
+                    <td className={tableCell}>{row.time}</td>
+                    <td className={tableCell}>
+                      <TextCell value={row.activity} />
+                    </td>
+                    <td className={tableCell}>
+                      <TextCell value={row.organisation} />
+                    </td>
+                    <td className={tableCell}>
+                      <TextCell value={row.teachingPoints} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </DocSection>
+
+      <DocSection title="Differentiation">
+        <table className="w-full border-collapse">
+          <thead>
+            <tr>
+              <th className={`${tableHead} w-1/3`}>Support</th>
+              <th className={`${tableHead} w-1/3`}>Core</th>
+              <th className={`${tableHead} w-1/3`}>Challenge</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td className={tableCell}>
+                <TextCell value={differentiation.support} />
+              </td>
+              <td className={tableCell}>
+                <TextCell value={differentiation.core} />
+              </td>
+              <td className={tableCell}>
+                <TextCell value={differentiation.challenge} />
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </DocSection>
+
+      <DocSection title="Assessment">
+        <table className="w-full border-collapse">
+          <tbody>
+            {(
+              [
+                ["Assessment opportunities", assessment.opportunities],
+                ["Observation points", assessment.observation],
+                ["Questioning prompts", assessment.questioning],
+                ["Success indicators", assessment.successIndicators],
+              ] as const
+            ).map(([label, value]) => (
+              <tr key={label}>
+                <th className="w-[28%] border border-slate-300 bg-slate-50 px-2 py-1.5 text-left text-xs font-semibold text-slate-600">
+                  {label}
+                </th>
+                <td className={tableCell}>
+                  <TextCell value={value} />
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </DocSection>
+
+      <DocSection title="Safety">
+        {lesson.safetyConsiderations.trim() ? (
+          <TextCell value={lesson.safetyConsiderations} />
+        ) : (
+          <p className="text-sm italic text-slate-400">
+            Standard PE safety checks — space, equipment, and pupil readiness.
+          </p>
+        )}
+      </DocSection>
+
+      <DocSection title="Reflection">
+        <div className="space-y-3">
+          <LabelBlock label="Teacher reflection prompt" value={reflection.teacher} />
+          <LabelBlock label="Student reflection question" value={reflection.student} />
+        </div>
+      </DocSection>
 
       {showFooter && (
-        <footer className="border-t border-slate-200 pt-4 text-center text-xs text-slate-400">
-          {BRAND_FOOTER}
+        <footer className="lesson-print-footer mt-4 border-t border-slate-300 pt-2 text-center text-xs text-slate-500">
+          PE Curriculum Studio · Generated {meta.generatedAt}
+          <span className="hidden print:inline"> · {BRAND_FOOTER}</span>
         </footer>
       )}
     </article>

@@ -63,7 +63,20 @@ body {
   }
 
   .lesson-print-root {
+    break-inside: auto;
+  }
+
+  .lesson-print-root .flow-section table tr {
     break-inside: avoid;
+  }
+
+  .lesson-print-root .doc-section,
+  .lesson-print-root section {
+    break-inside: avoid;
+  }
+
+  .lesson-print-root .flow-section {
+    break-inside: auto;
   }
 
   .scheme-print-area {
