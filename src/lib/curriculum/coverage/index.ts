@@ -39,4 +39,5 @@ export {
   matchesCoverageFilters,
 } from "./coverage-engine";
 
-export { buildCurriculumCoverageDashboard } from "./dashboard-engine";
+export { buildCurriculumCoverageDashboard, buildCoverageTeacherCatalogueSlice } from "./dashboard-engine";
+export type { CoverageTeacherCatalogueSlice } from "./dashboard-engine";

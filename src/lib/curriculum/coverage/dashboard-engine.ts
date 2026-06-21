@@ -6,9 +6,14 @@ import { PATHWAYS } from "../pathways";
 import { getPlanningOutcomeCounts, getPlanningOutcomes } from "../planning/planning-outcomes";
 import { GENERIC_TOPIC_IDS, getPlanningTopicDisplayName } from "../planning/topic-labels";
 import type { PathwayId, LearningOutcome } from "../types";
+import { buildPrimaryPEDashboardSummary } from "../primary-pe/progression-engine";
+import { buildFitnessCurriculumDashboardSummary } from "../fitness-curriculum/progression-engine";
+import { buildSecPeOptionDashboardSummary } from "../pe-option-sec/progression-engine";
+import { buildSportIntelligenceDashboardSummary } from "../sport-curriculum/progression-engine";
 import type {
   CatalogueCoverageStatus,
   CatalogueGapItem,
+  CatalogueLayerTotals,
   CurriculumCoverageDashboard,
   HeatmapCell,
   MetadataGapSummary,
@@ -17,12 +22,16 @@ import type {
   TopicCoverageRow,
   YearGroupCoverageRow,
 } from "./types";
-import { buildPrimaryPEDashboardSummary } from "../primary-pe/progression-engine";
-import { buildFitnessCurriculumDashboardSummary } from "../fitness-curriculum/progression-engine";
-import { buildSecPeOptionDashboardSummary } from "../pe-option-sec/progression-engine";
-import { buildSportIntelligenceDashboardSummary } from "../sport-curriculum/progression-engine";
-import type { PrimaryPEDashboardSummary } from "../primary-pe/types";
-import type { FitnessCurriculumDashboardSummary } from "../fitness-curriculum/types";
+
+/** Static catalogue fields used by the teacher-facing coverage dashboard. */
+export type CoverageTeacherCatalogueSlice = {
+  layerTotals: CatalogueLayerTotals;
+  pathwayCoverage: PathwayCoverageRow[];
+  topicCoverage: TopicCoverageRow[];
+};
+
+let cachedTeacherCatalogueSlice: CoverageTeacherCatalogueSlice | null = null;
+let cachedCurriculumCoverageDashboard: CurriculumCoverageDashboard | null = null;
 
 const YEAR_GROUP_ORDER = [
   "Year 1",
@@ -299,7 +308,7 @@ function countMissingYearGroupsInPathway(
   return outcomes.filter((o) => o.pathwayId === pathwayId && !o.yearGroups?.length).length;
 }
 
-export function buildCurriculumCoverageDashboard(): CurriculumCoverageDashboard {
+function computeTeacherCatalogueSlice(): CoverageTeacherCatalogueSlice {
   const rawOutcomes = IMPORTED_LEARNING_OUTCOMES;
   const planningOutcomes = getPlanningOutcomes();
   const kbOutcomes = LEARNING_OUTCOMES;
@@ -308,12 +317,8 @@ export function buildCurriculumCoverageDashboard(): CurriculumCoverageDashboard 
   const rawByPathway = countByPathway(rawOutcomes);
   const planningByPathway = countByPathway(planningOutcomes);
   const kbByPathway = countByPathway(kbOutcomes);
-  const rawByYear = countByYearGroup(rawOutcomes);
-  const planningByYear = countByYearGroup(planningOutcomes);
   const rawByTopic = countByTopicImported(rawOutcomes);
   const planningByTopic = countByTopicPlanning(planningOutcomes);
-
-  const fitnessTopicCount = planningByTopic.get("fitness") ?? 0;
 
   const pathwayCoverage: PathwayCoverageRow[] = PATHWAYS.map((pathway) => {
     const rawCount = rawByPathway.get(pathway.id) ?? 0;
@@ -331,6 +336,53 @@ export function buildCurriculumCoverageDashboard(): CurriculumCoverageDashboard 
       note,
     };
   });
+
+  const importedTopicIds = (importedTopicsData as { id: string }[]).map((t) => t.id);
+  const topicCoverage: TopicCoverageRow[] = importedTopicIds.map((topicId) => {
+    const key = topicId.toLowerCase();
+    const rawCount = rawByTopic.get(key) ?? 0;
+    const planningCount = planningByTopic.get(key) ?? 0;
+    return {
+      topicId,
+      label: getPlanningTopicDisplayName(topicId),
+      rawCount,
+      planningCount,
+      status: topicStatus(planningCount),
+    };
+  });
+
+  return {
+    layerTotals: {
+      rawImport: rawOutcomes.length,
+      planningCatalogue: counts.planningTotal,
+      kbStrictAlignment: kbOutcomes.length,
+    },
+    pathwayCoverage,
+    topicCoverage,
+  };
+}
+
+/** Lightweight static catalogue data for the teacher-facing coverage view. Cached per session. */
+export function buildCoverageTeacherCatalogueSlice(): CoverageTeacherCatalogueSlice {
+  if (!cachedTeacherCatalogueSlice) {
+    cachedTeacherCatalogueSlice = computeTeacherCatalogueSlice();
+  }
+  return cachedTeacherCatalogueSlice;
+}
+
+function computeCurriculumCoverageDashboard(): CurriculumCoverageDashboard {
+  const teacherSlice = buildCoverageTeacherCatalogueSlice();
+  const rawOutcomes = IMPORTED_LEARNING_OUTCOMES;
+  const planningOutcomes = getPlanningOutcomes();
+
+  const rawByPathway = countByPathway(rawOutcomes);
+  const planningByPathway = countByPathway(planningOutcomes);
+  const rawByYear = countByYearGroup(rawOutcomes);
+  const planningByYear = countByYearGroup(planningOutcomes);
+  const planningByTopic = countByTopicPlanning(planningOutcomes);
+
+  const fitnessTopicCount = planningByTopic.get("fitness") ?? 0;
+  const { pathwayCoverage, topicCoverage, layerTotals } = teacherSlice;
 
   const yearGroupCoverage: YearGroupCoverageRow[] = YEAR_GROUP_ORDER.map((yearGroup) => {
     const rawCount = rawByYear.get(yearGroup) ?? 0;
@@ -367,18 +419,6 @@ export function buildCurriculumCoverageDashboard(): CurriculumCoverageDashboard 
   }
 
   const importedTopicIds = (importedTopicsData as { id: string }[]).map((t) => t.id);
-  const topicCoverage: TopicCoverageRow[] = importedTopicIds.map((topicId) => {
-    const key = topicId.toLowerCase();
-    const rawCount = rawByTopic.get(key) ?? 0;
-    const planningCount = planningByTopic.get(key) ?? 0;
-    return {
-      topicId,
-      label: getPlanningTopicDisplayName(topicId),
-      rawCount,
-      planningCount,
-      status: topicStatus(planningCount),
-    };
-  });
 
   const sportCoverage: SportCoverageRow[] = importedTopicIds
     .filter((id) => !GENERIC_TOPIC_IDS.has(id.toLowerCase()))
@@ -406,11 +446,7 @@ export function buildCurriculumCoverageDashboard(): CurriculumCoverageDashboard 
 
   return {
     generatedAt: new Date().toISOString(),
-    layerTotals: {
-      rawImport: rawOutcomes.length,
-      planningCatalogue: counts.planningTotal,
-      kbStrictAlignment: kbOutcomes.length,
-    },
+    layerTotals,
     pathwayCoverage,
     yearGroupCoverage,
     pathwayYearHeatmap,
@@ -423,4 +459,12 @@ export function buildCurriculumCoverageDashboard(): CurriculumCoverageDashboard 
     secPE: buildSecPeOptionDashboardSummary(),
     sportPE: buildSportIntelligenceDashboardSummary(),
   };
+}
+
+/** Full curriculum audit dashboard. Cached per session after first build. */
+export function buildCurriculumCoverageDashboard(): CurriculumCoverageDashboard {
+  if (!cachedCurriculumCoverageDashboard) {
+    cachedCurriculumCoverageDashboard = computeCurriculumCoverageDashboard();
+  }
+  return cachedCurriculumCoverageDashboard;
 }

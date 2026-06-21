@@ -18,6 +18,7 @@ import {
   buildCoverageFilterOptions,
   buildCoverageReport,
   buildCurriculumCoverageDashboard,
+  buildCoverageTeacherCatalogueSlice,
   computeCoverageSummary,
   filterCoverageOutcomes,
   formatOutcomeSkills,
@@ -59,12 +60,8 @@ const MISSING_TABS: { id: CoverageMissingTab; label: string }[] = [
 
 export function CurriculumCoverageView() {
   const { data } = useApp();
-  const { context } = useTeacherContext();
-  const [filters, setFilters] = useState<CoverageFilters>(EMPTY_FILTERS);
-  const [activeTab, setActiveTab] = useState<CoverageMissingTab>("all");
+  const [auditOpen, setAuditOpen] = useState(false);
 
-  const summary = useMemo(() => computeCoverageSummary(), []);
-  const dashboard = useMemo(() => buildCurriculumCoverageDashboard(), []);
   const teachingReports = useMemo(
     () => buildTeachingProgressReports(data.lessons, data.schemes, data.calendar),
     [data.lessons, data.schemes, data.calendar]
@@ -73,10 +70,49 @@ export function CurriculumCoverageView() {
     () => buildTopicCoverageRows(teachingReports.taught, teachingReports.planned),
     [teachingReports]
   );
+  const teacherCatalogue = useMemo(() => buildCoverageTeacherCatalogueSlice(), []);
   const teacherReport = useMemo(
-    () => buildCoverageTeacherReport(dashboard, teachingReports.taught, topicRows),
-    [dashboard, teachingReports, topicRows]
+    () => buildCoverageTeacherReport(teacherCatalogue, teachingReports.taught, topicRows),
+    [teacherCatalogue, teachingReports.taught, topicRows]
   );
+
+  return (
+    <div>
+      <PageHeader
+        title="Coverage Dashboard"
+        description="What needs attention in your curriculum — and what to plan next."
+        action={
+          <Link href="/curriculum-intelligence">
+            <Button variant="secondary">Planning Insights →</Button>
+          </Link>
+        }
+      />
+
+      <CoverageTeacherView report={teacherReport} />
+
+      <details
+        className="mt-8 rounded-[20px] border border-slate-200 bg-white"
+        onToggle={(event) => setAuditOpen(event.currentTarget.open)}
+      >
+        <summary className="cursor-pointer list-none px-6 py-4 text-sm font-semibold text-slate-900 marker:content-none [&::-webkit-details-marker]:hidden">
+          ▶ Advanced Curriculum Audit
+          <span className="ml-2 text-xs font-normal text-slate-500">
+            Pathway tables, topic grids, and detailed coverage diagnostics
+          </span>
+        </summary>
+        {auditOpen ? <AdvancedCurriculumAuditPanel /> : null}
+      </details>
+    </div>
+  );
+}
+
+function AdvancedCurriculumAuditPanel() {
+  const { context } = useTeacherContext();
+  const [filters, setFilters] = useState<CoverageFilters>(EMPTY_FILTERS);
+  const [activeTab, setActiveTab] = useState<CoverageMissingTab>("all");
+
+  const summary = useMemo(() => computeCoverageSummary(), []);
+  const dashboard = useMemo(() => buildCurriculumCoverageDashboard(), []);
   const visibility = useMemo(
     () => countImportedOutcomeVisibility(IMPORTED_LEARNING_OUTCOMES, context),
     [context]
@@ -110,47 +146,25 @@ export function CurriculumCoverageView() {
   }
 
   return (
-    <div>
-      <PageHeader
-        title="Coverage Dashboard"
-        description="What needs attention in your curriculum — and what to plan next."
-        action={
-          <Link href="/curriculum-intelligence">
-            <Button variant="secondary">Planning Insights →</Button>
-          </Link>
-        }
+    <div className="border-t border-slate-100 px-6 py-4">
+      <div className="mb-4 flex justify-end">
+        <Button variant="secondary" onClick={exportReport}>
+          Export audit JSON
+        </Button>
+      </div>
+      <AdvancedAuditContent
+        dashboard={dashboard}
+        summary={summary}
+        visibility={visibility}
+        filterOptions={filterOptions}
+        filters={filters}
+        activeTab={activeTab}
+        results={results}
+        context={context}
+        onFilterChange={updateFilter}
+        onClearFilters={clearFilters}
+        onTabChange={setActiveTab}
       />
-
-      <CoverageTeacherView report={teacherReport} />
-
-      <details className="mt-8 rounded-[20px] border border-slate-200 bg-white">
-        <summary className="cursor-pointer list-none px-6 py-4 text-sm font-semibold text-slate-900 marker:content-none [&::-webkit-details-marker]:hidden">
-          ▶ Advanced Curriculum Audit
-          <span className="ml-2 text-xs font-normal text-slate-500">
-            Pathway tables, topic grids, and detailed coverage diagnostics
-          </span>
-        </summary>
-        <div className="border-t border-slate-100 px-6 py-4">
-          <div className="mb-4 flex justify-end">
-            <Button variant="secondary" onClick={exportReport}>
-              Export audit JSON
-            </Button>
-          </div>
-          <AdvancedAuditContent
-            dashboard={dashboard}
-            summary={summary}
-            visibility={visibility}
-            filterOptions={filterOptions}
-            filters={filters}
-            activeTab={activeTab}
-            results={results}
-            context={context}
-            onFilterChange={updateFilter}
-            onClearFilters={clearFilters}
-            onTabChange={setActiveTab}
-          />
-        </div>
-      </details>
     </div>
   );
 }

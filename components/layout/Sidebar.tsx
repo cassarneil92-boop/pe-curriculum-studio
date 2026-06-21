@@ -17,6 +17,7 @@ const HEAVY_ROUTES = new Set([
   "/schemes",
   "/lesson-builder",
   "/curriculum",
+  "/curriculum-coverage",
   "/curriculum-analytics",
   "/curriculum-intelligence",
   "/calendar",

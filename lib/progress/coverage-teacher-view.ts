@@ -1,4 +1,4 @@
-import type { CurriculumCoverageDashboard } from "@/src/lib/curriculum/coverage/types";
+import type { CoverageTeacherCatalogueSlice } from "@/src/lib/curriculum/coverage";
 import type { CurriculumAnalyticsReport } from "@/src/lib/intelligence/analytics/coverage-analytics";
 import type { TopicCoverageRow } from "@/lib/progress/teaching-progress-ui";
 
@@ -62,11 +62,11 @@ function planLessonHref(topicId: string): string {
 }
 
 export function buildCoverageTeacherReport(
-  dashboard: CurriculumCoverageDashboard,
+  catalogue: CoverageTeacherCatalogueSlice,
   taught: CurriculumAnalyticsReport,
   topicRows: TopicCoverageRow[]
 ): CoverageTeacherReport {
-  const visibleOutcomes = dashboard.layerTotals.planningCatalogue;
+  const visibleOutcomes = catalogue.layerTotals.planningCatalogue;
   const plannedOutcomes = taught.summary.plannedOutcomeIds;
   const deliveredOutcomes = taught.summary.taughtOutcomeIds;
   const coveragePercent =
@@ -93,7 +93,7 @@ export function buildCoverageTeacherReport(
       status: "attention" as const,
     }));
 
-  const attentionFromPathways: CoverageAttentionCard[] = dashboard.pathwayCoverage
+  const attentionFromPathways: CoverageAttentionCard[] = catalogue.pathwayCoverage
     .filter((row) => row.status === "thin" || row.status === "needs-review")
     .filter((row) => isTeacherTopic(row.label))
     .slice(0, 2)
@@ -108,7 +108,7 @@ export function buildCoverageTeacherReport(
 
   const attentionAreas = [...attentionFromTopics, ...attentionFromPathways].slice(0, 5);
 
-  const strongFromTopics: CoverageAttentionCard[] = dashboard.topicCoverage
+  const strongFromTopics: CoverageAttentionCard[] = catalogue.topicCoverage
     .filter((row) => row.status === "strong" && isTeacherTopic(row.label))
     .slice(0, 3)
     .map((row) => ({
