@@ -49,6 +49,10 @@ export const PATHWAY_SYNONYM_RULES: PathwaySynonymRule[] = [
 /** Teacher wording → curriculum topic id (longest keys matched first in parser). */
 export const CUSTOM_TOPIC_SYNONYMS: Record<string, string> = {
   soccer: "football",
+  "fundamental movement skills": "fundamentals",
+  fms: "fundamentals",
+  "movement competence": "fundamentals",
+  balance: "fundamentals",
   "fundamental skills": "fundamentals",
   fundamentals: "fundamentals",
   "basic movement": "fundamentals",
@@ -168,12 +172,14 @@ export const INTENT_PHRASES: Record<string, string[]> = {
 };
 
 export const SUGGESTED_PROMPT_CHIPS = [
+  "Create a Year 3 FMS scheme",
+  "Show Year 4 balance outcomes",
+  "What comes before invasion games?",
+  "Which outcomes support confidence development?",
   "Create a 6 lesson SOW for Form 5 ALP Basketball",
   "Find Year 9 Volleyball outcomes",
   "Suggest activities for invasion games",
   "Show gaps in my current scheme",
   "What have I not taught yet?",
   "Explain TGfU",
-  "Compare TGfU and Whole Part Whole",
-  "Best pedagogical approach for Year 7 Volleyball?",
 ] as const;

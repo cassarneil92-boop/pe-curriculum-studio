@@ -117,6 +117,8 @@ export interface CatalogueGapItem {
   detail: string;
 }
 
+import type { PrimaryPEDashboardSummary } from "../primary-pe/types";
+
 export interface CurriculumCoverageDashboard {
   generatedAt: string;
   layerTotals: CatalogueLayerTotals;
@@ -127,6 +129,7 @@ export interface CurriculumCoverageDashboard {
   sportCoverage: SportCoverageRow[];
   metadataGaps: MetadataGapSummary;
   catalogueGaps: CatalogueGapItem[];
+  primaryPE: PrimaryPEDashboardSummary;
 }
 
 /** @deprecated Dashboard filter alias — use CoverageFilters in audit UI. */

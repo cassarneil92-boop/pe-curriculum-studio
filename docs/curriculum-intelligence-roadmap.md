@@ -8,6 +8,7 @@
 | 3 — Advisory Alignment | **Shipped** | Schemes builder, `src/lib/intelligence/advisory/` |
 | 4 — Resource Warehouse | **Foundation** | Extended `ResourceItem` types, `/resources` |
 | 5 — AI Curriculum Coach | **Rule-based** | `src/lib/intelligence/coach/` |
+| 6A — Primary PE Reconstruction | **Foundation** | `src/lib/curriculum/primary-pe/` |
 | 6 — Collaboration | **Architecture** | `src/lib/intelligence/collaboration/scopes.ts` |
 | 7 — Curriculum Assistant | **Rule-based** | `/curriculum-assistant` |
 
@@ -105,6 +106,57 @@ All existing routes preserved.
 | **Teaching Progress** | `/curriculum-analytics` | What have I actually taught against that catalogue? |
 
 Engine: `src/lib/curriculum/coverage/dashboard-engine.ts` builds catalogue metrics from raw imports, `getPlanningOutcomes()`, and KB strict-alignment outcomes. The existing outcome verification filters and list remain below the dashboard sections.
+
+---
+
+## Phase 6A — Primary PE Reconstruction (Foundation)
+
+**Goal:** Transform Primary PE from scattered embedded fundamentals into a structured pathway with progression intelligence — without breaking existing outcomes or strict alignment.
+
+### Module layout
+
+```
+src/lib/curriculum/primary-pe/
+├── types.ts                 # Progression strands, learning domains, PL attributes
+├── progression-framework.ts # Years 1–6 bands and strand definitions
+├── planning-bridge.ts       # Surfaces embedded secondary-pe Y1–6 outcomes for primary-pe
+├── outcome-metadata.ts      # Strand / domain / PL metadata (explicit + inferred)
+├── progression-engine.ts    # Previous / current / next year queries + dashboard summary
+└── index.ts
+```
+
+### Progression framework (Years 1–6)
+
+| Strand | Focus |
+|--------|--------|
+| Fundamental Movement Skills | Locomotor, stability, manipulative foundations |
+| Movement Competence | Sequences, control, combined skills |
+| Games & Sport Foundations | Modified games and tactical readiness |
+| Health & Wellbeing | Healthy lifestyle and safe participation |
+| Physical Literacy | Motivation, confidence, competence, understanding |
+
+### Learning domain metadata
+
+Each primary outcome can be tagged (inferred or explicit) with: **Physical**, **Cognitive**, **Social**, **Affective**.
+
+### Physical literacy metadata
+
+Optional tags: **Motivation**, **Confidence**, **Competence**, **Knowledge & Understanding**.
+
+### Integration points
+
+| Surface | Behaviour |
+|---------|-----------|
+| **Planning layer** | `filterPlanningOutcomes({ appPathways: ["primary-pe"] })` includes KB samples + embedded F2/F4/F6 fundamentals |
+| **Coverage Dashboard** | Primary PE section: strand completeness, domain coverage, PL coverage, year coverage |
+| **Planning Assistant** | Queries: FMS schemes, balance outcomes, progression chains, confidence outcomes |
+| **Strict alignment** | Unchanged — still KB-only |
+
+### Example progression query
+
+> Show progression from Year 2 throwing to Year 4 invasion games.
+
+Uses `queryPrimaryProgression()` / `describeThrowingToInvasionProgression()` in the progression engine.
 
 ---
 

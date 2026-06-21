@@ -17,6 +17,8 @@ import type {
   TopicCoverageRow,
   YearGroupCoverageRow,
 } from "./types";
+import { buildPrimaryPEDashboardSummary } from "../primary-pe/progression-engine";
+import type { PrimaryPEDashboardSummary } from "../primary-pe/types";
 
 const YEAR_GROUP_ORDER = [
   "Year 1",
@@ -126,6 +128,13 @@ function pathwayStatus(
 ): { status: CatalogueCoverageStatus; note?: string } {
   if (rawCount === 0 && planningCount <= kbCount) {
     if (pathwayId === "primary-pe") {
+      const primarySummary = buildPrimaryPEDashboardSummary();
+      if (primarySummary.totalOutcomes > kbCount) {
+        return {
+          status: primarySummary.overallStatus === "strong" ? "strong" : "thin",
+          note: `${primarySummary.totalOutcomes} outcomes available via embedded fundamentals (Years 1–6) plus KB samples.`,
+        };
+      }
       return {
         status: "needs-review",
         note: "No direct import — primary content often appears under Secondary PE / Fundamentals.",
@@ -398,5 +407,6 @@ export function buildCurriculumCoverageDashboard(): CurriculumCoverageDashboard 
     sportCoverage,
     metadataGaps: countMissingMetadata(rawOutcomes),
     catalogueGaps: buildCatalogueGaps(pathwayCoverage, fitnessTopicCount),
+    primaryPE: buildPrimaryPEDashboardSummary(),
   };
 }

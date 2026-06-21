@@ -22,6 +22,7 @@ import { buildCurriculumAnalytics } from "@/src/lib/intelligence/analytics/cover
 import { buildSchemeAdvisoryAlignment } from "@/src/lib/intelligence/advisory/scheme-alignment";
 import { PEDAGOGICAL_MODELS } from "@/src/lib/intelligence/frameworks/pedagogical-models";
 import { buildCreateLessonAssistantResponse } from "@/lib/assistant/lesson-draft-builder";
+import { handlePrimaryPEAssistantQuery } from "@/lib/assistant/primary-pe-queries";
 import { resolveOutcomesForTopic } from "@/lib/assistant/topic-fallback";
 import { isPlanningCreationIntent } from "@/lib/assistant/query-parser";
 import type { ParsedAssistantQuery } from "./query-parser";
@@ -339,6 +340,9 @@ export function buildAssistantResponse(
     const codeResponse = respondToOutcomeCode(parsed.outcomeCode);
     if (codeResponse) return codeResponse;
   }
+
+  const primaryResponse = handlePrimaryPEAssistantQuery(parsed, context);
+  if (primaryResponse) return primaryResponse;
 
   const detected: DetectedContext = {
     intent: intentLabel(parsed.intent),

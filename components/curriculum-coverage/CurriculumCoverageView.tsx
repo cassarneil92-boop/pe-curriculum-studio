@@ -313,6 +313,107 @@ export function CurriculumCoverageView() {
             </ul>
           </Card>
         </div>
+
+        <Card>
+          <CardHeader
+            title="Primary PE progression"
+            description={`Structured catalogue for Years 1–6 — ${dashboard.primaryPE.totalOutcomes} outcomes (${dashboard.primaryPE.embeddedOutcomes} embedded fundamentals + ${dashboard.primaryPE.kbOutcomes} KB samples).`}
+          />
+          <div className="mb-4 flex flex-wrap items-center gap-2">
+            <CatalogueStatusBadge
+              status={
+                dashboard.primaryPE.overallStatus === "strong"
+                  ? "strong"
+                  : dashboard.primaryPE.overallStatus === "thin"
+                    ? "thin"
+                    : "needs-review"
+              }
+            />
+            <span className="text-sm text-slate-600">
+              Progression framework across FMS, movement competence, games foundations, health, and
+              physical literacy.
+            </span>
+          </div>
+
+          <div className="grid gap-6 lg:grid-cols-3">
+            <div>
+              <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Progression strands
+              </h4>
+              <ul className="space-y-2">
+                {dashboard.primaryPE.progressionCompleteness.map((row) => (
+                  <li
+                    key={row.strand}
+                    className="flex items-center justify-between rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                  >
+                    <span className="text-slate-800">{row.label}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="tabular-nums text-slate-600">{row.outcomeCount}</span>
+                      <CatalogueStatusBadge status={row.status} />
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div>
+              <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Learning domains
+              </h4>
+              <ul className="space-y-2">
+                {dashboard.primaryPE.learningDomainCoverage.map((row) => (
+                  <li
+                    key={row.domain}
+                    className="flex items-center justify-between rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                  >
+                    <span className="text-slate-800">{row.label}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="tabular-nums text-slate-600">{row.outcomeCount}</span>
+                      <CatalogueStatusBadge status={row.status} />
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div>
+              <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Physical literacy
+              </h4>
+              <ul className="space-y-2">
+                {dashboard.primaryPE.physicalLiteracyCoverage.map((row) => (
+                  <li
+                    key={row.attribute}
+                    className="flex items-center justify-between rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                  >
+                    <span className="text-slate-800">{row.label}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="tabular-nums text-slate-600">{row.outcomeCount}</span>
+                      <CatalogueStatusBadge status={row.status} />
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+
+          <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
+            {dashboard.primaryPE.yearCoverage.map((row) => (
+              <div
+                key={row.yearLabel}
+                className="rounded-lg border border-slate-200 bg-slate-50/50 px-3 py-2 text-center text-xs"
+              >
+                <p className="font-medium text-slate-700">{row.yearLabel}</p>
+                <p className="mt-0.5 text-lg font-semibold tabular-nums text-slate-800">
+                  {row.outcomeCount}
+                </p>
+                <div className="mt-1 flex justify-center">
+                  <CatalogueStatusBadge status={row.status} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
       </section>
 
       <h2 className="mb-4 text-lg font-semibold text-slate-900">Outcome verification</h2>

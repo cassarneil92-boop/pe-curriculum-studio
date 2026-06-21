@@ -11,6 +11,7 @@ import {
   getCurriculumPathwaysForAppPathways,
   getMatchingAppPathwaysForOutcome,
 } from "./matching";
+import { isPrimaryPlanningOutcome } from "../primary-pe/planning-bridge";
 import {
   applyPlanningSkillCorrections,
   resetPlanningSkillCorrectionsLog,
@@ -68,11 +69,12 @@ function isOutcomeVisibleForPlanning(
   outcome: LearningOutcome,
   appPathways: AppPathwayId[],
   context: TeacherContextSnapshot,
-  topicId?: string
+  topicId?: string,
+  yearGroup?: string
 ): boolean {
   if (context.exploreAllEnabled) return true;
 
-  const matchingApps = getMatchingAppPathwaysForOutcome(outcome, appPathways, topicId);
+  const matchingApps = getMatchingAppPathwaysForOutcome(outcome, appPathways, topicId, yearGroup);
   if (matchingApps.length === 0) return false;
 
   return matchingApps.some((appPathway) =>
@@ -103,22 +105,31 @@ function outcomeMatchesSearch(outcome: LearningOutcome, search: string): boolean
   );
 }
 
+function outcomeMatchesAppPathways(
+  outcome: LearningOutcome,
+  appPathways: AppPathwayId[],
+  yearGroup?: string,
+  topicId?: string
+): boolean {
+  if (appPathways.includes("primary-pe") && isPrimaryPlanningOutcome(outcome, yearGroup)) {
+    return true;
+  }
+
+  const curriculumPathways = getCurriculumPathwaysForAppPathways(appPathways, topicId ?? "");
+  return curriculumPathways.includes(outcome.pathwayId);
+}
+
 export function filterPlanningOutcomes(filter: PlanningFilter): LearningOutcome[] {
   const { appPathways, yearGroup, topicId, skillId, search, context } = filter;
   if (appPathways.length === 0) return [];
 
-  const curriculumPathways = getCurriculumPathwaysForAppPathways(
-    appPathways,
-    topicId ?? ""
-  );
-
   return getPlanningOutcomes().filter((outcome) => {
-    if (!curriculumPathways.includes(outcome.pathwayId)) return false;
+    if (!outcomeMatchesAppPathways(outcome, appPathways, yearGroup, topicId)) return false;
     if (yearGroup && !yearGroupMatchesFilter(outcome.yearGroups, yearGroup)) return false;
     if (topicId && !outcomeMatchesTopic(outcome, topicId)) return false;
     if (skillId && !outcomeMatchesSkill(outcome, skillId)) return false;
     if (search && !outcomeMatchesSearch(outcome, search)) return false;
-    if (!isOutcomeVisibleForPlanning(outcome, appPathways, context, topicId)) return false;
+    if (!isOutcomeVisibleForPlanning(outcome, appPathways, context, topicId, yearGroup)) return false;
     return true;
   });
 }

@@ -17,6 +17,8 @@ export type {
   YearGroupCoverageRow,
 } from "./types";
 
+export type { PrimaryPEDashboardSummary } from "../primary-pe/types";
+
 export { IMPORTED_LEARNING_OUTCOMES } from "./coverage-engine";
 
 export {
