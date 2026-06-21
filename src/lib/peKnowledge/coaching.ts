@@ -77,6 +77,14 @@ import {
   buildPedagogyCoachLSMetrics,
   buildSchemeLearningScienceTips,
 } from "./learningScienceEngines";
+import { EDUCATIONAL_PSYCHOLOGY_MASTER_PE_ENTRY } from "./educationalPsychologyMaster";
+import {
+  buildEducationalPsychologyPlanningInsights,
+  buildEducationalPsychologyQualityInsights,
+  buildEducationalPsychologyQualityReview,
+  buildPedagogyCoachEPMetrics,
+  buildSchemeEducationalPsychologyTips,
+} from "./educationalPsychologyEngines";
 
 export interface PEKnowledgeCardViewModel {
   entry: PEKnowledgeEntry;
@@ -160,6 +168,16 @@ export interface LessonPedagogyCoachReport {
     calibrationCheck: string;
     warning: string | null;
   };
+  educationalPsychologyMetrics?: {
+    score: number;
+    band: string;
+    workingMemoryLoad: string;
+    cognitiveLoadRisk: string | null;
+    metacognitionPrompt: string;
+    feedbackImprovement: string;
+    transferSuggestion: string;
+    warning: string | null;
+  };
 }
 
 export interface PhysicalLiteracyQualityReview {
@@ -216,6 +234,14 @@ export interface LearningScienceQualityReview {
   recommendations: string[];
 }
 
+export interface EducationalPsychologyQualityReview {
+  score: number;
+  band: string;
+  checks: { label: string; met: boolean }[];
+  warnings: string[];
+  recommendations: string[];
+}
+
 export interface SchemeProgressionCoachReport {
   sequencingTips: string[];
   spacingTips: string[];
@@ -228,6 +254,7 @@ export interface SchemeProgressionCoachReport {
   tpsrTips?: string[];
   primaryPETips?: string[];
   learningScienceTips?: string[];
+  educationalPsychologyTips?: string[];
 }
 
 export interface KnowledgeQualityInsight {
@@ -445,6 +472,13 @@ export function getPlanningAssistantKnowledgeSuggestions(
     lessonAim: context.lessonAim ?? prompt,
     walt: context.lessonAim ?? prompt,
   });
+  const epInsights = buildEducationalPsychologyPlanningInsights(prompt, {
+    yearGroup: context.yearGroup,
+    topicId: context.topicId,
+    activityArea: context.activityArea,
+    lessonAim: context.lessonAim ?? prompt,
+    walt: context.lessonAim ?? prompt,
+  });
   if (clInsights.length > 0) {
     const clCard: PEKnowledgeCardViewModel = {
       entry: COOPERATIVE_LEARNING_MASTER_PE_ENTRY,
@@ -484,6 +518,16 @@ export function getPlanningAssistantKnowledgeSuggestions(
       differentiationPrompt: "Calibrate difficulty — scaffold or extend without public ranking.",
     };
     return [lsCard, ...cards].slice(0, limit);
+  }
+  if (epInsights.length > 0) {
+    const epCard: PEKnowledgeCardViewModel = {
+      entry: EDUCATIONAL_PSYCHOLOGY_MASTER_PE_ENTRY,
+      reason: epInsights[0],
+      planningPrompts: epInsights.slice(0, 3),
+      assessmentPrompt: "Check understanding mid-lesson — not only at end.",
+      differentiationPrompt: "Scaffold for novices — fade support as competence grows.",
+    };
+    return [epCard, ...cards].slice(0, limit);
   }
   if (tflInsights.length > 0) {
     const tflCard: PEKnowledgeCardViewModel = {
@@ -649,6 +693,7 @@ export function buildLessonPedagogyCoachReport(
   const tpsrMetrics = buildPedagogyCoachTPSRMetrics(lesson);
   const primaryPEMetrics = buildPedagogyCoachPrimaryPEMetrics(lesson) ?? undefined;
   const learningScienceMetrics = buildPedagogyCoachLSMetrics(lesson);
+  const educationalPsychologyMetrics = buildPedagogyCoachEPMetrics(lesson);
 
   return {
     teachingModel,
@@ -665,6 +710,7 @@ export function buildLessonPedagogyCoachReport(
     tpsrMetrics,
     primaryPEMetrics,
     learningScienceMetrics,
+    educationalPsychologyMetrics,
   };
 }
 
@@ -771,6 +817,7 @@ export function buildSchemeProgressionCoachReport(
   const tpsrTips = buildSchemeTPSRTips(scheme);
   const primaryPETips = buildSchemePrimaryPETips(scheme);
   const learningScienceTips = buildSchemeLearningScienceTips(scheme, activeLessonIndex);
+  const educationalPsychologyTips = buildSchemeEducationalPsychologyTips(scheme, activeLessonIndex);
 
   return {
     sequencingTips: sequencingTips.slice(0, 3),
@@ -784,6 +831,7 @@ export function buildSchemeProgressionCoachReport(
     tpsrTips,
     primaryPETips,
     learningScienceTips,
+    educationalPsychologyTips,
   };
 }
 
@@ -1017,8 +1065,20 @@ export function buildKnowledgeQualityInsights(
 
   const lsInsights = buildLearningScienceQualityInsights(lesson);
   const tpsrTransferWarned = tpsrInsights.some((i) => i.message.includes("transfer"));
+  const lsRetrievalWarned = lsInsights.some((i) => i.message.includes("retrieval") || i.message.includes("Retrieval"));
   for (const insight of lsInsights) {
     if (tpsrTransferWarned && insight.message.includes("transfer") && insight.id !== "ls-review") {
+      continue;
+    }
+    insights.push(insight);
+  }
+
+  const epInsights = buildEducationalPsychologyQualityInsights(lesson);
+  for (const insight of epInsights) {
+    if (lsRetrievalWarned && insight.message.includes("retrieval") && insight.id !== "ep-review") {
+      continue;
+    }
+    if (tpsrTransferWarned && insight.message.includes("transfer") && insight.id !== "ep-review") {
       continue;
     }
     insights.push(insight);
@@ -1049,6 +1109,12 @@ export function buildLearningScienceQualityReviewForLesson(
   lesson: LessonBuilderFormData
 ): LearningScienceQualityReview {
   return buildLearningScienceQualityReview(lesson);
+}
+
+export function buildEducationalPsychologyQualityReviewForLesson(
+  lesson: LessonBuilderFormData
+): EducationalPsychologyQualityReview {
+  return buildEducationalPsychologyQualityReview(lesson);
 }
 
 export function formatYearGroupForContext(yearGroup?: string): string | undefined {

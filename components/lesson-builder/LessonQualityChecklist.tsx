@@ -15,6 +15,7 @@ import {
   buildTPSRQualityReviewForLesson,
   buildPrimaryPEQualityReviewForLesson,
   buildLearningScienceQualityReviewForLesson,
+  buildEducationalPsychologyQualityReviewForLesson,
   type KnowledgeQualityInsight,
 } from "@/src/lib/peKnowledge/coaching";
 import { isPrimaryPEYearGroup } from "@/src/lib/peKnowledge/primaryPEMaster";
@@ -84,6 +85,10 @@ export function LessonQualityChecklist({
   );
   const lsReview = useMemo(
     () => buildLearningScienceQualityReviewForLesson(lesson as LessonBuilderFormData),
+    [lesson]
+  );
+  const epReview = useMemo(
+    () => buildEducationalPsychologyQualityReviewForLesson(lesson as LessonBuilderFormData),
     [lesson]
   );
 
@@ -327,6 +332,31 @@ export function LessonQualityChecklist({
           )}
           {lsReview.recommendations[0] && (
             <p className="mt-2 text-xs text-slate-700">{lsReview.recommendations[0]}</p>
+          )}
+        </div>
+        <div className="mb-4 rounded-lg border border-purple-100 bg-purple-50/40 px-3 py-3">
+          <p className="text-xs font-semibold uppercase tracking-wide text-purple-800">
+            Educational Psychology Review
+          </p>
+          <p className="mt-1 text-sm font-medium text-slate-800">
+            {epReview.band} — {epReview.score}/100
+          </p>
+          <ul className="mt-2 space-y-1 text-xs text-slate-600">
+            {epReview.checks.map((c) => (
+              <li key={c.label}>
+                {c.met ? "✓" : "○"} {c.label}
+              </li>
+            ))}
+          </ul>
+          {epReview.warnings.length > 0 && (
+            <ul className="mt-2 space-y-1 text-xs text-amber-800">
+              {epReview.warnings.slice(0, 2).map((w) => (
+                <li key={w}>⚠ {w}</li>
+              ))}
+            </ul>
+          )}
+          {epReview.recommendations[0] && (
+            <p className="mt-2 text-xs text-slate-700">{epReview.recommendations[0]}</p>
           )}
         </div>
         <LessonQualityInsight

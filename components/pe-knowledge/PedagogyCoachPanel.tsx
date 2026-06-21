@@ -164,6 +164,33 @@ export function PedagogyCoachPanel({ lesson, onApplyLesson }: PedagogyCoachPanel
         </div>
       )}
 
+      {report.educationalPsychologyMetrics && (
+        <div className="rounded-lg border border-purple-100 bg-purple-50/50 px-3 py-2 space-y-2">
+          <p className="text-xs font-semibold text-purple-900">Educational Psychology Score</p>
+          <p className="text-xs text-slate-700">
+            Overall: <strong>{report.educationalPsychologyMetrics.score}</strong>/100 (
+            {report.educationalPsychologyMetrics.band})
+          </p>
+          <p className="text-xs text-slate-600">
+            Working memory: {report.educationalPsychologyMetrics.workingMemoryLoad}
+            {report.educationalPsychologyMetrics.cognitiveLoadRisk &&
+              ` · Risk: ${report.educationalPsychologyMetrics.cognitiveLoadRisk}`}
+          </p>
+          <p className="text-xs text-slate-700">
+            Metacognition: {report.educationalPsychologyMetrics.metacognitionPrompt}
+          </p>
+          <p className="text-xs text-slate-600">
+            Feedback: {report.educationalPsychologyMetrics.feedbackImprovement}
+          </p>
+          <p className="text-xs text-slate-700">
+            Transfer: {report.educationalPsychologyMetrics.transferSuggestion}
+          </p>
+          {report.educationalPsychologyMetrics.warning && (
+            <p className="text-xs text-amber-800">⚠ {report.educationalPsychologyMetrics.warning}</p>
+          )}
+        </div>
+      )}
+
       {report.physicalLiteracyMetrics && (
         <div className="rounded-lg border border-violet-100 bg-violet-50/50 px-3 py-2 space-y-2">
           <p className="text-xs font-semibold text-violet-900">Physical Literacy Score</p>

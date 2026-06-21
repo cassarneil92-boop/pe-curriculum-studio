@@ -167,6 +167,17 @@ export function SchemeProgressionCoach({
             }))}
           />
         )}
+        {(report.educationalPsychologyTips ?? []).length > 0 && (
+          <ActionableCoachList
+            label="Educational Psychology progression"
+            items={(report.educationalPsychologyTips ?? []).map((text, index) => ({
+              id: `ep-${index}`,
+              text,
+              actionLabel: "Add EP note",
+              onApply: () => applyScheme(text, "coachNote", `${lessonLabel} educational psychology`),
+            }))}
+          />
+        )}
         {(report.teachingForLearningTips ?? []).length > 0 && (
           <ActionableCoachList
             label="Teaching for Learning unit design"

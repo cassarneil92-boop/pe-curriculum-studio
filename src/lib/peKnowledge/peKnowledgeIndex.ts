@@ -15,6 +15,7 @@ import { COOPERATIVE_LEARNING_MASTER_PE_ENTRY, isCooperativeLearningRelevant } f
 import { TPSR_MASTER_PE_ENTRY, isTPSRRelevant } from "./tpsrMaster";
 import { PRIMARY_PE_MASTER_PE_ENTRY, isPrimaryPEYearGroup, isPrimaryPERelevant } from "./primaryPEMaster";
 import { LEARNING_SCIENCE_MASTER_PE_ENTRY, isLearningScienceRelevant } from "./learningScienceMaster";
+import { EDUCATIONAL_PSYCHOLOGY_MASTER_PE_ENTRY, isEducationalPsychologyRelevant } from "./educationalPsychologyMaster";
 import { isTGfURelevantTopic, TGfU_MASTER_PE_ENTRY } from "./tgfuMaster";
 import type {
   AgePhase,
@@ -33,6 +34,7 @@ export const ALL_PE_KNOWLEDGE_ENTRIES: PEKnowledgeEntry[] = [
   TPSR_MASTER_PE_ENTRY,
   PRIMARY_PE_MASTER_PE_ENTRY,
   LEARNING_SCIENCE_MASTER_PE_ENTRY,
+  EDUCATIONAL_PSYCHOLOGY_MASTER_PE_ENTRY,
   ...PHYSICAL_LITERACY_ENTRIES,
   PHYSICAL_LITERACY_MASTER_PE_ENTRY,
   ...MOTIVATION_ENTRIES,
@@ -205,6 +207,13 @@ function scoreEntryForContext(
     ) {
       score += 6;
       reasons.push("Learning Science — durable learning design");
+    }
+    if (
+      (entry.id === "educational-psychology-master" || entry.tags.includes("educational-psychology")) &&
+      (context.lessonAim || context.activityArea || isEducationalPsychologyRelevant(`${context.lessonAim ?? ""} ${area}`))
+    ) {
+      score += 6;
+      reasons.push("Educational Psychology — memory and load design");
     }
     if (
       (entry.id === "physical-literacy-master" ||
@@ -589,6 +598,44 @@ export {
 } from "./learningScienceEngines";
 
 export {
+  EDUCATIONAL_PSYCHOLOGY_FRAMEWORK,
+  EDUCATIONAL_PSYCHOLOGY_CORE_MESSAGE,
+  EDUCATIONAL_PSYCHOLOGY_WARNINGS,
+  EDUCATIONAL_PSYCHOLOGY_MASTER_PE_ENTRY,
+  isEducationalPsychologyRelevant,
+  getEducationalPsychologyDomain,
+  type EducationalPsychologyDomain,
+} from "./educationalPsychologyMaster";
+
+export {
+  evaluateWorkingMemoryLoad,
+  evaluateCognitiveLoad,
+  evaluatePriorKnowledgeActivation,
+  evaluateSchemaBuilding,
+  evaluateLearnerExpertise,
+  evaluateMetacognition,
+  evaluateScaffolding,
+  evaluateInstructionalClarity,
+  evaluateInstructionStrategy,
+  evaluateFeedbackQuality as evaluateEPFeedbackQuality,
+  evaluateAssessmentForLearning as evaluateEPAssessmentForLearning,
+  evaluateLearningTransfer,
+  evaluateLearningContext,
+  detectLearningMisconceptions,
+  evaluateEducationalPsychologyQuality,
+  buildEducationalPsychologyPlanningInsights,
+  buildPedagogyCoachEPMetrics,
+  buildEducationalPsychologyQualityReview,
+  buildEducationalPsychologyQualityInsights,
+  buildSchemeEducationalPsychologyTips,
+  lessonToEPContext,
+  type EPQualityBand,
+  type WorkingMemoryVerdict,
+  type ExpertiseLevel,
+  type EPTransferPotential,
+} from "./educationalPsychologyEngines";
+
+export {
   LEARNING_SCIENCE_ENTRIES,
   PEDAGOGY_MODEL_ENTRIES,
   PHYSICAL_LITERACY_ENTRIES,
@@ -632,12 +679,14 @@ export {
   type TPSRQualityReview,
   type PrimaryPEQualityReview,
   type LearningScienceQualityReview,
+  type EducationalPsychologyQualityReview,
   buildPhysicalLiteracyQualityReviewForLesson,
   buildTeachingForLearningQualityReviewForLesson,
   buildCooperativeLearningQualityReviewForLesson,
   buildTPSRQualityReviewForLesson,
   buildPrimaryPEQualityReviewForLesson,
   buildLearningScienceQualityReviewForLesson,
+  buildEducationalPsychologyQualityReviewForLesson,
 } from "./coaching";
 
 export type {
