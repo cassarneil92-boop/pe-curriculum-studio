@@ -30,31 +30,26 @@ export function AssistantLessonDraftActions({ response }: AssistantLessonDraftAc
     return null;
   }
 
-  const handleSaveDraft = () => {
-    addLesson(draftPayload);
-    toast("Lesson draft saved");
-    if (response.lessonPreview?.needsReview) {
-      toast("Review curriculum alignment before teaching.", "info");
-    }
-  };
-
-  const handleSaveAndOpen = () => {
+  const openInBuilder = () => {
     saveLessonDraft({ form: draftPayload, editingId: null, activeSection: "info" });
     if (response.lessonPreview?.needsReview) {
       toast("Review curriculum alignment before teaching.", "info");
     }
     router.push("/lesson-builder");
+  };
+
+  const handleSaveDraft = () => {
+    addLesson(draftPayload);
+    toast("Lesson draft saved to your library");
+    if (response.lessonPreview?.needsReview) {
+      toast("Review curriculum alignment before teaching.", "info");
+    }
   };
 
   const handleDuplicate = () => {
     const copy = duplicateAssistantLessonDraft(draftPayload);
     addLesson(copy);
     toast("Duplicate draft saved");
-  };
-
-  const handleContinueEditing = () => {
-    saveLessonDraft({ form: draftPayload, editingId: null, activeSection: "info" });
-    router.push("/lesson-builder");
   };
 
   return (
@@ -65,17 +60,14 @@ export function AssistantLessonDraftActions({ response }: AssistantLessonDraftAc
         </p>
       )}
       <div className="flex flex-wrap gap-2">
+        <Button type="button" variant="primary" onClick={openInBuilder}>
+          Open in Lesson Builder
+        </Button>
         <Button type="button" variant="secondary" onClick={handleSaveDraft}>
           Save Draft
         </Button>
-        <Button type="button" variant="primary" onClick={handleSaveAndOpen}>
-          Open in Lesson Builder
-        </Button>
         <Button type="button" variant="secondary" onClick={handleDuplicate}>
           Duplicate Draft
-        </Button>
-        <Button type="button" variant="ghost" onClick={handleContinueEditing}>
-          Continue Editing
         </Button>
       </div>
     </div>

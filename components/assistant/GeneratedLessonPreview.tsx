@@ -3,9 +3,11 @@
 import type { ReactNode } from "react";
 import { Badge } from "@/components/ui/Badge";
 import { Card, CardHeader } from "@/components/ui/Card";
+import { PATHWAYS } from "@/lib/constants";
 import type { AssistantResponse } from "@/lib/assistant";
 import { getPlanningSkillDisplayName, getPlanningTopicDisplayName } from "@/src/lib/curriculum/planning";
 import { getYearGroupLabel } from "@/lib/year-groups";
+import { resolveLearningOutcomeById } from "@/src/lib/curriculum/metadata";
 
 interface GeneratedLessonPreviewProps {
   response: AssistantResponse;
@@ -28,63 +30,46 @@ export function GeneratedLessonPreview({ response }: GeneratedLessonPreviewProps
 
   const topicLabel = getPlanningTopicDisplayName(source.topicId);
   const skillLabel = source.skillId ? getPlanningSkillDisplayName(source.skillId) : "—";
+  const pathwayLabels = source.appPathways.map(
+    (id) => PATHWAYS.find((p) => p.id === id)?.label ?? id
+  );
+  const outcomes = source.outcomeIds
+    .map((id) => resolveLearningOutcomeById(id))
+    .filter(Boolean);
 
   return (
     <Card className="border-teal-100/80">
-      <CardHeader
-        title="Generated plan preview"
-        description="Editable lesson draft — official outcomes are from your curriculum database."
-      />
+      <CardHeader title="Generated lesson draft" description="All fields pre-fill when you open Lesson Builder." />
       <dl className="space-y-4">
-        <PreviewRow label="Lesson title">{preview.title}</PreviewRow>
+        <PreviewRow label="Title">{preview.title}</PreviewRow>
         <PreviewRow label="Year group">{getYearGroupLabel(source.yearGroupId)}</PreviewRow>
+        <PreviewRow label="Pathway">{pathwayLabels.join(" · ")}</PreviewRow>
         <PreviewRow label="Topic">{topicLabel}</PreviewRow>
         <PreviewRow label="Skill focus">{skillLabel}</PreviewRow>
 
-        {response.matches && response.matches.length > 0 && (
+        {outcomes.length > 0 && (
           <div>
             <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-              Curriculum outcomes
+              Learning outcomes
             </dt>
-            <dd className="mt-2 space-y-2">
-              {response.matches.slice(0, 6).map((match) => (
-                <div
-                  key={match.code}
-                  className="rounded-lg border border-slate-100 bg-slate-50/60 px-3 py-2 text-sm"
-                >
-                  <p className="font-semibold text-teal-800">{match.code}</p>
-                  <p className="mt-0.5 text-slate-700">{match.description}</p>
-                </div>
+            <dd className="mt-2 flex flex-wrap gap-1.5">
+              {outcomes.map((o) => (
+                <Badge key={o!.id} tone="teal">
+                  {o!.code}
+                </Badge>
               ))}
             </dd>
           </div>
         )}
 
-        <PreviewRow label="Learning intention">{preview.walt}</PreviewRow>
         <PreviewRow label="WALT">{preview.walt}</PreviewRow>
-        <PreviewRow label="WILF / success criteria">{preview.wilf}</PreviewRow>
+        <PreviewRow label="WILF">{preview.wilf}</PreviewRow>
         <PreviewRow label="Activities">{preview.activities}</PreviewRow>
         <PreviewRow label="Resources">
           {preview.resources.length > 0 ? preview.resources.join(" · ") : undefined}
         </PreviewRow>
-        <PreviewRow label="Assessment check">
-          Use exit questioning or quick skill check during the main activity.
-        </PreviewRow>
-        <PreviewRow label="Safety note">
-          Check space, equipment and pupil readiness before starting.
-        </PreviewRow>
-        <PreviewRow label="Reflection / closure">{preview.coolDown}</PreviewRow>
-
-        {preview.pedagogicalApproach && (
-          <div>
-            <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-              Suggested approach
-            </dt>
-            <dd className="mt-1">
-              <Badge tone="teal">{preview.pedagogicalApproach}</Badge>
-            </dd>
-          </div>
-        )}
+        <PreviewRow label="Assessment">{preview.assessmentNotes}</PreviewRow>
+        <PreviewRow label="Reflection prompt">{preview.reflectionPrompt}</PreviewRow>
       </dl>
     </Card>
   );

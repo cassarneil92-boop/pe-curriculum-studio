@@ -195,6 +195,14 @@ function detectLessonCount(q: string): number | null {
   return null;
 }
 
+function detectSkillHint(q: string): string | null {
+  const skills = [
+    "passing", "receiving", "dribbling", "finishing", "defending", "shooting",
+    "serving", "spiking", "blocking", "lay-up", "rebounding", "sprint", "jump", "throw",
+  ];
+  return skills.find((s) => q.includes(s)) ?? null;
+}
+
 function detectOutcomeCode(raw: string): string | null {
   const match = raw.match(/\b([A-Z]{1,3}\d+\.\d+[a-z]?)\b/i);
   return match ? match[1].toUpperCase() : null;
@@ -255,6 +263,9 @@ export function parseAssistantQuery(raw: string): ParsedAssistantQuery {
   const lessonCount = detectLessonCount(normalised);
   if (lessonCount) matchedTerms.push(`${lessonCount} lessons`);
 
+  const skillHint = detectSkillHint(normalised);
+  if (skillHint) matchedTerms.push(skillHint);
+
   intent = inferIntentFromContext(intent, normalised);
 
   if (intent === "unknown" && (normalised.includes("coverage") || normalised.includes("not taught"))) {
@@ -278,7 +289,7 @@ export function parseAssistantQuery(raw: string): ParsedAssistantQuery {
     pathwayIds: pathways.pathways,
     topicId: topic.topicId,
     topicLabel: topic.label,
-    skillHint: null,
+    skillHint,
     lessonCount,
     outcomeCode,
     confidence,

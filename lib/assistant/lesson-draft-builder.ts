@@ -69,6 +69,10 @@ export function buildAssistantLessonPreview(input: {
     coolDown: template.coolDown,
     activities,
     resources,
+    assessmentNotes:
+      "Use exit questioning, peer observation, or a quick skill check during the main activity.",
+    reflectionPrompt:
+      "What did you improve today? What would you focus on next lesson?",
     topicMappingNote: input.outcomeResolution.topic.mappingNote ?? undefined,
     needsReview: input.outcomeResolution.topic.needsReview,
     pedagogicalApproach: primaryPedagogy
@@ -162,8 +166,8 @@ export function buildAssistantLessonDraft(
     safetyConsiderations: "",
     differentiation: "",
     activities: preview.activities,
-    assessmentNotes: "",
-    reflectionNotes: preview.coolDown,
+    assessmentNotes: preview.assessmentNotes,
+    reflectionNotes: preview.reflectionPrompt,
     selectedLearningOutcomeIds: source.outcomeIds,
     structuredActivities,
     lessonEndings: [],
@@ -219,22 +223,14 @@ export function buildCreateLessonAssistantResponse(input: {
     topicLabel: getPlanningTopicDisplayName(o.topicIds[0] ?? topic.resolvedTopicId),
   }));
 
-  const mappingSentence = topic.mappingNote ? `\n\n${topic.mappingNote}` : "";
   const reviewSentence = topic.needsReview
     ? " Review curriculum alignment before saving."
     : "";
 
-  const pedagogyRecommendations = recommendPedagogies({
-    topicId: topic.resolvedTopicId,
-    skillId,
-    yearGroupId: input.yearGroup,
-    limit: 3,
-  });
-
-  const lessonBuilderHref = `/lesson-builder?yearGroup=${input.yearGroup}&topic=${topic.requestedTopicId}&skill=${skillId}`;
+  const rationale = `Ready-to-edit ${displayLabel} lesson for ${getYearGroupLabel(input.yearGroup)} with official outcomes, WALT/WILF, activities, and resources.${reviewSentence}`;
 
   return {
-    answer: `Here is an editable lesson draft for **${displayLabel}** (${getYearGroupLabel(input.yearGroup)}). Review the preview below, then save or open in Lesson Builder.${mappingSentence}${reviewSentence}`,
+    answer: rationale,
     detectedContext: {
       intent: "Create lesson",
       yearGroup: getYearGroupLabel(input.yearGroup),
@@ -247,17 +243,17 @@ export function buildCreateLessonAssistantResponse(input: {
     matches,
     lessonPreview: preview,
     lessonDraftSource,
-    pedagogyRecommendations,
+    pedagogyRecommendations: recommendPedagogies({
+      topicId: topic.resolvedTopicId,
+      skillId,
+      yearGroupId: input.yearGroup,
+      limit: 3,
+    }),
     relatedOutcomeCodes: matches.map((m) => m.code),
     relatedTopicIds: [topic.requestedTopicId, topic.resolvedTopicId],
     suggestions: [
-      "Save this as a lesson draft",
       `Create a 6 lesson ${displayLabel} scheme`,
-      "Open in Lesson Builder",
-    ],
-    actions: [
-      { label: "Open in Lesson Builder", href: lessonBuilderHref, variant: "primary" },
-      { label: "Save as lesson draft", href: "/lessons", variant: "secondary" },
+      `Suggest activities for ${displayLabel}`,
     ],
   };
 }

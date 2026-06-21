@@ -2,13 +2,14 @@
 
 import { AssistantLessonDraftActions } from "@/components/assistant/AssistantLessonDraftActions";
 import { AssistantSchemeDraftActions } from "@/components/assistant/AssistantSchemeDraftActions";
+import { AssistantCurriculumAlignment } from "@/components/assistant/AssistantCurriculumAlignment";
 import { GeneratedLessonPreview } from "@/components/assistant/GeneratedLessonPreview";
 import { GeneratedSchemePreview } from "@/components/assistant/GeneratedSchemePreview";
-import { Card } from "@/components/ui/Card";
+import { Badge } from "@/components/ui/Badge";
 import type { AssistantResponse } from "@/lib/assistant";
 import {
+  getAssistantOutputMode,
   isLessonCreationResponse,
-  isSchemeCreationResponse,
 } from "@/lib/assistant/creation-detection";
 
 interface AssistantCreationPanelProps {
@@ -16,19 +17,17 @@ interface AssistantCreationPanelProps {
 }
 
 export function AssistantCreationPanel({ response }: AssistantCreationPanelProps) {
+  const mode = getAssistantOutputMode(response);
   const isLesson = isLessonCreationResponse(response);
-  const isScheme = isSchemeCreationResponse(response);
 
-  if (!isLesson && !isScheme) return null;
+  if (mode !== "lesson-draft" && mode !== "scheme-draft") return null;
 
   return (
     <div className="space-y-4">
-      <Card className="border-teal-200/80 bg-teal-50/30">
-        <p className="text-sm font-medium text-teal-950">
-          {isLesson ? "Here is an editable lesson draft." : "Here is an editable scheme draft."}
-        </p>
-        <p className="mt-1 text-sm text-teal-900/80">{response.answer.replace(/\*\*/g, "")}</p>
-      </Card>
+      <div className="flex flex-wrap items-center gap-2">
+        <Badge tone="teal">{isLesson ? "Lesson draft" : "Scheme draft"}</Badge>
+        <span className="text-sm text-slate-600">Ready to open in the builder — no copy and paste needed.</span>
+      </div>
 
       {isLesson ? <GeneratedLessonPreview response={response} /> : <GeneratedSchemePreview response={response} />}
 
@@ -37,6 +36,12 @@ export function AssistantCreationPanel({ response }: AssistantCreationPanelProps
       ) : (
         <AssistantSchemeDraftActions response={response} />
       )}
+
+      <p className="rounded-xl border border-slate-100 bg-slate-50/60 px-4 py-3 text-sm leading-relaxed text-slate-700">
+        {response.answer.replace(/\*\*/g, "")}
+      </p>
+
+      <AssistantCurriculumAlignment response={response} />
     </div>
   );
 }
