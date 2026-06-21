@@ -38,9 +38,9 @@ export interface ParsedAssistantQuery {
 const CREATION_VERBS =
   /\b(create|build|generate|make|plan|design|prepare)\b/;
 
-const LESSON_ARTIFACTS = /\b(lesson|session|activity)\b/;
+const LESSON_ARTIFACTS = /\b(lessons?|sessions?|activities?)\b/;
 
-const SCHEME_ARTIFACTS = /\b(scheme|sow|unit)\b/;
+const SCHEME_ARTIFACTS = /\b(schemes?|sow|unit|units?)\b/;
 
 const EXPLICIT_FIND_OUTCOME_PHRASES = [
   "find outcomes",
@@ -73,11 +73,14 @@ function isCreationQuery(q: string): boolean {
 }
 
 function detectCreationIntent(q: string): AssistantIntent | null {
-  if (!isCreationQuery(q)) return null;
-
   const hasSchemeArtifact = SCHEME_ARTIFACTS.test(q);
   const hasLessonArtifact = LESSON_ARTIFACTS.test(q);
   const hasNumberedLessons = /\b\d{1,2}\s*(?:lesson|week|session)s?\b/.test(q);
+  const hasCreationVerb = isCreationQuery(q);
+
+  if (!hasCreationVerb && !hasSchemeArtifact && !hasLessonArtifact) {
+    return null;
+  }
 
   if (hasSchemeArtifact || (hasNumberedLessons && /\b(sow|scheme|unit)\b/.test(q))) {
     return "create-scheme";
@@ -87,12 +90,16 @@ function detectCreationIntent(q: string): AssistantIntent | null {
     return "create-scheme";
   }
 
-  if (hasLessonArtifact) {
+  if (hasLessonArtifact && (hasCreationVerb || !hasSchemeArtifact)) {
     return "create-lesson";
   }
 
   if (/\bunit\b/.test(q)) {
     return "create-scheme";
+  }
+
+  if (hasCreationVerb) {
+    return hasNumberedLessons ? "create-scheme" : "create-lesson";
   }
 
   return null;

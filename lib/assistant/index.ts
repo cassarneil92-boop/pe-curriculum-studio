@@ -19,10 +19,17 @@ export { buildLessonBuilderDraftFromScheme } from "./scheme-to-lesson-builder";
 export {
   buildAssistantLessonDraft,
   buildCreateLessonAssistantResponse,
+  duplicateAssistantLessonDraft,
 } from "./lesson-draft-builder";
 export { resolveOutcomesForTopic, type OutcomeResolution, type TopicResolution } from "./topic-fallback";
 export type { AssistantSchemeDraftSource } from "./responses";
 export { parseAssistantQuery, isPlanningCreationIntent, type ParsedAssistantQuery, type AssistantIntent } from "./query-parser";
+export {
+  isCreationRequestQuery,
+  isCreationAssistantResponse,
+  isLessonCreationResponse,
+  isSchemeCreationResponse,
+} from "./creation-detection";
 export {
   buildAssistantResponse,
   buildAssistantResponseFromPrompt,

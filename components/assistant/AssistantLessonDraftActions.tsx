@@ -5,8 +5,11 @@ import { useRouter } from "next/navigation";
 import { useApp } from "@/components/providers/AppProvider";
 import { useToast } from "@/components/providers/ToastProvider";
 import { Button } from "@/components/ui/Button";
-import { buildAssistantLessonDraft } from "@/lib/assistant/lesson-draft-builder";
-import type { AssistantResponse } from "@/lib/assistant";
+import {
+  buildAssistantLessonDraft,
+  duplicateAssistantLessonDraft,
+  type AssistantResponse,
+} from "@/lib/assistant";
 import { saveLessonDraft } from "@/lib/lesson-builder/draft";
 
 interface AssistantLessonDraftActionsProps {
@@ -29,7 +32,7 @@ export function AssistantLessonDraftActions({ response }: AssistantLessonDraftAc
 
   const handleSaveDraft = () => {
     addLesson(draftPayload);
-    toast("Lesson draft saved");
+    toast("Lesson saved to your library");
     if (response.lessonPreview?.needsReview) {
       toast("Review curriculum alignment before teaching.", "info");
     }
@@ -43,25 +46,29 @@ export function AssistantLessonDraftActions({ response }: AssistantLessonDraftAc
     router.push("/lesson-builder");
   };
 
+  const handleDuplicate = () => {
+    const copy = duplicateAssistantLessonDraft(draftPayload);
+    addLesson(copy);
+    toast("Duplicate lesson saved to your library");
+  };
+
   return (
-    <div className="mt-4 space-y-3 border-t border-slate-100 pt-4">
+    <div className="rounded-[20px] border border-slate-200 bg-white p-5 shadow-sm">
       {response.lessonPreview.needsReview && response.lessonPreview.topicMappingNote && (
-        <p className="rounded-lg border border-amber-200 bg-amber-50/80 px-3 py-2 text-xs text-amber-900">
+        <p className="mb-4 rounded-lg border border-amber-200 bg-amber-50/80 px-3 py-2 text-xs text-amber-900">
           {response.lessonPreview.topicMappingNote} Review before saving.
         </p>
       )}
-      <div>
-        <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
-          Save this preview
-        </p>
-        <div className="flex flex-wrap gap-2">
-          <Button type="button" variant="secondary" className="text-xs" onClick={handleSaveDraft}>
-            Save as lesson draft
-          </Button>
-          <Button type="button" variant="primary" className="text-xs" onClick={handleSaveAndOpen}>
-            Open in Lesson Builder
-          </Button>
-        </div>
+      <div className="flex flex-wrap gap-2">
+        <Button type="button" variant="secondary" onClick={handleSaveDraft}>
+          Save as editable lesson draft
+        </Button>
+        <Button type="button" variant="primary" onClick={handleSaveAndOpen}>
+          Save and open in Lesson Builder
+        </Button>
+        <Button type="button" variant="ghost" onClick={handleDuplicate}>
+          Duplicate as new lesson
+        </Button>
       </div>
     </div>
   );

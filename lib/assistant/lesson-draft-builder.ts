@@ -109,6 +109,17 @@ export function buildAssistantLessonDraftSource(input: {
   };
 }
 
+export function duplicateAssistantLessonDraft(
+  draft: Omit<LessonPlan, "id" | "createdAt" | "updatedAt">
+): Omit<LessonPlan, "id" | "createdAt" | "updatedAt"> {
+  return {
+    ...draft,
+    title: draft.title.trim().endsWith("(copy)")
+      ? draft.title
+      : `${draft.title} (copy)`,
+  };
+}
+
 export function buildAssistantLessonDraft(
   source: AssistantLessonDraftSource,
   preview: AssistantLessonPreview
@@ -223,7 +234,7 @@ export function buildCreateLessonAssistantResponse(input: {
   const lessonBuilderHref = `/lesson-builder?yearGroup=${input.yearGroup}&topic=${topic.requestedTopicId}&skill=${skillId}`;
 
   return {
-    answer: `Here is a **${displayLabel}** lesson preview for **${getYearGroupLabel(input.yearGroup)}** with WALT, WILF, activities, resources, and nearest matching curriculum outcomes.${mappingSentence}${reviewSentence}`,
+    answer: `Here is an editable lesson draft for **${displayLabel}** (${getYearGroupLabel(input.yearGroup)}). Review the preview below, then save or open in Lesson Builder.${mappingSentence}${reviewSentence}`,
     detectedContext: {
       intent: "Create lesson",
       yearGroup: getYearGroupLabel(input.yearGroup),

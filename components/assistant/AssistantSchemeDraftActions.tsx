@@ -2,7 +2,6 @@
 
 import { useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { AssistantSchemeInsights } from "@/components/assistant/AssistantSchemeInsights";
 import { useApp } from "@/components/providers/AppProvider";
 import { useToast } from "@/components/providers/ToastProvider";
 import { Button } from "@/components/ui/Button";
@@ -35,7 +34,7 @@ export function AssistantSchemeDraftActions({ response }: AssistantSchemeDraftAc
 
   const handleSaveDraft = () => {
     addScheme(draftResult.draft);
-    toast("Scheme draft saved");
+    toast("Scheme saved to your library");
     if (draftResult.needsReview) {
       toast(schemeDraftReviewMessage(true) ?? "", "info");
     }
@@ -52,38 +51,26 @@ export function AssistantSchemeDraftActions({ response }: AssistantSchemeDraftAc
   const handleDuplicate = () => {
     const copy = duplicateAssistantSchemeDraft(draftResult.draft);
     addScheme(copy);
-    toast("New scheme copy saved from assistant preview");
+    toast("Duplicate scheme saved to your library");
   };
 
   return (
-    <div className="mt-4 space-y-4 border-t border-slate-100 pt-4">
-      <AssistantSchemeInsights
-        quality={draftResult.quality}
-        confidence={draftResult.confidence}
-        pedagogicalQuality={draftResult.pedagogicalQuality}
-        pedagogyRecommendations={draftResult.pedagogyRecommendations}
-      />
-
-      <div>
-        <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
-          Save this preview
+    <div className="rounded-[20px] border border-slate-200 bg-white p-5 shadow-sm">
+      {draftResult.needsReview && (
+        <p className="mb-4 rounded-lg border border-amber-200 bg-amber-50/80 px-3 py-2 text-xs text-amber-900">
+          {schemeDraftReviewMessage(true)}
         </p>
-        {draftResult.needsReview && (
-          <p className="mb-3 rounded-lg border border-amber-200 bg-amber-50/80 px-3 py-2 text-xs text-amber-900">
-            {schemeDraftReviewMessage(true)}
-          </p>
-        )}
-        <div className="flex flex-wrap gap-2">
-          <Button type="button" variant="secondary" className="text-xs" onClick={handleSaveDraft}>
-            Save as scheme draft
-          </Button>
-          <Button type="button" variant="primary" className="text-xs" onClick={handleSaveAndOpen}>
-            Save and open in Scheme Builder
-          </Button>
-          <Button type="button" variant="ghost" className="text-xs" onClick={handleDuplicate}>
-            Duplicate as new scheme
-          </Button>
-        </div>
+      )}
+      <div className="flex flex-wrap gap-2">
+        <Button type="button" variant="secondary" onClick={handleSaveDraft}>
+          Save as editable scheme draft
+        </Button>
+        <Button type="button" variant="primary" onClick={handleSaveAndOpen}>
+          Save and open in Scheme Builder
+        </Button>
+        <Button type="button" variant="ghost" onClick={handleDuplicate}>
+          Duplicate as new scheme
+        </Button>
       </div>
     </div>
   );

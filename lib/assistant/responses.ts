@@ -561,7 +561,7 @@ export function buildAssistantResponse(
 
   if (parsed.intent === "create-scheme") {
     return {
-      answer: `I can help you plan a **${lessonCount}-lesson** scheme for **${getYearGroupLabel(yearGroup)}** ${pathwayLabels(appPathways).join(" + ")} — **${displayTopicLabel}**. Official outcomes and a suggested sequence are below.${mappingNote ? ` ${mappingNote}` : ""}${reviewNote}`,
+      answer: `Here is an editable scheme draft for **${displayTopicLabel}** (${getYearGroupLabel(yearGroup)}, ${lessonCount} lessons). Review the preview below, then save or open in Scheme Builder.${mappingNote ? ` ${mappingNote}` : ""}${reviewNote}`,
       detectedContext: detected,
       matches,
       planningSequence,
